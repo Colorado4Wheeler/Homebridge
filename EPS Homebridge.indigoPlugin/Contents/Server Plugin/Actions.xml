@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<!-- EPS (ColoradoFourWheeler) Plugin -->
+<Actions>
+	<!-- Defaults to the main ColoradoFourWheeler forum on Indigo -->
+	<SupportURL>http://forums.indigodomo.com/viewforum.php?f=192</SupportURL>
+	
+	<!-- All plugins that monitor other devices will have an update action -->
+	<Action id="update" deviceFilter="self">
+		<Name>Update</Name>
+		<CallbackMethod>updateDevice</CallbackMethod>
+	</Action>
+	
+	<Action id="close" deviceFilter="self">
+		<Name>Toggle close state</Name>
+		<CallbackMethod>TEST</CallbackMethod>
+	</Action>
+	
+	<Action id="smartdim" deviceFilter="indigo.dimmer">
+		<Name>Smart Dimmer Action</Name>
+		<CallbackMethod>smartDimmer</CallbackMethod>
+		<ConfigUI>
+			<SupportURL>http://www.perceptiveautomation.com/wiki/doku.php?id=plugins:example_dev_1</SupportURL>
+			
+			<Field id="percentage" type="textfield" defaultValue="25">
+				<Label>Percent to dim or brighten device each execution:</Label>
+			</Field>
+			
+			<Field id="sep1" type="separator" />
+			
+			<Field id="lbl1" type="label">
+				<Label>By default Smart Dimmer will reverse its course when the device is off or at full brightness.  This means if you are off it will brighten to full brightness, at which time the next action will begin to dim the device until it is off again.
+				
+If you enable Round Robin then you do not want it to reverse course and instead just keep going from full brightness to off to brighten again, never dimming the device.</Label>
+			</Field>
+			
+			<Field id="reverse" type="checkbox" default="no">
+				<Label>Round Robin:</Label>
+				<Description>Never dim the device, always brighten until off again</Description>
+			</Field>
+		</ConfigUI>
+	</Action>
+</Actions>

@@ -1,0 +1,317 @@
+<!-- EPS (ColoradoFourWheeler) Plugin -->
+<PluginConfig>
+	<!-- Hidden prefs that are updated via other menus or in code because they may have large dialogs or complex options -->
+	<Field id="pollingMode" type="textfield" defaultValue="realTime" hidden="true">
+    	<Label>pollingMode:</Label>
+    </Field>
+    
+    <Field id="pollingInterval" type="textfield" defaultValue="1" hidden="true">
+    	<Label>pollingInterval:</Label>
+    </Field>
+    
+    <Field id="pollingFrequency" type="textfield" defaultValue="s" hidden="true">
+    	<Label>pollingFrequency:</Label>
+    </Field>
+    
+    <!-- Enabled for plugins that need to monitor Indigo device changes -->
+	<Field type="checkbox" id="monitorChanges" defaultValue="true" hidden="true">
+		<Label> </Label>
+		<Description>monitorChanges</Description>
+	</Field>
+    
+    <!-- Logging level - part of every EPS plugin - Indigo 7 centric -->
+	<Field type="menu" id="logLevel" defaultValue="20">
+		<Label>Log Level:</Label>
+		<List>
+			<Option value="5">Thread Debug</Option>
+			<Option value="10">Debug</Option>
+			<Option value="20">Info</Option>
+			<Option value="30">Warning</Option>
+			<Option value="40">Error</Option>
+			<Option value="50">Critical</Option>
+		</List>
+	</Field>
+   	
+   	<!-- Any specialized plugin-specific options, hidden or otherwise, for THIS plugin -->
+	
+	<Field id="sep_general" type="separator" />
+	
+	<Field type="textfield" id="itemcount" defaultValue="0" readonly="true">
+		<Label>Item Count (Out of 99):</Label>
+	</Field>
+	
+	<Field type="checkbox" id="countWrappedItems" defaultValue="true">
+		<Label> </Label>
+		<Description>Include Wrappers in item count</Description>
+		<CallbackMethod>configFieldChanged</CallbackMethod>
+	</Field>
+	
+	<Field type="button" id="refresh"  >
+		<Label> </Label>
+		<Title>Refresh </Title>
+		<CallbackMethod>btnRefreshDeviceCount</CallbackMethod>
+	</Field>
+
+	<Field type="label" id="lbl_intro" >
+		<Label>Use the list below to show the various lists that you want to include in Homebridge by default.  This only toggles the visibility of the list, your selections in each category will be saved regardless of it's visibility here.
+		
+</Label>
+	</Field>
+	
+	<Field type="menu" id="view" defaultValue="config" >
+		<Label>Select a list to configure:</Label>
+		<List>
+			<Option value="config">Basic Homebridge Configuration</Option>
+			<Option value="devinclude">Homebridge Friendly Devices To Include</Option>
+			<Option value="devexclude">Indigo Devices To Exclude</Option>
+			<Option value="actinclude">Action Groups To Include</Option>
+			<Option value="actexclude">Action Groups To Exclude</Option>
+			<Option value="treatasswitch">Treat As Switches</Option>
+			<Option value="treataslock">Treat As Locks</Option>
+			<Option value="treatasdoor">Treat As Doors</Option>
+			<Option value="treatasgarage">Treat As Garage Doors</Option>
+			<Option value="treataswindows">Treat As Windows</Option>
+			<Option value="treatasdrapes">Treat As Window Coverings</Option>
+		</List>
+		<CallbackMethod>configFieldChanged</CallbackMethod>
+	</Field>
+	
+	<Field type="checkbox" id="hideWrappedItems" defaultValue="true">
+		<Label> </Label>
+		<Description>Exclude wrapped devices from the lists</Description>
+		<CallbackMethod>configFieldChanged</CallbackMethod>
+	</Field>
+	
+	<Field id="sep_hbselection" type="separator" />
+	
+	<!-- *********** CONFIG *********** -->
+	
+	<Field type="textfield" id="platform" defaultValue="Indigo" readonly="true" visibleBindingId="view" visibleBindingValue="config" >
+		<Label>Platform:</Label>
+	</Field>
+	
+	<Field type="textfield" id="name" defaultValue="My Indigo Server" visibleBindingId="view" visibleBindingValue="config" >
+		<Label>Name:</Label>
+	</Field>
+	
+	<Field type="textfield" id="protocol" defaultValue="http" visibleBindingId="view" visibleBindingValue="config" >
+		<Label>Protocol:</Label>
+	</Field>
+	
+	<Field type="textfield" id="host" defaultValue="127.0.0.1" visibleBindingId="view" visibleBindingValue="config" >
+		<Label>Indigo server IP:</Label>
+	</Field>
+	
+	<Field type="textfield" id="port" defaultValue="8176" visibleBindingId="view" visibleBindingValue="config" >
+		<Label>Indigo server port:</Label>
+	</Field>
+	
+	<Field type="textfield" id="path" defaultValue="" visibleBindingId="view" visibleBindingValue="config" >
+		<Label>Indigo server path:</Label>
+	</Field>
+	
+	<Field type="textfield" id="username" defaultValue="" visibleBindingId="view" visibleBindingValue="config" >
+		<Label>Web access user name:</Label>
+	</Field>
+	
+	<Field type="textfield" id="password" defaultValue="" visibleBindingId="view" visibleBindingValue="config" >
+		<Label>Web access password:</Label>
+	</Field>
+	
+	<Field type="textfield" id="accessory" defaultValue="" visibleBindingId="view" visibleBindingValue="config" >
+		<Label>Accessory name prefix:</Label>
+	</Field>
+	
+	<Field type="checkbox" id="celsius" defaultValue="false" visibleBindingId="view" visibleBindingValue="config">
+		<Label> </Label>
+		<Description>Show thermostats in Celsius</Description>
+	</Field>
+	
+	<!-- *********** INCLUDE *********** -->
+	
+	<Field type="label" id="lbl_devinclude" visibleBindingId="view" visibleBindingValue="devinclude" alwaysUseInDialogHeightCalc="true">
+		<Label>Devices you want included in Homebridge.  This list impacts other lists, if you include a device here you cannot exclude it (unless you select All) and if you don't include it here you cannot select it in any of the device type lists.
+		
+</Label>
+	</Field>
+	
+	<Field id="devinclude" type="list" rows="12" defaultValue="-all-" visibleBindingId="view" visibleBindingValue="devinclude" alwaysUseInDialogHeightCalc="true">
+		<Label>Devices:</Label>
+		<List class="self" filter="hbfriendly" method="pluginList" dynamicReload="true"/>
+		<CallbackMethod>configFieldChanged</CallbackMethod>
+	</Field>
+	
+	<!-- *********** EXCLUDE *********** -->
+	
+	<Field type="label" id="lbl_devexclude" visibleBindingId="view" visibleBindingValue="devexclude">
+		<Label>Devices you want excluded from Homebridge that you have initially included.
+		
+</Label>
+	</Field>
+	
+	<Field id="devexclude" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="devexclude">
+		<Label>Devices:</Label>
+		<List class="self" filter="hbexclude" method="pluginList" dynamicReload="true"/>
+		<CallbackMethod>configFieldChanged</CallbackMethod>
+	</Field>
+	
+	<!-- *********** INCLUDE ACTION GROUPS *********** -->
+	
+	<Field type="label" id="lbl_actinclude" visibleBindingId="view" visibleBindingValue="actinclude" >
+		<Label>Action groups you want included in Homebridge.  This list impacts other lists, if you include an action group here you cannot exclude it (unless you select All) and if you don't include it here you cannot select it in any of the device type lists.
+		
+</Label>
+	</Field>
+	
+	<Field id="actinclude" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="actinclude" >
+		<Label>Action Groups:</Label>
+		<List class="self" filter="hbactinclude" method="pluginList" dynamicReload="true"/>
+		<CallbackMethod>configFieldChanged</CallbackMethod>
+	</Field>
+	
+	<!-- *********** EXCLUDE ACTION GROUPS *********** -->
+	
+	<Field type="label" id="lbl_actexclude" visibleBindingId="view" visibleBindingValue="actexclude" >
+		<Label>Action groups you want excluded from Homebridge that you have initially included.
+		
+</Label>
+	</Field>
+	
+	<Field id="actexclude" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="actexclude" >
+		<Label>Action Groups:</Label>
+		<List class="self" filter="hbactexclude" method="pluginList" dynamicReload="true"/>
+		<CallbackMethod>configFieldChanged</CallbackMethod>
+	</Field>
+	
+	
+	<!-- *********** SWITCHES *********** -->
+	
+	<Field type="label" id="lbl_treatasswitch" visibleBindingId="view" visibleBindingValue="treatasswitch">
+		<Label>Included devices that you want to be treated as an On/Off switch instead of a dimmer.  If you used a device or action in another "Treat As" it will not be shown in this list.
+		
+</Label>
+	</Field>
+	
+	<Field id="treatasswitch" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="treatasswitch">
+		<Label>Items:</Label>
+		<List class="self" filter="hbtypes#treatasswitch" method="pluginList" dynamicReload="true"/>
+		<CallbackMethod>configFieldChanged</CallbackMethod>
+	</Field>
+	
+	<!-- *********** LOCKS *********** -->
+	
+	<Field type="label" id="lbl_treataslock" visibleBindingId="view" visibleBindingValue="treataslock">
+		<Label>Included devices that you want to be treated as a lock that responds to lock and unlock Siri commands.  If you used a device or action in another "Treat As" it will not be shown in this list.
+		
+</Label>
+	</Field>
+	
+	<Field id="treataslock" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="treataslock">
+		<Label>Items:</Label>
+		<List class="self" filter="hbtypes#treataslock" method="pluginList" dynamicReload="true"/>
+		<CallbackMethod>configFieldChanged</CallbackMethod>
+	</Field>
+	
+	<!-- *********** DOORS *********** -->
+	
+	<Field type="label" id="lbl_treatasdoor" visibleBindingId="view" visibleBindingValue="treatasdoor">
+		<Label>Included devices that you want to be treated as a door that responds to open and close Siri commands.  If you used a device or action in another "Treat As" it will not be shown in this list.
+		
+</Label>
+	</Field>
+	
+	<Field id="treatasdoor" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="treatasdoor">
+		<Label>Items:</Label>
+		<List class="self" filter="hbtypes#treatasdoor" method="pluginList" dynamicReload="true"/>
+		<CallbackMethod>configFieldChanged</CallbackMethod>
+	</Field>
+	
+	<!-- *********** GARAGE DOORS *********** -->
+	
+	<Field type="label" id="lbl_treatasgarage" visibleBindingId="view" visibleBindingValue="treatasgarage">
+		<Label>Included devices that you want to be treated as a door that responds to open and close Siri commands.  If you used a device or action in another "Treat As" it will not be shown in this list.
+		
+</Label>
+	</Field>
+	
+	<Field id="treatasgarage" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="treatasgarage">
+		<Label>Items:</Label>
+		<List class="self" filter="hbtypes#treatasgarage" method="pluginList" dynamicReload="true"/>
+		<CallbackMethod>configFieldChanged</CallbackMethod>
+	</Field>
+	
+	<!-- *********** WINDOWS *********** -->
+	
+	<Field type="label" id="lbl_treataswindows" visibleBindingId="view" visibleBindingValue="treataswindows">
+		<Label>Included devices that you want to be treated as a window that responds to open and close Siri commands.  If you used a device or action in another "Treat As" it will not be shown in this list.
+		
+</Label>
+	</Field>
+	
+	<Field id="treataswindows" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="treataswindows">
+		<Label>Items:</Label>
+		<List class="self" filter="hbtypes#treataswindows" method="pluginList" dynamicReload="true"/>
+		<CallbackMethod>configFieldChanged</CallbackMethod>
+	</Field>
+	
+	<!-- *********** DRAPES *********** -->
+	
+	<Field type="label" id="lbl_treatasdrapes" visibleBindingId="view" visibleBindingValue="treatasdrapes">
+		<Label>Included devices that you want to be treated as a window coverings (drapes, blinds, curtains, etc) that responds to open, close and dimmer (as open to/close to) Siri commands.  If you used a device or action in another "Treat As" it will not be shown in this list.
+		
+</Label>
+	</Field>
+	
+	<Field id="treatasdrapes" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="treatasdrapes">
+		<Label>Items:</Label>
+		<List class="self" filter="hbtypes#treatasdrapes" method="pluginList" dynamicReload="true"/>
+		<CallbackMethod>configFieldChanged</CallbackMethod>
+	</Field>
+	
+</PluginConfig>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

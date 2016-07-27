@@ -1,0 +1,136 @@
+<?xml version="1.0"?>
+<!-- EPS (ColoradoFourWheeler) Plugin -->
+<MenuItems>
+	<MenuItem id="saveHB">
+    	<Name>Save Homebridge Config</Name>
+    	<CallbackMethod>menuSave</CallbackMethod>
+    </MenuItem>
+    
+    <MenuItem id="reloadHB">
+    	<Name>Reload Homebridge</Name>
+    	<CallbackMethod>menuReload</CallbackMethod>
+    </MenuItem>
+    
+    <MenuItem id="sep_hb1"/>
+    
+    <MenuItem id="saveReloadHB">
+    	<Name>Save Homebridge Config and Reload</Name>
+    	<CallbackMethod>menuSaveReload</CallbackMethod>
+    </MenuItem>
+    
+    <MenuItem id="sep_hb2"/>
+    
+    <MenuItem id="startHB">
+    	<Name>Start Homebridge</Name>
+    	<CallbackMethod>menuStart</CallbackMethod>
+    </MenuItem>
+    
+    <MenuItem id="stopHB">
+    	<Name>Stop Homebridge</Name>
+    	<CallbackMethod>menuStop</CallbackMethod>
+    </MenuItem>
+    
+    <MenuItem id="updateHB">
+    	<Name>Homebridge Software Update</Name>
+    	<CallbackMethod>menuUpdate</CallbackMethod>
+    </MenuItem>
+    
+    <MenuItem id="sep_hb3"/>
+    
+	<MenuItem id="performanceOptions">
+        <Name>Performance Options</Name>
+        <ButtonTitle>Save</ButtonTitle>
+        <CallbackMethod>performanceOptions</CallbackMethod>
+        <ConfigUI>
+			<Field type="menu" id="pollingMode" defaultValue="realTime">
+				<Label>Device Updating:</Label>
+				<List>
+					<Option value="realTime">Realtime Device Updating</Option>
+					<Option value="pollDevice">Periodic Polling</Option>
+					<Option value="concurrentThread">Concurrent Threading</Option>
+				</List>
+			</Field>
+			
+			<Field id="realTime" type="label" visibleBindingId="pollingMode" visibleBindingValue="realTime">
+				<Label>Monitors every change to the plugin device and any associated subdevices in real-time.
+				
+Under most circumstances this is preferred but if you create a lot of devices or subdevices in a plugin with a lot of calculations this can cause timeouts, high memory usage and performance problems for both Indigo and the plugin.
+
+If you experience errors or timeouts in Indigo try changing to a different method.
+
+
+
+
+
+				</Label>
+			</Field>
+			
+			<Field id="pollDevice" type="label" visibleBindingId="pollingMode" visibleBindingValue="pollDevice">
+				<Label>Instead of monitoring for device and subdevice changes, instead periodically poll the device based on a schedule.
+				
+This will result in less real-time information but is far more efficient in terms of memory and processor usage than real-time updating.
+
+
+
+
+				</Label>
+			</Field>
+			
+			<Field id="concurrentThread" type="label" visibleBindingId="pollingMode" visibleBindingValue="concurrentThread">
+				<Label>Only update information for the device and subdevices when the plugins Concurrent Threading occurs.
+				
+This is similar to polling but instead of checking every ~1 second to see if polling needs to occur the plugin will instead only update on a set interval and update devices with no further calculations.
+
+Using this method is nit-picking performance since polling is almost equally as efficient, but if both other methods don't rectify performance problems or Indigo errors as a result of the plugin then this method is a good option.
+				</Label>
+			</Field>
+			
+			<Field id="sep_pollingMode" type="separator" visibleBindingId="pollingMode" visibleBindingValue="pollDevice,concurrentThread" />
+			
+			<Field id="realTimeSpacer" type="label" visibleBindingId="pollingMode" visibleBindingValue="realTime">
+				<Label>
+				
+				
+				</Label>
+			</Field>
+			
+			<Field id="pollingInterval" type="textfield" defaultValue="1" visibleBindingId="pollingMode" visibleBindingValue="pollDevice,concurrentThread">
+				<Label>Interval:</Label>
+			</Field>
+			
+			<Field type="menu" id="pollingFrequency" defaultValue="s" visibleBindingId="pollingMode" visibleBindingValue="pollDevice,concurrentThread">
+				<Label>Frequency:</Label>
+				<List>
+					<Option value="s">Seconds</Option>
+					<Option value="m">Minutes</Option>
+					<Option value="h">Hours</Option>
+				</List>
+			</Field>
+			
+        </ConfigUI>
+    </MenuItem>
+    
+    <MenuItem id="sep_options"/>
+    
+ 	<MenuItem id="libVersion">
+    	<Name>Show Support Information</Name>
+    	<CallbackMethod>pluginMenuSupportInfo</CallbackMethod>
+    </MenuItem>
+    
+    <MenuItem id="supportLog">
+    	<Name>Support Data Dump</Name>
+    	<CallbackMethod>pluginMenuSupportData</CallbackMethod>
+    </MenuItem>
+    
+    <MenuItem id="supportLogEx">
+    	<Name>Support Comprehensive Data Dump</Name>
+    	<CallbackMethod>pluginMenuSupportDataEx</CallbackMethod>
+    </MenuItem>
+    
+    <MenuItem id="sep_update"/>
+    
+    <MenuItem id="update">
+    	<Name>Check For Plugin Update</Name>
+    	<CallbackMethod>pluginMenuCheckUpdates</CallbackMethod>
+    </MenuItem>
+</MenuItems>
