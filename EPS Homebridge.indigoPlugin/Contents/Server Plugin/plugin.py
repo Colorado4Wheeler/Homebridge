@@ -872,7 +872,7 @@ class Plugin(indigo.PluginBase):
 				else:
 					valuesDict["deviceOnShowStates"] = True
 					
-				if valuesDict["deviceActionOff"] == "indigo_turnOn" or valuesDict["deviceActionOff"] == "indigo_turnOff":
+				if valuesDict["methodOffMaster"] == "on" or valuesDict["methodOffMaster"] == "passthrough" or valuesDict["deviceActionOff"] == "indigo_turnOn" or valuesDict["deviceActionOff"] == "indigo_turnOff":
 					valuesDict["deviceOffState"] = "onOffState"
 					valuesDict["deviceOffStateValue"] = "true"
 					if valuesDict["deviceActionOff"] == "indigo_turnOff": valuesDict["deviceOffStateValue"] = "false"
@@ -909,6 +909,10 @@ class Plugin(indigo.PluginBase):
 				props["deviceActionOn"] = "indigo_turnOff"
 				
 				return eps.act.runAction (props)
+				
+			elif dev.pluginProps["methodOffMaster"] == "on" and ext.valueValid (dev.pluginProps, "deviceOn", True):
+				# Easy, just do what On does				
+				return eps.act.runAction (dev.pluginProps)
 				
 			elif dev.pluginProps["methodOff"] == "device" and ext.valueValid (dev.pluginProps, "deviceOff", True):
 				return eps.act.runAction (dev.pluginProps, "Off")

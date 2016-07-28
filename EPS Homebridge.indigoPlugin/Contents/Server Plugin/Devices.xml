@@ -178,7 +178,6 @@
 				<List>
 					<Option value="passthrough">Pass Through</Option>
 					<Option value="on">Use On Method</Option>
-					<Option value="same">Same As On Method</Option>
 					<Option value="device">Single Device</Option>
 					<Option value="action">Action Group</Option>
 				</List>
