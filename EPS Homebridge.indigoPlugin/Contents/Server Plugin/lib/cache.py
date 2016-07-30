@@ -74,6 +74,11 @@ class cache:
 				indigo.variables.subscribeToChanges()
 				self.factory.plug.isSubscribedVariables = True
 				
+			if type(obj) is indigo.ActionGroup and self.factory.plug.isSubscribedActionGroups == False:
+				self.logger.threaddebug ("Action group is being watched, automatically subscribing to action group changes")
+				indigo.actionGroups.subscribeToChanges()
+				self.factory.plug.isSubscribedActionGroups = True
+				
 			else:
 				if self.factory.plug.isSubscribedDevices == False:
 					self.logger.threaddebug ("Device state is being watched, automatically subscribing to device changes")
@@ -232,6 +237,23 @@ class cache:
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
+			
+	#
+	# Add watched action group - we don't look for anything that changed, it's here so we can notify the plugin that one we are watching was run
+	#
+	def addWatchedActionGroup (self, parent, watchedItemsDict):
+		try:
+			for agId, variable in watchedItemsDict.iteritems():
+				if int(agId) in indigo.actionGroups:
+					# If we are watching something then automatically turn on subscribeToChanges
+					self.subscribeToChanges(indigo.actionGroups[agId])
+					self.items.addWatchedItem (parent, indigo.actionGroups[agId])
+				else:
+					self.logger.warning ("Cannot watch action group '{0}' on child device '{1}' because the action group doesn't exist".format(str(agId), parent.name))			
+			
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))		
 			
 	#
 	# Add watched object without any attribute, states, props or values being watched - called when no other property is appropriate but we still want to monitor the object
@@ -563,6 +585,10 @@ class cacheDict:
 				self.logger.debug("Automatically adding watched variable '{0}' to cache as a watched item".format(parent.name))
 				newitem = cacheVar(parent)
 		
+			elif type(parent) is indigo.ActionGroup:
+				self.logger.debug("Automatically adding watched action group '{0}' to cache as a watched item".format(parent.name))
+				newitem = cacheAg(parent)
+				
 			else:
 				self.logger.debug("Automatically adding watched device '{0}' to cache as a watched item".format(parent.name))
 				newitem = cacheDev(parent)
@@ -741,6 +767,62 @@ class cacheDev:
 						if origDev.ownerProps[property] != newDev.ownerProps[property]:
 							self.logger.threaddebug ("'{0}' property '{1}' has changed, adding change record for '{2}'".format(newDev.name, property, indigo.devices[watchinfo.id].name))
 							ret.append (cacheChange(self, "property", property, watchinfo.id, newDev.id, origDev.ownerProps[property], newDev.ownerProps[property]))
+					
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+		
+		return ret
+
+#
+# Action group record
+#
+class cacheAg:
+	#
+	# Initialize the  class
+	#
+	def __init__(self, ag):
+		self.itemType = "ActionGroup"
+		self.name = ag.name
+		self.id = ag.id
+		self.watchedBy = []
+		self.watching = []
+		
+		self.logger = logging.getLogger ("Plugin.cacheAg")
+		
+	def __str__(self):
+		ret = ""
+		
+		try:
+			ret += self._addLine ("name", self.name)
+			ret += self._addLine ("type", self.itemType)
+			ret += self._addLine ("id", self.id)
+			
+			if len(self.watchedBy) == 0:
+				ret += self._addLine ("watchedBy", "")
+			else:
+				ret += self._addLine ("watchedBy", "(dict)")
+				for watchinfo in self.watchedBy:
+					ret += unicode(watchinfo)
+					
+			if len(self.watching) == 0:
+				ret += self._addLine ("watching", "")
+			else:
+				ret += self._addLine ("watching", "(dict)")
+				for watchinfo in self.watching:
+					ret += unicode(watchinfo)
+				
+		except:
+			raise
+		
+		return ret
+		
+	def getWatchedByChanges (self, origActionGroup, newActionGroup):
+		ret = []
+		
+		try:
+			# Until Indigo lets us dig into Action Groups there's nothing to watch for, so any change is interesting
+			for watchinfo in self.watchedBy:
+				ret.append (cacheChange(self, "actiongroup", newActionGroup.name, watchinfo.id, newActionGroup.id, "Action Groups have no value", "Action Groups have no value"))
 					
 		except Exception as e:
 			self.logger.error (ext.getException(e))	

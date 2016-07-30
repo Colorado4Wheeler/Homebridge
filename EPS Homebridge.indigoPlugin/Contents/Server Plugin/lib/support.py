@@ -163,6 +163,7 @@ class support:
 				
 				variables = ""
 				devices = ""
+				actiongroups = ""
 				watchingIds = []
 				
 				for item in self.factory.cache.items:
@@ -230,6 +231,7 @@ class support:
 						
 						if item.itemType == "Device": devices += cacheItem
 						if item.itemType == "Variable": variables += cacheItem
+						if item.itemType == "ActionGroup": actiongroups += cacheItem
 						
 				ret += self.factory.ui.debugHeaderEx ("-")
 				ret += self.factory.ui.debugLine ("Devices", "-")
@@ -240,6 +242,11 @@ class support:
 				ret += self.factory.ui.debugLine ("Variables", "-")
 				ret += self.factory.ui.debugHeaderEx ("-")
 				ret += variables
+				
+				ret += self.factory.ui.debugHeaderEx ("-")
+				ret += self.factory.ui.debugLine ("Action Groups", "-")
+				ret += self.factory.ui.debugHeaderEx ("-")
+				ret += actiongroups
 				
 				if len(watchingIds) > 0:				
 					ret += self.factory.ui.debugHeaderEx ("-")

@@ -11,8 +11,7 @@ import dtutil
 
 class actions:	
 	# MAIN TERMS
-	PASS = "Pass"
-	FAIL = "Fail"
+	FORMTERMS = ["Pass", "Fail"]
 	VALIDATION = "isActionConfig"
 	FIELDPREFIX = "If"
 	
@@ -43,7 +42,7 @@ class actions:
 	#
 	def runAction (self, propsDict, method = None):
 		try:
-			if method is None: method = self.PASS
+			if method is None: method = self.FORMTERMS[0]
 			
 			# Check that we have either a strValuePassOn or strValueFailOn, if we don't then this is either
 			# not an action or it's a pseudo action device that the plugin is handling one-off
@@ -149,7 +148,6 @@ class actions:
 				args["value"] = False # We have to put up the value here
 				if rawAction == "indigo_setBinaryOutput": args["value"] = True
 				rawAction = "indigo_setBinaryOutput"
-				
 				
 			##########################################################################################	
 				
@@ -309,6 +307,9 @@ class actions:
 		
 		try:
 			if ext.valueValid (propsDict, self.OPT_GROUP + method + str(index), True):
+				# In case the plugin is hiding a valid field, unhide it here
+				propsDict[self.OPT_GROUP + method + str(index)] = self.toggleGroupVisibility (propsDict[self.OPT_GROUP + method + str(index)], True)
+				
 				if propsDict[self.OPT_GROUP + method + str(index)] == "textfield":
 					ret = propsDict[self.STR_VAL + method + str(index)]
 					
@@ -440,6 +441,46 @@ class actions:
 		return True
 		
 	#
+	# Utility to toggle the visibility of a field so that the field is still considered active, just not displayed
+	#
+	def toggleGroupVisibility (self, fieldValue, unhide = False):
+		try:
+			if fieldValue == "hidden": return "hidden"
+			
+			if unhide == False:
+				# In case we get the already hidden value
+				if fieldValue == "invtxt": return fieldValue
+				if fieldValue == "invmnu": return fieldValue
+				if fieldValue == "invlst": return fieldValue
+				if fieldValue == "invchk": return fieldValue
+				
+				# Return hidden value
+				if fieldValue == "textfield": return "invtxt"
+				if fieldValue == "menu": return "invmnu"
+				if fieldValue == "list": return "invlst"
+				if fieldValue == "checkbox": return "invchk"
+				
+			else:
+				# In case we get the already unhidden value
+				# In case we get the already hidden value
+				if fieldValue == "textfield": return fieldValue
+				if fieldValue == "menu": return fieldValue
+				if fieldValue == "list": return fieldValue
+				if fieldValue == "checkbox": return fieldValue
+				
+				# Return unhidden value
+				if fieldValue == "invtxt": return "textfield"
+				if fieldValue == "invmnu": return "menu"
+				if fieldValue == "invlst": return "list"
+				if fieldValue == "invchk": return "checkbox"
+				
+			# If we got here then there is an unknown option
+			self.logger.warn ("Unable to change a group UI value {0}, this is could be critical depending on the plugin".format(fieldValue))
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+		
+	#
 	# Set up any UI defaults that we need
 	#
 	def setUIDefaults (self, propsDict, defaultCondition = "disabled", defaultState = "onOffState"):
@@ -450,9 +491,8 @@ class actions:
 				self.logger.threaddebug ("The current device is not an action device, not setting defaults")
 				return propsDict
 				
-			for i in range (0, 2):
-				method = self.PASS
-				if i == 1: method = self.FAIL
+			for i in range (0, len(self.FORMTERMS)):
+				method = self.FORMTERMS[i]
 				
 				if ext.valueValid (propsDict, self.OPT_LABEL + method + "1") == False: 
 					self.logger.threaddebug ("{0} doesn't seem to apply to this device, skipping defaults".format(method))
@@ -607,6 +647,8 @@ class actions:
 					if objType == "variable": obj = indigo.variables[int(valuesDict[objType + method])]
 					listData = self._getActionOptionUIList (obj, objType, valuesDict, method)
 					
+					#indigo.server.log(unicode(listData))
+					
 					listIdx = 1
 					for listItem in listData:
 						# Only return the list for this group
@@ -665,7 +707,10 @@ class actions:
 	def _getActionOptionUIList (self, obj, objType, valuesDict, method):
 		try:
 			actions = self.factory.plugcache.getActions (obj)
-					
+			
+			#indigo.server.log(objType + "Action" + method)
+			#indigo.server.log(valuesDict[objType + "Action" + method])
+			
 			for id, action in actions.iteritems():
 				if id == valuesDict[objType + "Action" + method]:
 					if "ConfigUI" in action:
@@ -694,9 +739,8 @@ class actions:
 				return (True, valuesDict, errorDict)
 				
 			# Make sure no -line- items are selected
-			for i in range (0, 1):
-				method = self.PASS
-				if i == 1: method = self.FAIL
+			for i in range (0, len(self.FORMTERMS)):
+				method = self.FORMTERMS[i]
 				
 				if ext.valueValid (valuesDict, self.OPT_LABEL + method + "1") == False: continue # may not have pass or may not have fail
 				

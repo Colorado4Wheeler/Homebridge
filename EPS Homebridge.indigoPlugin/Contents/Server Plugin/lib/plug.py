@@ -18,6 +18,7 @@ AFTER = 2
 class plug:	
 	isSubscribedVariables = False
 	isSubscribedDevices = False
+	isSubscribedActionGroups = False
 
 	#
 	# Initialize the  class
@@ -34,6 +35,7 @@ class plug:
 			for change in changes:
 				if change.lower() == "variables": self.isSubscribedVariables = True
 				if change.lower() == "devices": self.isSubscribedDevices = True
+				if change.lower() == "actiongroups": self.isSubscribedActionGroups = True
 				
 				f = getattr(indigo, change.lower())
 				f.subscribeToChanges()
@@ -276,6 +278,11 @@ class plug:
 				if watcher is not None and len(watcher) > 0:
 					self.factory.cache.addWatchedVariable (dev, watcher)
 					
+				# If the plugin wants to know when an action group is run
+				watcher = self._callBack (NOTHING, [dev], "onWatchedActionGroupRequest")
+				if watcher is not None and len(watcher) > 0:
+					self.factory.cache.addWatchedActionGroup (dev, watcher)
+					
 			self._callBack (AFTER, [dev])
 		
 		except Exception as e:
@@ -512,6 +519,9 @@ class plug:
 			
 			self._callBack (BEFORE, [valuesDict, userCancelled, typeId, devId])	
 			
+			# Make sure we've flushed the cache for this device
+			self.factory.ui.flushCache (dev.id)
+			
 			self._callBack (AFTER, [valuesDict, userCancelled, typeId, devId])
 		
 		except Exception as e:
@@ -535,38 +545,56 @@ class plug:
 				stateName = "onOffState"
 				
 				success = self._callBack (NOTHING, [dev], "onDeviceCommandTurnOn")
-				if success is None or success == False:
-					self.logger.error(u"send \"%s\" %s failed" % (dev.name, "on"))
-				else:
+				if success:
 					stateVal = True
-					self.logger.info(u"sent \"%s\" %s" % (dev.name, "on"))
-				
+									
 			elif action.deviceAction == indigo.kDimmerRelayAction.TurnOff:
 				command = "off"
 				stateName = "onOffState"
 				
 				success = self._callBack (NOTHING, [dev], "onDeviceCommandTurnOff")
-				if success is None or success == False:
-					self.logger.error(u"send \"%s\" %s failed" % (dev.name, "off"))
-				else:
+				if success:
 					stateVal = False
-					self.logger.info(u"sent \"%s\" %s" % (dev.name, "off"))
-				
-			elif action.deviceAction == indigo.kDimmerRelayAction.toggle:
+									
+			elif action.deviceAction == indigo.kDimmerRelayAction.Toggle:
 				command = "toggle"
 				stateName = "onOffState"
-				stateVal = False
-				
-				if dev.states["onOffState"]: stateVal = True
-				
-				success = self._callBack (NOTHING, [dev], "onDeviceCommandToggle")
-				if success is None or success == False:
-					self.logger.error(u"send \"%s\" %s failed" % (dev.name, "toggle"))
+				stateVal = dev.states["onOffState"]
+								
+				#success = self._callBack (NOTHING, [dev], "onDeviceCommandToggle")
+				# Toggle is just a fancy name for on and off, so raise the on and off events
+				if stateVal:
+					success = self._callBack (NOTHING, [dev], "onDeviceCommandTurnOff")
 				else:
-					self.logger.info(u"sent \"%s\" %s" % (dev.name, "toggle"))
+					success = self._callBack (NOTHING, [dev], "onDeviceCommandTurnOn")
+				
+				if success:
+					# Reverse the state value so we can update our own state to be the opposite of what it was
+					if stateVal: 
+						stateVal = False
+					else:
+						stateVal = True
+						
+			elif action.deviceAction == indigo.kDimmerRelayAction.SetBrightness:
+				command = "set brightness"
+				stateName = "brightnessLevel"
+				
+				if ext.valueValid (dev.states, stateName):
+					success = self._callBack (NOTHING, [dev, action.actionValue], "onDeviceCommandSetBrightness")
+					stateVal = action.actionValue
+				else:
+					success = False
+				
+				if success:
+					stateVal = action.actionValue
+					
+			else:
+				self.logger.error ("Unknown device command: " + unicode(action))
+					
 					
 			if success:
 				dev.updateStateOnServer(stateName, stateVal)
+				self.logger.info(u"sent \"%s\" %s" % (dev.name, command))
 			else:
 				self.logger.error (u"send \"%s\" %s failed" % (dev.name, command))
 			
@@ -750,8 +778,8 @@ class plug:
 			if "cache" in dir(self.factory):
 				ret = self.factory.cache.watchedItemChanges (origVar, newVar)
 				for change in ret:
-						self.logger.debug ("'{0}' {1} has changed".format(newVar.name, change.type))
-						self._callBack (NOTHING, [origVar, newVar, change], "onWatchedVariableChanged")
+					self.logger.debug ("'{0}' {1} has changed".format(newVar.name, change.type))
+					self._callBack (NOTHING, [origVar, newVar, change], "onWatchedVariableChanged")
 			
 			self._callBack (AFTER, [origVar, newVar])
 		
@@ -822,6 +850,48 @@ class plug:
 	# INDIGO ACTION EVENTS
 	################################################################################
 	
+	# Action group created (Indigo)
+	def actionGroupCreated(self, actionGroup): 
+		try:
+			self.logger.threaddebug ("Action group '{0}' created".format(actionGroup.name))
+			
+			self._callBack (BEFORE, [actionGroup])	
+			
+			self._callBack (AFTER, [actionGroup])
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+	
+	# Action group updated (Indigo)
+	def actionGroupUpdated (self, origActionGroup, newActionGroup):
+		try:
+			self.logger.threaddebug ("Action group '{0}' updated".format(newActionGroup.name))
+			
+			self._callBack (BEFORE, [origActionGroup, newActionGroup])	
+			
+			if "cache" in dir(self.factory):
+				ret = self.factory.cache.watchedItemChanges (origActionGroup, newActionGroup)
+				for change in ret:
+					self.logger.debug ("'{0}' {1} has changed".format(newActionGroup.name, change.type))
+					self._callBack (NOTHING, [origActionGroup, newActionGroup, change], "onWatchedActionGroupChanged")
+			
+			self._callBack (AFTER, [origActionGroup, newActionGroup])
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+	# Action group deleted (Indigo)
+	def actionGroupDeleted(self, actionGroup): 
+		try:
+			self.logger.threaddebug ("Action group '{0}' deleted".format(actionGroup.name))
+			
+			self._callBack (BEFORE, [actionGroup])	
+			
+			self._callBack (AFTER, [actionGroup])
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+	
 	# Validate the action configuration (Indigo)
 	def validateActionConfigUi(self, valuesDict, typeId, deviceId):
 		errorDict = indigo.Dict()
@@ -871,6 +941,10 @@ class plug:
 					self.logger.threaddebug ("Action group configuration dialog closed")
 			
 			self._callBack (BEFORE, [valuesDict, userCancelled, typeId, deviceId])	
+			
+			# Make sure we've flushed the cache for this device
+			self.factory.ui.flushCache (deviceId)
+			if ext.valueValid (valuesDict, "uniqueIdentifier", True): self.factory.ui.flushCache (int(valuesDict["uniqueIdentifier"]))
 			
 			self._callBack (AFTER, [valuesDict, userCancelled, typeId, deviceId])
 		

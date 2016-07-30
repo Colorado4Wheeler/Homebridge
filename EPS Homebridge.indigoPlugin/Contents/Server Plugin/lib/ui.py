@@ -118,6 +118,9 @@ class ui:
 			
 			# System
 			if listType.lower() == "indigofolders":	results = self._getIndigoFolders (args, valuesDict)
+			
+			# Miscellaneous
+			if listType.lower() == "numbers": results = self._getNumbers (args, valuesDict)
 		
 			# Conditions
 			if listType.lower() == "conditions_topmenu": results = self._getConditionsTopMenu (args, valuesDict)
@@ -163,6 +166,18 @@ class ui:
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
 			return ret	
+	
+	#
+	# Remove a target ID from the cache so it's not saved if we close and re-open the same device again
+	#
+	def flushCache (self, targetId):
+		try:
+			if targetId in self.listcache:
+				del self.listcache[targetId]
+				self.logger.threaddebug ("UI cache flushed for {0}".format(str(targetId)))
+				
+		except Exception as e:
+			self.logger.error (ext.getException(e))		
 	
 	#
 	# Cache a list so other routines can access it
@@ -317,14 +332,35 @@ class ui:
 		try:
 			retList = []
 			
+			state = ""
+			excludeSelf = False
+						
+			# Only if it has a certain state
 			if ext.valueValid (args, "onlywith", True): 
 				state = args["onlywith"]
+				
+			# Exclude plugin devices
+			if ext.valueValid (args, "excludeself", True): 
+				if args["excludeself"].lower() == "true":
+					excludeSelf = True
 		
 			for dev in indigo.devices:
-				if ext.valueValid (dev.states, state):
+				isValid = True
+
+				# Check for filtered state	
+				if state != "":
+					isValid = False
+								
+					if ext.valueValid (dev.states, state):
+						isValide = True
+						
+				# Check for self filter
+				if excludeSelf and dev.pluginId == self.factory.plugin.pluginId: isValid = False
+				
+				if isValid:
 					retList.append ((str(dev.id), dev.name))	
 		
-			return retList
+			if len(retList) > 0: return retList
 	
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
@@ -1092,6 +1128,34 @@ class ui:
 			for f in func.folders:
 				option = (str(f.id), f.name)
 				retList.append(option)						
+					
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			return ret
+		
+		return retList
+	
+	#
+	# Return list of folders for various Indigo items, returns devices folders by default
+	#
+	def _getNumbers (self, args, valuesDict):
+		ret = [("default", "No folders found")]
+	
+		try:
+			retList = []
+			
+			low = 0
+			high = 20
+		
+			if ext.valueValid (args, "low", True):
+				low = int(args["low"])
+				
+			if ext.valueValid (args, "high", True):
+				high = int(args["high"])
+			
+			for i in range (low, high + 1):
+				option = (str(i), str(i))
+				retList.append(option)		
 					
 		except Exception as e:
 			self.logger.error (ext.getException(e))	

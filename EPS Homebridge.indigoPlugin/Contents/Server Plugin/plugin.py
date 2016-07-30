@@ -17,6 +17,7 @@ from lib import dtutil
 # Plugin libraries
 from os.path import expanduser
 import subprocess
+import string
 
 eps = eps(None)
 
@@ -30,7 +31,7 @@ eps = eps(None)
 class Plugin(indigo.PluginBase):
 
 	# Define the plugin-specific things our engine needs to know
-	TVERSION	= "3.1.0"
+	TVERSION	= "3.2.0"
 	PLUGIN_LIBS = ["cache", "conditions", "actions"] #["conditions", "cache", "actions"] #["cache"]
 	UPDATE_URL 	= ""
 	
@@ -66,12 +67,16 @@ class Plugin(indigo.PluginBase):
 	#
 	def onAfter_startup (self): 
 		try:
-			eps.act.PASS = "On"
-			eps.act.FAIL = "Off"
+			eps.act.FORMTERMS = ["On", "Off", "Dim1", "Dim2", "Dim3", "Dim4", "Dim5"]
 			eps.act.VALIDATION = "methodOn"
 			
-			self.ALLDEVCOUNT = 0
-			self.ALLACTCOUNT = 0
+			self.DIMMERS = ["dimmer", "door", "window", "drape"] # Types that support brightnessLevel
+			
+			self.ALLDEVCOUNT = 0 # For counting up devices in prefs
+			self.ALLACTCOUNT = 0 # For counting up actions in prefs
+			
+			self.TOTALDIMMING = 4 # Total number of dimmer levels our device allows
+			self.TOTALFIELDS = 5 # Total number of option settings fields we allow for actions
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
@@ -97,7 +102,7 @@ class Plugin(indigo.PluginBase):
 	def menuStart (self):
 		try:
 			os.system("launchctl load -w ~/Library/LaunchAgents/com.webdeck.homebridge.plist")
-			self.logger.info ("The Homebridge server has been started, give it 60 seconds to finish loading")
+			self.logger.info ("The Homebridge server has been started, give it a few minutes to finish loading")
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
@@ -562,7 +567,7 @@ class Plugin(indigo.PluginBase):
 						elif devId == "-none-":	
 							break						
 						else:
-							retList.append ((devId, indigo.devices[int(devId)].name))
+							if devId in indigo.devices: retList.append ((devId, indigo.devices[int(devId)].name))
 							
 					if len(retList) > 0:
 						retList.insert(0, ("-none-", "Don't Exclude Anything"))
@@ -587,7 +592,7 @@ class Plugin(indigo.PluginBase):
 						elif devId == "-none-":	
 							break
 						else:
-							retList.append ((devId, indigo.actionGroups[int(devId)].name))
+							if devId in indigo.devices: retList.append ((devId, indigo.actionGroups[int(devId)].name))
 							
 					if len(retList) > 0:
 						retList.insert(0, ("-none-", "Don't Exclude Anything"))
@@ -607,7 +612,7 @@ class Plugin(indigo.PluginBase):
 						elif devId == "-none-":
 							break				
 						else:
-							typeList.append ((devId, indigo.devices[int(devId)].name))
+							if devId in indigo.devices: typeList.append ((devId, indigo.devices[int(devId)].name))
 							
 					# Now go through excludes and make sure those are removed
 					if len(valuesDict["devexclude"]) > 0 and valuesDict["devexclude"][0] != "-none-":
@@ -641,7 +646,7 @@ class Plugin(indigo.PluginBase):
 						elif devId == "-none-":
 							break				
 						else:
-							typeList.append ((devId, indigo.actionGroups[int(devId)].name))
+							if devId in indigo.devices: typeList.append ((devId, indigo.actionGroups[int(devId)].name))
 							
 					# Now go through excludes and make sure those are removed
 					if len(valuesDict["actexclude"]) > 0 and valuesDict["actexclude"][0] != "-none-":
@@ -768,11 +773,105 @@ class Plugin(indigo.PluginBase):
 			self.logger.error (ext.getException(e))	
 	
 		return False
-	
+
 	################################################################################
 	# DEVICE HANDLERS
 	################################################################################
+
+	#
+	# Device start comm
+	#
+	def onAfter_deviceStartComm (self, dev):
+		try:
+			self.checkDeviceAddress (dev)
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
 	
+	#
+	# Device updated
+	#			
+	def onAfter_pluginDeviceUpdated (self, origDev, newDev):
+		try:
+			self.checkDeviceAddress (newDev)
+			self.setDeviceIcon (newDev)
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+			
+	#
+	# Set the device icon
+	#
+	def setDeviceIcon (self, dev):
+		try:
+			img = False
+			
+			if "brightnessLevel" in dev.states:
+				pass
+			else:
+				return
+			
+			if dev.pluginProps["treatAs"] == "switch": 
+				if dev.states["brightnessLevel"] == 0: img = indigo.kStateImageSel.PowerOff
+				if dev.states["brightnessLevel"] != 0: img = indigo.kStateImageSel.PowerOn
+				
+			if dev.pluginProps["treatAs"] == "lock": 
+				if dev.states["brightnessLevel"] == 0: img = indigo.kStateImageSel.DoorSensorClosed
+				if dev.states["brightnessLevel"] != 0: img = indigo.kStateImageSel.DoorSensorOpened
+				
+			if dev.pluginProps["treatAs"] == "door": 
+				if dev.states["brightnessLevel"] == 0: img = indigo.kStateImageSel.DoorSensorClosed
+				if dev.states["brightnessLevel"] != 0: img = indigo.kStateImageSel.DoorSensorOpened
+			
+			if dev.pluginProps["treatAs"] == "dimmer": 
+				if dev.states["brightnessLevel"] == 0: img = indigo.kStateImageSel.DimmerOff
+				if dev.states["brightnessLevel"] != 0: img = indigo.kStateImageSel.DimmerOn
+			
+			if dev.pluginProps["treatAs"] == "garage": 
+				if dev.states["brightnessLevel"] == 0: img = indigo.kStateImageSel.DoorSensorClosed
+				if dev.states["brightnessLevel"] != 0: img = indigo.kStateImageSel.DoorSensorOpened
+			
+			if dev.pluginProps["treatAs"] == "window": 
+				if dev.states["brightnessLevel"] == 0: img = indigo.kStateImageSel.WindowSensorClosed
+				if dev.states["brightnessLevel"] != 0: img = indigo.kStateImageSel.WindowSensorOpened
+				
+			if dev.pluginProps["treatAs"] == "drape": 
+				if dev.states["brightnessLevel"] == 0: img = indigo.kStateImageSel.LightSensor
+				if dev.states["brightnessLevel"] != 0: img = indigo.kStateImageSel.LightSensorOn
+		
+			if img: dev.updateStateImageOnServer(img)
+			
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+	
+	#
+	# Check the device address
+	#
+	def checkDeviceAddress (self, dev):
+		try:
+			# If it doesn't have an address for some reason then give it one
+			if dev.address == "" and ext.valueValid (dev.pluginProps, "treatAs", True):
+				if dev.pluginProps["treatAs"] != "none":
+					address = "Unknown Device"
+					
+					if dev.pluginProps["treatAs"] == "switch": address="Switch"
+					if dev.pluginProps["treatAs"] == "lock": address="Lock"
+					if dev.pluginProps["treatAs"] == "door": address="Door"
+					if dev.pluginProps["treatAs"] == "dimmer": address="Dimmer"
+					if dev.pluginProps["treatAs"] == "garage": address="Garage Door"
+					if dev.pluginProps["treatAs"] == "window": address="Window"
+					if dev.pluginProps["treatAs"] == "drape": address="Window Covering"
+
+					props = dev.pluginProps
+					props["address"] = address
+					dev.replacePluginPropsOnServer (props)
+					
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+
+
 	#
 	# Watch for state changes on linked devices
 	#
@@ -781,30 +880,22 @@ class Plugin(indigo.PluginBase):
 		ret = {}
 		
 		try:
-			if dev.deviceTypeId == "Homebridge-Relay":
-				for i in range (0, 2):
-					method = "On"
-					if i == 1: method = "Off"
-					
-					if dev.pluginProps["method" + method] == "device" and ext.valueValid (dev.pluginProps, "device" + method, True):
-						devEx = indigo.devices[int(dev.pluginProps["device" + method])]
-						devStates = []
-					
-						if type(devEx) is indigo.RelayDevice or type(devEx) is indigo.DimmerDevice or "onOffState" in dev.states:
-							devStates.append("onOffState")
+			if dev.deviceTypeId == "Homebridge-Wrapper":
+				for i in range (1, self.TOTALDIMMING + 2 + 1): # Dimmers + On + Off + 1 (since we aren't starting at 0)
+					method = "Dim" + str(i)
+					if i == self.TOTALDIMMING + 1: method = "On"
+					if i == self.TOTALDIMMING + 2: method = "Off"
+
+					# We never really use the device, but the device defined for the state to watch
+					if dev.pluginProps["getStatusFrom" + method] == "state" and ext.valueValid (dev.pluginProps, "stateFromDevice" + method, True):	
+						devId = int(dev.pluginProps["stateFromDevice" + method])
+						state = dev.pluginProps["deviceState" + method]
 						
-						if type(devEx) is indigo.DimmerDevice or "brightnessLevel" in dev.states:
-							devStates.append("brightnessLevel")
-							
-						if dev.pluginProps["device" + method + "ShowStates"] and ext.valueValid (dev.pluginProps, "device" + method + "State", True):
-							# They are using a custom state to determine the on/off state of our device
-							if dev.pluginProps["device" + method + "State"] in devStates:
-								pass
-							else:
-								devStates.append(dev.pluginProps["device" + method + "State"])
-					
-						if len(devStates) > 0: ret[devEx.id] = devStates
-				
+						if devId in ret:
+							ret[devId].append (state)
+						else:
+							ret[devId] = [state]
+								
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
 			
@@ -818,12 +909,18 @@ class Plugin(indigo.PluginBase):
 		ret = {}
 		
 		try:
-			for i in range (0, 2):
-					method = "On"
-					if i == 1: method = "Off"
+			# First watch THIS device
+			if dev.deviceTypeId == "Homebridge-Wrapper":
+				for i in range (1, self.TOTALDIMMING + 2 + 1): # Dimmers + On + Off + 1 (since we aren't starting at 0)
+					method = "Dim" + str(i)
+					if i == self.TOTALDIMMING + 1: method = "On"
+					if i == self.TOTALDIMMING + 2: method = "Off"
 					
 					if dev.pluginProps["method" + method] == "device" and ext.valueValid (dev.pluginProps, "device" + method, True):
 						ret[int(dev.pluginProps["device" + method])] = ["address", "name"]
+					
+				# Now we have to go through our config and watch everything ELSE too
+				self.logger.warn ("(DEVELOPER NOTE) Non plugin devices being sent to Homebridge needs to cache attributes!")
 								
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
@@ -838,170 +935,535 @@ class Plugin(indigo.PluginBase):
 		ret = {}
 		
 		try:
-			if dev.deviceTypeId == "epsCustomDev":
-				ret[int(dev.pluginProps["variable"])] = True # Variables don't have extra info, just that we watch the value
-								
+			if dev.deviceTypeId == "Homebridge-Wrapper":
+				for i in range (1, self.TOTALDIMMING + 2 + 1): # Dimmers + On + Off + 1 (since we aren't starting at 0)
+					method = "Dim" + str(i)
+					if i == self.TOTALDIMMING + 1: method = "On"
+					if i == self.TOTALDIMMING + 2: method = "Off"
+					
+					if dev.pluginProps["getStatusFrom" + method] == "variable":	
+						varId = int(dev.pluginProps["deviceVariable" + method])
+						ret[varId] = True # Variables don't have extra info, just that we watch the value
+		
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
 			
 		return ret
 		
 	#
-	# A form field changed, update defaults
+	# Watch for name changes on action groups
 	#
-	def onAfter_formFieldChanged (self, valuesDict, typeId, devId):
+	def XXX_onWatchedActionGroupRequest (self, dev):
+		self.logger.threaddebug ("Returning watched action groups for {0}".format(dev.deviceTypeId))
+		ret = {}
+		
 		try:
-			if valuesDict["methodOffMaster"] != "passthrough" and valuesDict["methodOffMaster"] != "on" and valuesDict["methodOffMaster"] != "same":
-				valuesDict["methodOff"] = valuesDict["methodOffMaster"]
-			else:
-				valuesDict["methodOff"] = "hidden"
+			if dev.pluginProps["methodOn"] == "action" and ext.valueValid (dev.pluginProps, "actionOn", True):
+				ret[int(dev.pluginProps["actionOn"])] = True # Action groups don't have extra info, really we are just watching for if it got ran elsewhere
 			
-			# Basic defaults
-			valuesDict["deviceOnShowStates"] = False	
-			valuesDict["deviceOffShowStates"] = False	
+			if dev.pluginProps["methodOff"] == "action" and ext.valueValid (dev.pluginProps, "actionOff", True):
+				ret[int(dev.pluginProps["actionOff"])] = True
 			
-			if valuesDict["deviceActionOn"] == "": valuesDict["deviceActionOn"] = "indigo_turnOn"
-			if valuesDict["deviceActionOff"] == "": valuesDict["deviceActionOff"] = "indigo_turnOff"
-				
-			# If this is a switch and we are using the stock on and off commands then we don't need to show fields
-			if typeId == "Homebridge-Relay":
-				if valuesDict["deviceActionOn"] == "indigo_turnOn" or valuesDict["deviceActionOn"] == "indigo_turnOff":
-					valuesDict["deviceOnState"] = "onOffState"
-					valuesDict["deviceOnStateValue"] = "true"
-					if valuesDict["deviceActionOn"] == "indigo_turnOff": valuesDict["deviceOnStateValue"] = "false"
-				else:
-					valuesDict["deviceOnShowStates"] = True
-					
-				if valuesDict["methodOffMaster"] == "on" or valuesDict["methodOffMaster"] == "passthrough" or valuesDict["deviceActionOff"] == "indigo_turnOn" or valuesDict["deviceActionOff"] == "indigo_turnOff":
-					valuesDict["deviceOffState"] = "onOffState"
-					valuesDict["deviceOffStateValue"] = "true"
-					if valuesDict["deviceActionOff"] == "indigo_turnOff": valuesDict["deviceOffStateValue"] = "false"
-				else:
-					valuesDict["deviceOffShowStates"] = True
-				
 		except Exception as e:
-			self.logger.error (ext.getException(e))		
+			self.logger.error (ext.getException(e))	
 			
-		return valuesDict
-	
+		return ret
+				
 	#
 	# Our device was turned on
 	#
 	def onDeviceCommandTurnOn (self, dev):	
 		try:
+			# If it's already on then only let them turn it on again if the On method cannot determine on/off states
+			if dev.pluginProps["getStatusFromOn"] != "none":
+				# We have a means to check status and have already in other raised events, this is redundant
+				if dev.states["onOffState"]: return True 
+			
 			if dev.pluginProps["methodOn"] == "device" and ext.valueValid (dev.pluginProps, "deviceOn", True):
-				return eps.act.runAction (dev.pluginProps)
+				return eps.act.runAction (dev.pluginProps, "On")
+									
+			if dev.pluginProps["methodOn"] == "action" and ext.valueValid (dev.pluginProps, "actionOn", True):
+				indigo.actionGroup.execute(int(dev.pluginProps["actionOn"]))
+				return True
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))		
-			return False
 			
-		return True
+		return False
 		
 	#
 	# Our device was turned off
 	#
 	def onDeviceCommandTurnOff (self, dev):	
 		try:
-			if dev.pluginProps["methodOffMaster"] == "passthrough" and ext.valueValid (dev.pluginProps, "deviceOn", True):
-				# Pass through is just that, a one-for-one so we are simply turning off the device
-				props = dev.pluginProps
-				props["deviceActionOn"] = "indigo_turnOff"
-				
-				return eps.act.runAction (props)
-				
-			elif dev.pluginProps["methodOffMaster"] == "on" and ext.valueValid (dev.pluginProps, "deviceOn", True):
-				# Easy, just do what On does				
-				return eps.act.runAction (dev.pluginProps)
-				
-			elif dev.pluginProps["methodOff"] == "device" and ext.valueValid (dev.pluginProps, "deviceOff", True):
+			# If it's already on then only let them turn it off again if the Off method cannot determine on/off states
+			if dev.pluginProps["getStatusFromOff"] != "none":
+				# We have a means to check status and have already in other raised events, this is redundant
+				if dev.states["onOffState"] == False: return True
+						
+			if dev.pluginProps["methodOff"] == "device" and ext.valueValid (dev.pluginProps, "deviceOff", True):
 				return eps.act.runAction (dev.pluginProps, "Off")
+				
+			if dev.pluginProps["methodOff"] == "action" and ext.valueValid (dev.pluginProps, "actionOff", True):
+				indigo.actionGroup.execute(int(dev.pluginProps["actionOff"]))
+				return True
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))		
-			return False
 			
-		return True	
+		return False	
+		
+	#
+	# Our device brightness was changed
+	#
+	def onDeviceCommandSetBrightness (self, dev, value):	
+		try:
+			# If the setting is for 0 or 100 then return the on/off
+			if value == 0: return self.onDeviceCommandTurnOff (dev)
+			if value == 100: return self.onDeviceCommandTurnOn (dev)
+			
+			# See if any of our settings control brightness
+			for i in range (1, self.TOTALDIMMING + 1): 
+				method = "Dim" + str(i)
+				if i == self.TOTALDIMMING + 1: method = "On"
+				if i == self.TOTALDIMMING + 2: method = "Off"
+				
+				if dev.pluginProps["method" + method] == "none": continue
+				
+				# If we hit this then we've defined this dim, see if it matches the value
+				if dev.pluginProps["brightness" + method] == str(value):
+					# If it's already on then only let them set brightness again if the method cannot determine on/off states
+					if dev.pluginProps["getStatusFrom" + method] != "none":
+						# We have a means to check status and have already in other raised events, this is redundant
+						if dev.states["brightnessLevel"] == value: return True
+				
+					if dev.pluginProps["method" + method] == "device" and ext.valueValid (dev.pluginProps, "device" + method, True):
+						return eps.act.runAction (dev.pluginProps, method)
+				
+					if dev.pluginProps["method" + method] == "action" and ext.valueValid (dev.pluginProps, "action" + method, True):
+						indigo.actionGroup.execute(int(dev.pluginProps["action" + method]))
+						return True
+						
+			# If we didn't return by now then it's a passthrough if On the device supports dimming, if they defined
+			# different devices for on and off then we don't care, we only change brightness on the On device for passthrough,
+			# they should have defined variants if they wanted to use something else
+			if dev.pluginProps["methodOn"] == "device" and ext.valueValid (dev.pluginProps, "deviceOn", True):
+				devEx = indigo.devices[int(dev.pluginProps["deviceOn"])]
+				if type(devEx) is indigo.DimmerDevice:
+					indigo.dimmer.setBrightness (devEx.id, value)
+					return True				
+				else:
+					self.logger.error ("A command to change the brightness of '{0}' failed because the device doesn't support changing brightness".format(devEx.name))
+					return False
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))		
+			
+		return False	
+	
+	
+	#
+	# Process a child device's change
+	#
+	def changeParentFromChild (self, parent, child, changeInfo, getStatusMethod):
+		# Find out what commands are influenced by this state
+		changedMethod = []
+		isPassthrough = True # Assume we don't have an action to set brightness
+		
+		try:		
+			for i in range (1, self.TOTALDIMMING + 2 + 1): # Dimmers + On + Off + 1 (since we aren't starting at 0)
+				method = "Dim" + str(i)
+				if i == self.TOTALDIMMING + 1: method = "On"
+				if i == self.TOTALDIMMING + 2: method = "Off"
+				
+				#indigo.server.log(unicode(changeInfo))
+			
+				if parent.pluginProps["getStatusFrom" + method] != getStatusMethod: continue # wrong event, variables handled elsewhere
+				
+				if getStatusMethod == "state":
+					if parent.pluginProps["stateFromDevice" + method] != str(child.id): continue # wrong child, move on
+					if parent.pluginProps["deviceState" + method] != changeInfo.name: continue # wrong state/variable, move on
+				
+				if parent.pluginProps["method" + method] == "none" and method[0:3] == "Dim": 
+					# The method is not enabled, it's a passthrough brightness if the child supports it
+					#if ext.valueValid (child.states, "brightnessLevel"): isPassthrough = True
+					continue
+			
+				# See if the state values match
+				propValue = parent.pluginProps["value" + method].lower()
+				if propValue != "" and propValue[0:1] == "{":
+					propValue = parent.pluginProps["value" + method] # undo lower
+					propValue = propValue.replace ("{", "")
+					propValue = propValue.replace ("}", "")
+					propValue = parent.pluginProps[propValue].lower()
+				
+				childValue = unicode(changeInfo.newValue).lower()
+			
+				self.logger.threaddebug ("Analyzing " + method + ": " + unicode(childValue) + " " + parent.pluginProps["valueOperator" + method] + " " + unicode(propValue))
+			
+				if parent.pluginProps["valueOperator" + method] == "equal":
+					if childValue == propValue: changedMethod.append(method)
+				
+				elif parent.pluginProps["valueOperator" + method] == "notequal":
+					if childValue != propValue : changedMethod.append(method)
+				
+				elif parent.pluginProps["valueOperator" + method] == "greater":
+					if childValue > propValue: changedMethod.append(method)
+				
+				elif parent.pluginProps["valueOperator" + method] == "less":
+					if childValue < propValue: changedMethod.append(method)	
+					
+				elif parent.pluginProps["valueOperator" + method] == "in":
+					stringIsIn = string.find (propValue, childValue)
+					if stringIsIn > -1: 
+						changedMethod.append(method)	
+					else:
+						# See if it's in the first position
+						if propValue[0:len(childValue)] == childValue: changeMethod.append(method)
+		
+			if len(changedMethod) == 0:
+				pass	
+			
+			else:
+				if len(changedMethod) > 1:
+					self.logger.warn ("'{0}' changed but more than one method takes ownership of the change, setting '{1}' to the lowest denominator!".format(child.name, parent.name))
+					# Use on if it's there, then off then dimmers in order until we get a match
+					if "On" in changedMethod: 
+						changedMethod = ["On"]
+					elif "Off" in changedMethod: 
+						changedMethod = ["Off"]
+					else:
+						for x in range (1, self.TOTALDIMMING + 1):
+							if "Dim" + str(x) in changedMethod: 
+								changedMethod = ["Dim" + str(x)]
+								break
+					
+					self.logger.debug ("Lowest denominator method is {0}".format(changedMethod[0]))
+			
+				# Assume on unless found otherwise
+				method = changedMethod[0]
+				stateName = "onOffState"
+				stateVal = True
+				
+				if method == "Off":
+					stateVal = False
+					
+				elif method == "On":
+					stateVal = True
+					
+				elif method[0:3] == "Dim":
+					# We set the brightness to the "requested percent" because we are saying that we are at THIS device
+					# brightness IF the child matches our conditions
+					self.logger.debug ("Overriding passthrough, we have a dimmer action")
+					stateName = "brightnessLevel"
+					stateVal = int(parent.pluginProps["brightness" + method])
+					isPassthrough = False # Override any passthrough we might have, this now has priority
+											
+				else:
+					self.logger.error ("'{0}' changed but '{1}' method {2} doesn't exist".format(child.name, parent.name, method))
+					return
+					
+				parent.updateStateOnServer(stateName, stateVal)
+				
+				# In case this device is a supported dimmer type change the brightness as well
+				if parent.pluginProps["treatAs"] in self.DIMMERS:
+					if stateName == "onOffState" and stateVal == False: parent.updateStateOnServer("brightnessLevel", 0)
+					if stateName == "onOffState" and stateVal == True: parent.updateStateOnServer("brightnessLevel", 100)
+	
+			# If we had no brightness changes and we are passing through then update			
+			if isPassthrough and getStatusMethod == "state" and ext.valueValid (child.states, "brightnessLevel"):
+				self.logger.threaddebug ("Passing through brightness from child to the parent")
+				parent.updateStateOnServer("brightnessLevel", child.states["brightnessLevel"])
+							
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
 		
 	#
 	# A watched state changed, we need to see if we have to update our own device state as a result
 	#
 	def onWatchedStateChanged (self, origDev, newDev, changeInfo):
-		parent = indigo.devices[changeInfo.parentId]
-		child = indigo.devices[changeInfo.childId]
+		try:
+			parent = indigo.devices[changeInfo.parentId]
+			child = indigo.devices[changeInfo.childId]
 		
-		# Get our on and off devices (typically we expect them to be the same but who knows what lerks in the minds of users)
-		devOn = False
-		devOff = False
-		
-		if ext.valueValid (parent.pluginProps, "deviceOn", True): devOn = indigo.devices[int(parent.pluginProps["deviceOn"])]
-		if ext.valueValid (parent.pluginProps, "deviceOff", True): devOff = indigo.devices[int(parent.pluginProps["deviceOff"])]
-		
-		# Before proceeding make sure the state change matches the on or off states of our devices, otherwise no need to go on
-		isOnState = False
-		isOffState =False
-		
-		if devOn and parent.pluginProps["deviceOnState"] == changeInfo.name and child.id == devOn.id: isOnState = True
-		if devOff and parent.pluginProps["deviceOffState"] == changeInfo.name and child.id == devOff.id: isOffState = True
-		
-		if isOnState == False and isOffState == False:
-			self.logger.debug ("The device state change does not match the states being monitored for either off or on on this device")
-			return
-		
-		onValue = None
-		offValue = None
-		
-		if devOn: onValue = devOn.states[parent.pluginProps["deviceOnState"]]
-		if devOff: offValue = devOff.states[parent.pluginProps["deviceOffState"]]
-		
-		# If the parent and child devices and states are the same (and typically we expect them to be) then it's an easy comparison
-		if devOn and devOff and devOn.id == devOff.id and parent.pluginProps["deviceOnState"] == parent.pluginProps["deviceOffState"]:
-			if unicode(onValue).lower() == parent.pluginProps["deviceOnStateValue"].lower():
-				parent.updateStateOnServer("onOffState", True)
-				
-			elif unicode(offValue).lower() == parent.pluginProps["deviceOffStateValue"].lower():
-				parent.updateStateOnServer("onOffState", False)
-				
-			else:
-				self.logger.warn ("Even though our on and off devices and states are the same somehow we cannot figure out if we should be on or off")
-				indigo.server.log(unicode(onValue).lower())
-				indigo.server.log(parent.pluginProps["deviceOnStateValue"].lower())
-				indigo.server.log(unicode(offValue).lower())
-				indigo.server.log(parent.pluginProps["deviceOffStateValue"].lower())
-		
-		return
-		
-		# To know if we should be on or off is based on one state being a match and the other not because if both
-		# states are matched to the configured values then it's both on and off at the same time and while it could be
-		# possible there's no way to actually reflect that in the UI
-		if unicode(devOn).lower() == parent.pluginProps["deviceOnStateValue"].lower() and unicode(devOff).lower() != parent.pluginProps["deviceOffStateValue"].lower():
-			# The device On is true and the device Off is false, therefor we are on
-			parent.updateStateOnServer("onOffState", True)
+			self.changeParentFromChild (parent, child, changeInfo, "state")
 			
-		elif unicode(devOn).lower() != parent.pluginProps["deviceOnStateValue"].lower() and unicode(devOff).lower() == parent.pluginProps["deviceOffStateValue"].lower():
-			# The device Off is true and the device On is false, therefor we are off
-			parent.updateStateOnServer("onOffState", False)
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+	
+	#
+	# A watched variable changed, we need to see if we have to update our own device state as a result
+	#		
+	def onWatchedVariableChanged (self, origVar, newVar, changeInfo):
+		try:
+			parent = indigo.devices[changeInfo.parentId]
+			child = indigo.variables[changeInfo.childId]
+		
+			self.changeParentFromChild (parent, child, changeInfo, "variable")
 			
-		else:
-			self.logger.warn ("The device '{0}' is somehow both on and off based on the states of the device it references, I don't know what to do".format(parent.name))
-			return
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
 		
 		
-		return
+
+	################################################################################
+	# DEVICE UI HANDLERS
+	################################################################################
 		
-		onValue = parent.pluginProps["deviceOnStateValue"]
-		offValue = parent.pluginProps["deviceOffStateValue"]
+	#
+	# Validate the wrapper config
+	#
+	def validateDeviceConfigUi(self, valuesDict, typeId, devId):
+		try:
+			# If the device state area is hidden then make sure the selected device matches - this is a safeguard
+			# against them changing the main device after the defaults got set
+			for i in range (1, self.TOTALDIMMING + 2 + 1): # Dimmers + On + Off + 1 (since we aren't starting at 0)
+				method = "Dim" + str(i)
+				if i == self.TOTALDIMMING + 1: method = "On"
+				if i == self.TOTALDIMMING + 2: method = "Off"
+				
+				if valuesDict["showStateFromDevice" + method] == False:
+					# We are hiding the device state, sync the device with the deviceIsOn device
+					valuesDict["stateFromDevice" + method] = valuesDict["device" + method]
+					
+			# Make sure no matter what config were were viewing that we return to the On view
+			valuesDict["settingSelect"] = "On"
 		
-		onNewValue = ""
-		offNewValue = ""
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+		return valuesDict
+	
+	################################################################################
+	# DEVICE CONFIG UI
+	################################################################################
+	
+	#
+	# Return methods appropriate for the device AsType
+	#
+	def listSettingSelect (self, filter="", valuesDict=None, typeId="", targetId=0):
+		ret = []
+
+		try:
+			# Common
+			ret.append (("cnd", "Conditions"))
+			ret.append (("On", "On"))
+			ret.append (("Off", "Off"))
+			
+			if valuesDict is None or len(valuesDict) == 0: return ret # otherwise we error out in next statement
+			
+			# Only if the type supports brightness
+			if valuesDict["treatAs"] in self.DIMMERS:
+				term = "% Open "
+				if valuesDict["treatAs"] == "dimmer": term = "Brightness "
+				for i in range (1, self.TOTALDIMMING + 1):
+					ret.append (("Dim" + str(i), term + str(i)))
+							
 		
-		if changeInfo.name == parent.pluginProps["deviceOnState"] and changeInfo.childId == int(parent.pluginProps["deviceOn"]):
-			# Our on device on state changed
-			onNewValue = unicode(child.states[changeInfo.name])
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+		return ret
+	
 		
-		if changeInfo.name == parent.pluginProps["deviceOffState"] and changeInfo.childId == int(parent.pluginProps["deviceOff"]):
-			# Our on device on state changed
-			offNewValue = unicode(child.states[changeInfo.name])
+	#
+	# A form field changed, update defaults
+	#
+	def onAfter_formFieldChanged (self, valuesDict, typeId, devId):
+		try:
+			if valuesDict["settingSelect"] == "":
+				# Brand new device but no action selected yet, set the default action and return
+				valuesDict["settingSelect"] = "On"
+				return valuesDict
+				
+			# If they changed from a device supporting variances to one that doesn't then handle that here
+			if valuesDict["settingSelect"][0:3] == "Dim":
+				if valuesDict["treatAs"] in self.DIMMERS:
+					pass
+				else:
+					valuesDict["settingSelect"] = "On"
+				
+			for i in range (1, self.TOTALDIMMING + 2 + 1): # Dimmers + On + Off + 1 (since we aren't starting at 0)
+				method = "Dim" + str(i)
+				if i == self.TOTALDIMMING + 1: method = "On"
+				if i == self.TOTALDIMMING + 2: method = "Off"
+				
+				#indigo.server.log ("Global method: " + method + " (" + str(i) + ")")
+				
+				# Toggle off all visibility checkboxes and let the routine determine if they get turned off
+				valuesDict["showAction" + method] = False
+				valuesDict["showStatusFrom" + method] = False
+				valuesDict["showValueAndOperator" + method] = False
+				valuesDict["showStateFromDevice" + method] = False
+								
+				# If we have populated the On device, and the rest are blank, auto populate all devices to save user time
+				if ext.valueValid (valuesDict, "deviceOn", True):
+					for x in range (1, self.TOTALDIMMING + 2 + 1):
+						m = "Dim" + str(x)
+						if x == self.TOTALDIMMING + 1: m = "On"
+						if x == self.TOTALDIMMING + 2: m = "Off"
+
+						if ext.valueValid (valuesDict, "device" + m, True) == False: 
+							valuesDict["device" + m] = valuesDict["deviceOn"]
+							valuesDict["stateFromDevice" + m] = valuesDict["deviceOn"]
+							
+				
+				# Don't set defaults unless we are looking at the section and we are not at "Do Not Implement"
+				if valuesDict["settingSelect"] == method and ext.valueValid (valuesDict, "method" + method) and valuesDict["method" + method] != "none":
+					if ext.valueValid (valuesDict, "method" + method):
+						# A few miscellaneous defaults
+						if valuesDict["valueOperator" + method] == "": valuesDict["valueOperator" + method] = "equal"
+				
+						# Device values
+						if valuesDict["method" + method] == "device":
+							valuesDict["showAction" + method] = True
+							
+							# If they selected a device, show the actions
+							if ext.valueValid (valuesDict, "device" + method, True):
+								valuesDict = self.setDeviceStatusMethodDefaults (valuesDict["device" + method], valuesDict, method)
+							
+								if ext.valueValid (valuesDict, "stateFromDevice" + method, True) == False:
+									# If they don't have a device to pull states from then use this one as a default
+									valuesDict["stateFromDevice" + method] = valuesDict["device" + method]
+							
+							else:
+								# We can't prompt for actions unless there is a device
+								valuesDict["showAction" + method] = False
+								valuesDict["showStatusFrom" + method] = False
+								valuesDict["showValueAndOperator" + method] = False
+								valuesDict["showStateFromDevice" + method] = False
+								
+						elif valuesDict["method" + method] == "action":
+							# Make sure fields are hidden if they are visible now
+							for x in range (1, self.TOTALFIELDS + 1):
+								valuesDict["optionGroup" + method + str(x)] = eps.act.toggleGroupVisibility (valuesDict["optionGroup" + method + str(x)])
+								
+							# Using an action group ALWAYS requires asking for state
+							valuesDict["showStatusFrom" + method] = True
+							valuesDict["showStateFromDevice" + method] = True
+							valuesDict["showValueAndOperator" + method] = True
+							
+					if ext.valueValid (valuesDict, "stateFromDevice" + method, True):
+						pass
+						
+				else:
+					# If we aren't looking at this method then make sure all field options are hidden
+					for x in range (1, self.TOTALFIELDS + 1):
+						valuesDict["optionGroup" + method + str(x)] = eps.act.toggleGroupVisibility (valuesDict["optionGroup" + method + str(x)])
+						
+				# For the "show X from" we need to toggle that if we are comparing to variable or if it cannot be determined
+				if valuesDict["settingSelect"] == method and ext.valueValid (valuesDict, "getStatusFrom" + method):
+					if valuesDict["getStatusFrom" + method] == "none":
+						#valuesDict["showStatusFrom" + method] = False
+						valuesDict["showValueAndOperator" + method] = False
+						valuesDict["showStateFromDevice" + method] = False
+						
+					elif valuesDict["getStatusFrom" + method] == "variable":
+						valuesDict["showStatusFrom" + method] = True
+						valuesDict["showValueAndOperator" + method] = True
+						valuesDict["showStateFromDevice" + method] = False
+					
+												
+			# LAST order of business, if we get here then we're no longer a new device			
+			valuesDict["isNewDevice"] = False	
+				
+		except Exception as e:
+			self.logger.error (ext.getException(e))		
+			
+		return valuesDict
+		
+	#
+	# Set default values for known devices to determine if a given method is active for a device
+	#
+	def setDeviceStatusMethodDefaults (self, devId, valuesDict, method):
+		try:
+			dev = indigo.devices[int(devId)]
+			devActions = eps.plugcache.getActions (dev)
+			
+			# Make sure the currently selected action is valid, if not then clear it out so we can set defaults below
+			isMatched = False
+			for act, actInfo in devActions.iteritems():
+				if act == valuesDict["deviceAction" + method]: isMatched = True
+				
+			if isMatched == False: valuesDict["deviceAction" + method] = ""
+			
+			if type(dev) is indigo.MultiIODevice:
+				# This can use some finesse but for now it gets us where we want to be
+				valuesDict["showStatusFrom" + method] = True
+				valuesDict["showValueAndOperator" + method] = True
+				valuesDict["showStateFromDevice" + method] = True
+			
+			elif type(dev) is indigo.RelayDevice or type(dev) is indigo.DimmerDevice or type(dev) is indigo.SensorDevice:
+				# If this was just created then set the defaults for all the various methods
+				if valuesDict["isNewDevice"]:
+					if ext.valueValid (valuesDict, "deviceActionOn"): valuesDict["deviceActionOn"] = "indigo_turnOn"
+					if ext.valueValid (valuesDict, "deviceActionOff"): valuesDict["deviceActionOff"] = "indigo_turnOff"
+					
+					for i in range (1, self.TOTALDIMMING + 1):
+						if ext.valueValid (valuesDict, "deviceActionDim" + str(i)): 
+							if type(dev) is indigo.DimmerDevice:
+								valuesDict["deviceActionDim" + str(i)] = "indigo_setBrightness"
+								valuesDict["brightnessDim" + str(i)] = str(i * 20)
+								valuesDict["strValueDim" + str(i) + "1"] = str(i * 20) # First field is brightness level
+								
+							else:
+								valuesDict["deviceActionDim" + str(i)] = "indigo_toggle"
+								valuesDict["strValueDim" + str(i) + "1"] = ""
+						
+					
+					
+				if valuesDict["value" + method] == "{strValue" + method + "1}": valuesDict["value" + method] = "" # In case they change the action don't leave this lingering, we'll add it again below
+				
+				if valuesDict["deviceAction" + method] == "indigo_turnOn" or valuesDict["deviceAction" + method] == "indigo_turnOff" or valuesDict["deviceAction" + method] == "indigo_toggle":
+					valuesDict["getStatusFrom" + method] = "state"
+					valuesDict["valueOperator" + method] = "equal"
+					valuesDict["stateFromDevice" + method] = str(dev.id)
+					valuesDict["deviceState" + method] = "onOffState"
+					
+					valuesDict["showStatusFrom" + method] = False
+					valuesDict["showStateFromDevice" + method] = False
+					valuesDict["showValueAndOperator" + method] = False
+					
+				if valuesDict["deviceAction" + method] == "indigo_toggle" and method != "On" and method != "Off":
+					# If they use toggle for a brightness action we don't know what to do
+					valuesDict["showStatusFrom" + method] = True
+					valuesDict["showValueAndOperator" + method] = True
+					valuesDict["showStateFromDevice" + method] = True
+					
+				if valuesDict["deviceAction" + method] == "indigo_turnOn":
+					valuesDict["value" + method] = "true"
+					
+				elif valuesDict["deviceAction" + method] == "indigo_turnOff":
+					valuesDict["value" + method] = "false"
+					
+				elif valuesDict["deviceAction" + method] == "indigo_toggle":
+					if method == "On": valuesDict["value" + method] = "true"
+					if method == "Off": valuesDict["value" + method] = "false"
+					
+				elif valuesDict["deviceAction" + method] == "indigo_setBrightness" or valuesDict["deviceAction" + method] == "indigo_brighten" or valuesDict["deviceAction" + method] == "indigo_dim":
+					valuesDict["getStatusFrom" + method] = "state"
+					valuesDict["valueOperator" + method] = "equal"
+					valuesDict["stateFromDevice" + method] = str(dev.id)
+					valuesDict["deviceState" + method] = "brightnessLevel"
+					valuesDict["value" + method] = "{strValue" + method + "1}"
+					
+					valuesDict["showStatusFrom" + method] = False
+					valuesDict["showValueAndOperator" + method] = False
+					valuesDict["showStateFromDevice" + method] = False
+					
+				else:
+					valuesDict["showStatusFrom" + method] = True
+					valuesDict["showValueAndOperator" + method] = True
+					valuesDict["showStateFromDevice" + method] = True
+				
+			
+		except Exception as e:
+			self.logger.error (ext.getException(e))		
+			
+		return valuesDict
+		
+	
+
 		
 		
 		
@@ -1020,12 +1482,7 @@ class Plugin(indigo.PluginBase):
 		
 	
 			
-	def onWatchedVariableChanged (self, origVar, newVar, changeInfo):
-		self.logger.info ("I just got a watched variable change")
-		# Test the conditions
-		dev = indigo.devices[changeInfo.parentId]
-		if dev.deviceTypeId == "epsCustomDev2":
-			eps.plug.checkConditions (dev.pluginProps, dev)
+	
 		
 	def onWatchedAttributeChanged (self, origDev, newDev, changeInfo):
 		self.logger.info ("I just got a watched attribute change")
@@ -1039,15 +1496,12 @@ class Plugin(indigo.PluginBase):
 		self.logger.info ("I just got a watched property change")
 		indigo.server.log(unicode(changeInfo))
 	
-	def onAfter_deviceStartComm (self, dev):
-		pass
+	
 		
 	def onAfter_pluginDevicePropChanged (self, origDev, newDev, changedProps):	
 		if newDev.deviceTypeId == "epsActionDev":
 			eps.act.runAction (newDev.pluginProps)
-			
-	def onAfter_pluginDeviceUpdated (self, origDev, newDev):
-		pass
+	
 		
 	def onConditionsCheckPass (self, dev):
 		indigo.server.log ("CONDITIONS PASSED!")
@@ -1128,7 +1582,10 @@ class Plugin(indigo.PluginBase):
 	################################################################################
 	
 	# Basic comm events
-	
+	def actionGroupCreated(self, actionGroup): eps.plug.actionGroupCreated(actionGroup)
+	def actionGroupUpdated (self, origActionGroup, newActionGroup): eps.plug.actionGroupUpdated (origActionGroup, newActionGroup)
+	def actionGroupDeleted(self, actionGroup): eps.plug.actionGroupDeleted(actionGroup)
+		
 	# UI
 	def validateActionConfigUi(self, valuesDict, typeId, actionId): return eps.plug.validateActionConfigUi(valuesDict, typeId, actionId)
 	def closedActionConfigUi(self, valuesDict, userCancelled, typeId, actionId): return eps.plug.closedActionConfigUi(valuesDict, userCancelled, typeId, actionId)

@@ -1,10 +1,1998 @@
 <?xml version="1.0"?>
 <!-- EPS (ColoradoFourWheeler) Plugin -->
 <Devices>
+	<!-- =========== WRAPPER =========== -->
+	<Device type="dimmer" id="Homebridge-Wrapper">
+		<Name>Homebridge Wrapper</Name>
+		<ConfigUI>
+			<Field id="isNewDevice" type="checkbox" hidden="true" defaultValue="true">
+				<Label> </Label>
+				<Description>Lets us keep some things hidden until we get a callback that lets us toggle defaults</Description>
+			</Field>
+		
+			<!-- Find out what kind of wrapper this is before showing any fields, this gives us a chance to set defaults when its selected -->
+			<Field type="menu" id="treatAs" defaultValue="none" >
+				<Label>Type of wrapper:</Label>
+				<List>
+					<Option value="none">Select How Homebridge Should Treat This</Option>
+					<Option value="dimmer">Dimmer</Option>
+					<Option value="switch">Switch</Option>
+					<Option value="lock">Lock</Option>
+					<Option value="door">Door</Option>
+					<Option value="garage">Garage Door</Option>
+					<Option value="window">Window</Option>
+					<Option value="drape">Window Covering (Curtain, Blind, etc)</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="settingSelect" defaultValue="On" visibleBindingId="treatAs" visibleBindingValue="dimmer,switch,lock,door,garage,window,drape" >
+				<Label>Command to modify:</Label>
+				<List class="self" filter="" method="listSettingSelect" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="conditionSelect" defaultValue="1" visibleBindingId="settingSelect" visibleBindingValue="cnd">
+				<Label>Condition to modify:</Label>
+				<List>
+					<Option value="1">Condition 1</Option>
+					<Option value="2">Condition 2</Option>
+					<Option value="3">Condition 3</Option>
+					<Option value="4">Condition 4</Option>
+					<Option value="5">Condition 5</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="sep_general" type="separator" />
+			
+			<!-- *********** ON *********** -->
+			<Field type="menu" id="methodOn" defaultValue="device" visibleBindingId="settingSelect" visibleBindingValue="On">
+				<Label>Method for On:</Label>
+				<List>
+					<Option value="none">Do Not Implement</Option>
+					<Option value="device">Device</Option>
+					<Option value="action">Action Group</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="actionOn" visibleBindingId="methodOn" visibleBindingValue="action">
+				<Label>Action group:</Label>
+				<List class="indigo.actionGroups" />
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="deviceOn" visibleBindingId="methodOn" visibleBindingValue="device">
+				<Label>Device:</Label>
+				<List class="self" filter="#filtereddevices#[index=DEVICELIST, excludeself=true]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- Hidden checkbox to toggle deviceAction -->
+			<Field type="checkbox" id="showActionOn" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if the action is shown</Description>
+			</Field>
+			
+			<Field type="menu" id="deviceActionOn" defaultValue="turnOn" visibleBindingId="showActionOn" visibleBindingValue="true">
+				<Label>Action:</Label>
+				<List class="self" filter="#deviceactions#[index=deviceActionOn, srcfield=deviceOn, allowui=true]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- ** ACTION FIELD 1 ** -->
+			<Field type="menu" id="optionGroupOn1" defaultValue="hidden" hidden="true">
+				<Label>GROUP 1 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="sep_fieldsOn" type="separator" visibleBindingId="optionGroupOn1" visibleBindingValue="textfield,menu,list,checkbox" />
+			
+			<Field id="optionLabelOn1" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupOn1" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueOn1" type="checkbox" visibleBindingId="optionGroupOn1" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueOn1" type="textfield" visibleBindingId="optionGroupOn1" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueOn1" defaultValue="on" visibleBindingId="optionGroupOn1" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=1, method=On]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueOn1" defaultValue="on" visibleBindingId="optionGroupOn1" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=1, method=On]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- ** ACTION FIELD 2 ** -->
+			<Field type="menu" id="optionGroupOn2" defaultValue="hidden" hidden="true">
+				<Label>GROUP 2 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelOn2" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupOn2" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueOn2" type="checkbox" visibleBindingId="optionGroupOn2" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueOn2" type="textfield" visibleBindingId="optionGroupOn2" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueOn2" defaultValue="on" visibleBindingId="optionGroupOn2" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=2, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueOn2" defaultValue="on" visibleBindingId="optionGroupOn2" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=2, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>	
+			
+			<!-- ** ACTION FIELD 3 ** -->
+			<Field type="menu" id="optionGroupOn3" defaultValue="hidden" hidden="true">
+				<Label>GROUP 3 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelOn3" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupOn3" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueOn3" type="checkbox" visibleBindingId="optionGroupOn3" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueOn3" type="textfield" visibleBindingId="optionGroupOn3" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueOn3" defaultValue="on" visibleBindingId="optionGroupOn3" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=3, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueOn3" defaultValue="on" visibleBindingId="optionGroupOn3" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=3, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>	
+			
+			<!-- ** ACTION FIELD 4 ** -->
+			<Field type="menu" id="optionGroupOn4" defaultValue="hidden" hidden="true">
+				<Label>GROUP 4 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelOn4" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupOn4" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueOn4" type="checkbox" visibleBindingId="optionGroupOn4" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueOn4" type="textfield" visibleBindingId="optionGroupOn4" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueOn4" defaultValue="on" visibleBindingId="optionGroupOn4" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=4, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueOn4" defaultValue="on" visibleBindingId="optionGroupOn4" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=4, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>	
+			
+			<!-- ** ACTION FIELD 5 ** -->
+			<Field type="menu" id="optionGroupOn5" defaultValue="hidden" hidden="true">
+				<Label>GROUP 5 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelOn5" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupOn5" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueOn5" type="checkbox" visibleBindingId="optionGroupOn5" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueOn5" type="textfield" visibleBindingId="optionGroupOn5" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueOn5" defaultValue="on" visibleBindingId="optionGroupOn5" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=5, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueOn5" defaultValue="on" visibleBindingId="optionGroupOn5" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=5, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>											
+			
+			<!-- ** END ACTION FIELDS ** -->
+			
+			<!-- Hidden checkbox to toggle getStatusFrom -->
+			<Field type="checkbox" id="showStatusFromOn" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if the get status menu is shown</Description>
+			</Field>
+			
+			<Field id="sep_showStatusFromOn" type="separator" visibleBindingId="showStatusFromOn" visibleBindingValue="true"/>
+			
+			<Field type="menu" id="getStatusFromOn" defaultValue="state" visibleBindingId="showStatusFromOn" visibleBindingValue="true">
+				<Label>This is On if:</Label>
+				<List>
+					<Option value="none">No Way To Determine</Option>
+					<Option value="state">Device State</Option>
+					<Option value="variable">Variable</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- Hidden checkbox to toggle stateFromDevice -->
+			<Field type="checkbox" id="showStateFromDeviceOn" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if we request a device to get states from</Description>
+			</Field>
+			
+			<Field type="menu" id="stateFromDeviceOn" visibleBindingId="showStateFromDeviceOn" visibleBindingValue="true">
+				<Label>Device:</Label>
+				<List class="self" filter="#filtereddevices#[index=DEVICELIST, excludeself=true]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="deviceStateOn" defaultValue="onOffState" visibleBindingId="getStatusFromOn" visibleBindingValue="state">
+				<Label>State:</Label>
+				<List class="self" filter="#devicestates#[index=deviceStateOn, srcfield=stateFromDeviceOn, allowui=True]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="deviceVariableOn" defaultValue="onOffState" visibleBindingId="getStatusFromOn" visibleBindingValue="variable">
+				<Label>Variable:</Label>
+				<List class="indigo.variables" />
+			</Field>
+			
+			<!-- Hidden checkbox to toggle valueOperator and value -->
+			<Field type="checkbox" id="showValueAndOperatorOn" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if show the operator and value fields</Description>
+			</Field>
+			
+			<Field type="menu" id="valueOperatorOn" defaultValue="equal" visibleBindingId="showValueAndOperatorOn" visibleBindingValue="true">
+				<Label>Is:</Label>
+				<List class="self" filter="#conditions_operators#[index=valueOperatorOn]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="textfield" id="valueOn" defaultValue="" visibleBindingId="showValueAndOperatorOn" visibleBindingValue="true">
+				<Label>Value:</Label>
+			</Field>
+			
+			<!-- *********** OFF *********** -->
+			<Field type="menu" id="methodOff" defaultValue="device" visibleBindingId="settingSelect" visibleBindingValue="Off">
+				<Label>Method for Off:</Label>
+				<List>
+					<Option value="none">Do Not Implement</Option>
+					<Option value="device">Device</Option>
+					<Option value="action">Action Group</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="actionOff" visibleBindingId="methodOff" visibleBindingValue="action">
+				<Label>Action group:</Label>
+				<List class="indigo.actionGroups" />
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="deviceOff" visibleBindingId="methodOff" visibleBindingValue="device">
+				<Label>Device:</Label>
+				<List class="self" filter="#filtereddevices#[index=DEVICELIST, excludeself=true]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- Hidden checkbox to toggle deviceAction -->
+			<Field type="checkbox" id="showActionOff" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if the action is shown</Description>
+			</Field>
+			
+			<Field type="menu" id="deviceActionOff" defaultValue="turnOff" visibleBindingId="showActionOff" visibleBindingValue="true">
+				<Label>Action:</Label>
+				<List class="self" filter="#deviceactions#[index=deviceActionOff, srcfield=deviceOff, allowui=true]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- ** ACTION FIELD 1 ** -->
+			<Field type="menu" id="optionGroupOff1" defaultValue="hidden" hidden="true">
+				<Label>GROUP 1 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="sep_fieldsOff" type="separator" visibleBindingId="optionGroupOff1" visibleBindingValue="textfield,menu,list,checkbox" />
+			
+			<Field id="optionLabelOff1" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupOff1" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueOff1" type="checkbox" visibleBindingId="optionGroupOff1" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueOff1" type="textfield" visibleBindingId="optionGroupOff1" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueOff1" defaultValue="on" visibleBindingId="optionGroupOff1" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=1, method=Off]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueOff1" defaultValue="on" visibleBindingId="optionGroupOff1" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=1, method=Off]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- ** ACTION FIELD 2 ** -->
+			<Field type="menu" id="optionGroupOff2" defaultValue="hidden" hidden="true">
+				<Label>GROUP 2 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelOff2" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupOff2" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueOff2" type="checkbox" visibleBindingId="optionGroupOff2" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueOff2" type="textfield" visibleBindingId="optionGroupOff2" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueOff2" defaultValue="on" visibleBindingId="optionGroupOff2" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=2, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueOff2" defaultValue="on" visibleBindingId="optionGroupOff2" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=2, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>	
+			
+			<!-- ** ACTION FIELD 3 ** -->
+			<Field type="menu" id="optionGroupOff3" defaultValue="hidden" hidden="true">
+				<Label>GROUP 3 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelOff3" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupOff3" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueOff3" type="checkbox" visibleBindingId="optionGroupOff3" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueOff3" type="textfield" visibleBindingId="optionGroupOff3" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueOff3" defaultValue="on" visibleBindingId="optionGroupOff3" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=3, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueOff3" defaultValue="on" visibleBindingId="optionGroupOff3" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=3, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>	
+			
+			<!-- ** ACTION FIELD 4 ** -->
+			<Field type="menu" id="optionGroupOff4" defaultValue="hidden" hidden="true">
+				<Label>GROUP 4 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelOff4" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupOff4" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueOff4" type="checkbox" visibleBindingId="optionGroupOff4" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueOff4" type="textfield" visibleBindingId="optionGroupOff4" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueOff4" defaultValue="on" visibleBindingId="optionGroupOff4" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=4, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueOff4" defaultValue="on" visibleBindingId="optionGroupOff4" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=4, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>	
+			
+			<!-- ** ACTION FIELD 5 ** -->
+			<Field type="menu" id="optionGroupOff5" defaultValue="hidden" hidden="true">
+				<Label>GROUP 5 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelOff5" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupOff5" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueOff5" type="checkbox" visibleBindingId="optionGroupOff5" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueOff5" type="textfield" visibleBindingId="optionGroupOff5" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueOff5" defaultValue="on" visibleBindingId="optionGroupOff5" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=5, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueOff5" defaultValue="on" visibleBindingId="optionGroupOff5" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=5, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>											
+			
+			<!-- ** END ACTION FIELDS ** -->
+			
+			<!-- Hidden checkbox to toggle getStatusFrom -->
+			<Field type="checkbox" id="showStatusFromOff" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if the get status menu is shown</Description>
+			</Field>
+			
+			<Field id="sep_showStatusFromOff" type="separator" visibleBindingId="showStatusFromOff" visibleBindingValue="true"/>
+			
+			<Field type="menu" id="getStatusFromOff" defaultValue="state" visibleBindingId="showStatusFromOff" visibleBindingValue="true">
+				<Label>This is Off if:</Label>
+				<List>
+					<Option value="none">No Way To Determine</Option>
+					<Option value="state">Device State</Option>
+					<Option value="variable">Variable</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- Hidden checkbox to toggle stateFromDevice -->
+			<Field type="checkbox" id="showStateFromDeviceOff" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if we request a device to get states from</Description>
+			</Field>
+			
+			<Field type="menu" id="stateFromDeviceOff" visibleBindingId="showStateFromDeviceOff" visibleBindingValue="true">
+				<Label>Device:</Label>
+				<List class="self" filter="#filtereddevices#[index=DEVICELIST, excludeself=true]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="deviceStateOff" defaultValue="onOffState" visibleBindingId="getStatusFromOff" visibleBindingValue="state">
+				<Label>State:</Label>
+				<List class="self" filter="#devicestates#[index=deviceStateOff, srcfield=stateFromDeviceOff, allowui=True]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="deviceVariableOff" defaultValue="onOffState" visibleBindingId="getStatusFromOff" visibleBindingValue="variable">
+				<Label>Variable:</Label>
+				<List class="indigo.variables" />
+			</Field>
+			
+			<!-- Hidden checkbox to toggle valueOperator and value -->
+			<Field type="checkbox" id="showValueAndOperatorOff" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if show the operator and value fields</Description>
+			</Field>
+			
+			<Field type="menu" id="valueOperatorOff" defaultValue="equal" visibleBindingId="showValueAndOperatorOff" visibleBindingValue="true">
+				<Label>Is:</Label>
+				<List class="self" filter="#conditions_operators#[index=valueOperatorOff]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="textfield" id="valueOff" defaultValue="" visibleBindingId="showValueAndOperatorOff" visibleBindingValue="true">
+				<Label>Value:</Label>
+			</Field>			
+
+			<!-- *********** DIM 1 *********** -->
+			<Field type="menu" id="methodDim1" defaultValue="none" visibleBindingId="settingSelect" visibleBindingValue="Dim1">
+				<Label>Method for Variance 1:</Label>
+				<List>
+					<Option value="none">Do Not Implement</Option>
+					<Option value="device">Device</Option>
+					<Option value="action">Action Group</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="brightnessDim1" defaultValue="50" visibleBindingId="methodDim1" visibleBindingValue="device,action">
+				<Label>Requested percent:</Label>
+				<List class="self" filter="#numbers#[index=brightnessDim1, low=1, high=99]" method="getCustomList" />
+			</Field>
+			
+			<Field type="menu" id="actionDim1" visibleBindingId="methodDim1" visibleBindingValue="action">
+				<Label>Action group:</Label>
+				<List class="indigo.actionGroups" />
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="deviceDim1" visibleBindingId="methodDim1" visibleBindingValue="device">
+				<Label>Device:</Label>
+				<List class="self" filter="#filtereddevices#[index=DEVICELIST, excludeself=true]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- Hidden checkbox to toggle deviceAction -->
+			<Field type="checkbox" id="showActionDim1" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if the action is shown</Description>
+			</Field>
+			
+			<Field type="menu" id="deviceActionDim1" defaultValue="turnDim1" visibleBindingId="showActionDim1" visibleBindingValue="true">
+				<Label>Action:</Label>
+				<List class="self" filter="#deviceactions#[index=deviceActionDim1, srcfield=deviceDim1, allowui=true]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- ** ACTION FIELD 1 ** -->
+			<Field type="menu" id="optionGroupDim11" defaultValue="hidden" hidden="true">
+				<Label>GROUP 1 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="sep_fieldsDim1" type="separator" visibleBindingId="optionGroupDim11" visibleBindingValue="textfield,menu,list,checkbox" />
+			
+			<Field id="optionLabelDim11" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupDim11" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueDim11" type="checkbox" visibleBindingId="optionGroupDim11" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueDim11" type="textfield" visibleBindingId="optionGroupDim11" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueDim11" defaultValue="on" visibleBindingId="optionGroupDim11" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=1, method=Dim1]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueDim11" defaultValue="on" visibleBindingId="optionGroupDim11" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=1, method=Dim1]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- ** ACTION FIELD 2 ** -->
+			<Field type="menu" id="optionGroupDim12" defaultValue="hidden" hidden="true">
+				<Label>GROUP 2 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelDim12" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupDim12" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueDim12" type="checkbox" visibleBindingId="optionGroupDim12" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueDim12" type="textfield" visibleBindingId="optionGroupDim12" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueDim12" defaultValue="on" visibleBindingId="optionGroupDim12" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=2, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueDim12" defaultValue="on" visibleBindingId="optionGroupDim12" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=2, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>	
+			
+			<!-- ** ACTION FIELD 3 ** -->
+			<Field type="menu" id="optionGroupDim13" defaultValue="hidden" hidden="true">
+				<Label>GROUP 3 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelDim13" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupDim13" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueDim13" type="checkbox" visibleBindingId="optionGroupDim13" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueDim13" type="textfield" visibleBindingId="optionGroupDim13" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueDim13" defaultValue="on" visibleBindingId="optionGroupDim13" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=3, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueDim13" defaultValue="on" visibleBindingId="optionGroupDim13" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=3, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>	
+			
+			<!-- ** ACTION FIELD 4 ** -->
+			<Field type="menu" id="optionGroupDim14" defaultValue="hidden" hidden="true">
+				<Label>GROUP 4 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelDim14" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupDim14" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueDim14" type="checkbox" visibleBindingId="optionGroupDim14" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueDim14" type="textfield" visibleBindingId="optionGroupDim14" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueDim14" defaultValue="on" visibleBindingId="optionGroupDim14" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=4, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueDim14" defaultValue="on" visibleBindingId="optionGroupDim14" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=4, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>	
+			
+			<!-- ** ACTION FIELD 5 ** -->
+			<Field type="menu" id="optionGroupDim15" defaultValue="hidden" hidden="true">
+				<Label>GROUP 5 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelDim15" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupDim15" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueDim15" type="checkbox" visibleBindingId="optionGroupDim15" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueDim15" type="textfield" visibleBindingId="optionGroupDim15" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueDim15" defaultValue="on" visibleBindingId="optionGroupDim15" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=5, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueDim15" defaultValue="on" visibleBindingId="optionGroupDim15" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=5, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>											
+			
+			<!-- ** END ACTION FIELDS ** -->
+			
+			<!-- Hidden checkbox to toggle getStatusFrom -->
+			<Field type="checkbox" id="showStatusFromDim1" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if the get status menu is shown</Description>
+			</Field>
+			
+			<Field id="sep_showStatusFromDim1" type="separator" visibleBindingId="showStatusFromDim1" visibleBindingValue="true"/>
+			
+			<Field type="menu" id="getStatusFromDim1" defaultValue="state" visibleBindingId="showStatusFromDim1" visibleBindingValue="true">
+				<Label>This is Variance 1 if:</Label>
+				<List>
+					<Option value="none">No Way To Determine</Option>
+					<Option value="state">Device State</Option>
+					<Option value="variable">Variable</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- Hidden checkbox to toggle stateFromDevice -->
+			<Field type="checkbox" id="showStateFromDeviceDim1" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if we request a device to get states from</Description>
+			</Field>
+			
+			<Field type="menu" id="stateFromDeviceDim1" visibleBindingId="showStateFromDeviceDim1" visibleBindingValue="true">
+				<Label>Device:</Label>
+				<List class="self" filter="#filtereddevices#[index=DEVICELIST, excludeself=true]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="deviceStateDim1" defaultValue="onDim1State" visibleBindingId="getStatusFromDim1" visibleBindingValue="state">
+				<Label>State:</Label>
+				<List class="self" filter="#devicestates#[index=deviceStateDim1, srcfield=stateFromDeviceDim1, allowui=True]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="deviceVariableDim1" defaultValue="onOffState" visibleBindingId="getStatusFromDim1" visibleBindingValue="variable">
+				<Label>Variable:</Label>
+				<List class="indigo.variables" />
+			</Field>
+			
+			<!-- Hidden checkbox to toggle valueOperator and value -->
+			<Field type="checkbox" id="showValueAndOperatorDim1" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if show the operator and value fields</Description>
+			</Field>
+			
+			<Field type="menu" id="valueOperatorDim1" defaultValue="equal" visibleBindingId="showValueAndOperatorDim1" visibleBindingValue="true">
+				<Label>Is:</Label>
+				<List class="self" filter="#conditions_operators#[index=valueOperatorDim1]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="textfield" id="valueDim1" defaultValue="" visibleBindingId="showValueAndOperatorDim1" visibleBindingValue="true">
+				<Label>Value:</Label>
+			</Field>				
+			
+			<!-- *********** DIM 2 *********** -->
+			<Field type="menu" id="methodDim2" defaultValue="none" visibleBindingId="settingSelect" visibleBindingValue="Dim2">
+				<Label>Method for Variance 2:</Label>
+				<List>
+					<Option value="none">Do Not Implement</Option>
+					<Option value="device">Device</Option>
+					<Option value="action">Action Group</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="brightnessDim2" defaultValue="50" visibleBindingId="methodDim2" visibleBindingValue="device,action">
+				<Label>Requested percent:</Label>
+				<List class="self" filter="#numbers#[index=brightnessDim2, low=1, high=99]" method="getCustomList" />
+			</Field>
+			
+			<Field type="menu" id="actionDim2" visibleBindingId="methodDim2" visibleBindingValue="action">
+				<Label>Action group:</Label>
+				<List class="indigo.actionGroups" />
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="deviceDim2" visibleBindingId="methodDim2" visibleBindingValue="device">
+				<Label>Device:</Label>
+				<List class="self" filter="#filtereddevices#[index=DEVICELIST, excludeself=true]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- Hidden checkbox to toggle deviceAction -->
+			<Field type="checkbox" id="showActionDim2" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if the action is shown</Description>
+			</Field>
+			
+			<Field type="menu" id="deviceActionDim2" defaultValue="turnDim2" visibleBindingId="showActionDim2" visibleBindingValue="true">
+				<Label>Action:</Label>
+				<List class="self" filter="#deviceactions#[index=deviceActionDim2, srcfield=deviceDim2, allowui=true]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- ** ACTION FIELD 1 ** -->
+			<Field type="menu" id="optionGroupDim21" defaultValue="hidden" hidden="true">
+				<Label>GROUP 1 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="sep_fieldsDim2" type="separator" visibleBindingId="optionGroupDim21" visibleBindingValue="textfield,menu,list,checkbox" />
+			
+			<Field id="optionLabelDim21" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupDim21" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueDim21" type="checkbox" visibleBindingId="optionGroupDim21" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueDim21" type="textfield" visibleBindingId="optionGroupDim21" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueDim21" defaultValue="on" visibleBindingId="optionGroupDim21" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=1, method=Dim2]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueDim21" defaultValue="on" visibleBindingId="optionGroupDim21" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=1, method=Dim2]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- ** ACTION FIELD 2 ** -->
+			<Field type="menu" id="optionGroupDim22" defaultValue="hidden" hidden="true">
+				<Label>GROUP 2 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelDim22" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupDim22" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueDim22" type="checkbox" visibleBindingId="optionGroupDim22" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueDim22" type="textfield" visibleBindingId="optionGroupDim22" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueDim22" defaultValue="on" visibleBindingId="optionGroupDim22" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=2, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueDim22" defaultValue="on" visibleBindingId="optionGroupDim22" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=2, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>	
+			
+			<!-- ** ACTION FIELD 3 ** -->
+			<Field type="menu" id="optionGroupDim23" defaultValue="hidden" hidden="true">
+				<Label>GROUP 3 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelDim23" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupDim23" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueDim23" type="checkbox" visibleBindingId="optionGroupDim23" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueDim23" type="textfield" visibleBindingId="optionGroupDim23" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueDim23" defaultValue="on" visibleBindingId="optionGroupDim23" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=3, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueDim23" defaultValue="on" visibleBindingId="optionGroupDim23" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=3, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>	
+			
+			<!-- ** ACTION FIELD 4 ** -->
+			<Field type="menu" id="optionGroupDim24" defaultValue="hidden" hidden="true">
+				<Label>GROUP 4 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelDim24" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupDim24" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueDim24" type="checkbox" visibleBindingId="optionGroupDim24" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueDim24" type="textfield" visibleBindingId="optionGroupDim24" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueDim24" defaultValue="on" visibleBindingId="optionGroupDim24" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=4, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueDim24" defaultValue="on" visibleBindingId="optionGroupDim24" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=4, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>	
+			
+			<!-- ** ACTION FIELD 5 ** -->
+			<Field type="menu" id="optionGroupDim25" defaultValue="hidden" hidden="true">
+				<Label>GROUP 5 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelDim25" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupDim25" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueDim25" type="checkbox" visibleBindingId="optionGroupDim25" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueDim25" type="textfield" visibleBindingId="optionGroupDim25" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueDim25" defaultValue="on" visibleBindingId="optionGroupDim25" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=5, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueDim25" defaultValue="on" visibleBindingId="optionGroupDim25" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=5, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>											
+			
+			<!-- ** END ACTION FIELDS ** -->
+			
+			<!-- Hidden checkbox to toggle getStatusFrom -->
+			<Field type="checkbox" id="showStatusFromDim2" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if the get status menu is shown</Description>
+			</Field>
+			
+			<Field id="sep_showStatusFromDim2" type="separator" visibleBindingId="showStatusFromDim2" visibleBindingValue="true"/>
+			
+			<Field type="menu" id="getStatusFromDim2" defaultValue="state" visibleBindingId="showStatusFromDim2" visibleBindingValue="true">
+				<Label>This is Variance 2 if:</Label>
+				<List>
+					<Option value="none">No Way To Determine</Option>
+					<Option value="state">Device State</Option>
+					<Option value="variable">Variable</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- Hidden checkbox to toggle stateFromDevice -->
+			<Field type="checkbox" id="showStateFromDeviceDim2" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if we request a device to get states from</Description>
+			</Field>
+			
+			<Field type="menu" id="stateFromDeviceDim2" visibleBindingId="showStateFromDeviceDim2" visibleBindingValue="true">
+				<Label>Device:</Label>
+				<List class="self" filter="#filtereddevices#[index=DEVICELIST, excludeself=true]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="deviceStateDim2" defaultValue="onDim2State" visibleBindingId="getStatusFromDim2" visibleBindingValue="state">
+				<Label>State:</Label>
+				<List class="self" filter="#devicestates#[index=deviceStateDim2, srcfield=stateFromDeviceDim2, allowui=True]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="deviceVariableDim2" defaultValue="onOffState" visibleBindingId="getStatusFromDim2" visibleBindingValue="variable">
+				<Label>Variable:</Label>
+				<List class="indigo.variables" />
+			</Field>
+			
+			<!-- Hidden checkbox to toggle valueOperator and value -->
+			<Field type="checkbox" id="showValueAndOperatorDim2" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if show the operator and value fields</Description>
+			</Field>
+			
+			<Field type="menu" id="valueOperatorDim2" defaultValue="equal" visibleBindingId="showValueAndOperatorDim2" visibleBindingValue="true">
+				<Label>Is:</Label>
+				<List class="self" filter="#conditions_operators#[index=valueOperatorDim2]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="textfield" id="valueDim2" defaultValue="" visibleBindingId="showValueAndOperatorDim2" visibleBindingValue="true">
+				<Label>Value:</Label>
+			</Field>
+			
+			<!-- *********** DIM 3 *********** -->
+			<Field type="menu" id="methodDim3" defaultValue="none" visibleBindingId="settingSelect" visibleBindingValue="Dim3">
+				<Label>Method for Variance 3:</Label>
+				<List>
+					<Option value="none">Do Not Implement</Option>
+					<Option value="device">Device</Option>
+					<Option value="action">Action Group</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="brightnessDim3" defaultValue="50" visibleBindingId="methodDim3" visibleBindingValue="device,action">
+				<Label>Requested percent:</Label>
+				<List class="self" filter="#numbers#[index=brightnessDim3, low=1, high=99]" method="getCustomList" />
+			</Field>
+			
+			<Field type="menu" id="actionDim3" visibleBindingId="methodDim3" visibleBindingValue="action">
+				<Label>Action group:</Label>
+				<List class="indigo.actionGroups" />
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="deviceDim3" visibleBindingId="methodDim3" visibleBindingValue="device">
+				<Label>Device:</Label>
+				<List class="self" filter="#filtereddevices#[index=DEVICELIST, excludeself=true]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- Hidden checkbox to toggle deviceAction -->
+			<Field type="checkbox" id="showActionDim3" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if the action is shown</Description>
+			</Field>
+			
+			<Field type="menu" id="deviceActionDim3" defaultValue="turnDim3" visibleBindingId="showActionDim3" visibleBindingValue="true">
+				<Label>Action:</Label>
+				<List class="self" filter="#deviceactions#[index=deviceActionDim3, srcfield=deviceDim3, allowui=true]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- ** ACTION FIELD 1 ** -->
+			<Field type="menu" id="optionGroupDim31" defaultValue="hidden" hidden="true">
+				<Label>GROUP 1 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="sep_fieldsDim3" type="separator" visibleBindingId="optionGroupDim31" visibleBindingValue="textfield,menu,list,checkbox" />
+			
+			<Field id="optionLabelDim31" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupDim31" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueDim31" type="checkbox" visibleBindingId="optionGroupDim31" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueDim31" type="textfield" visibleBindingId="optionGroupDim31" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueDim31" defaultValue="on" visibleBindingId="optionGroupDim31" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=1, method=Dim3]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueDim31" defaultValue="on" visibleBindingId="optionGroupDim31" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=1, method=Dim3]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- ** ACTION FIELD 2 ** -->
+			<Field type="menu" id="optionGroupDim32" defaultValue="hidden" hidden="true">
+				<Label>GROUP 2 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelDim32" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupDim32" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueDim32" type="checkbox" visibleBindingId="optionGroupDim32" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueDim32" type="textfield" visibleBindingId="optionGroupDim32" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueDim32" defaultValue="on" visibleBindingId="optionGroupDim32" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=2, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueDim32" defaultValue="on" visibleBindingId="optionGroupDim32" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=2, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>	
+			
+			<!-- ** ACTION FIELD 3 ** -->
+			<Field type="menu" id="optionGroupDim33" defaultValue="hidden" hidden="true">
+				<Label>GROUP 3 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelDim33" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupDim33" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueDim33" type="checkbox" visibleBindingId="optionGroupDim33" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueDim33" type="textfield" visibleBindingId="optionGroupDim33" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueDim33" defaultValue="on" visibleBindingId="optionGroupDim33" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=3, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueDim33" defaultValue="on" visibleBindingId="optionGroupDim33" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=3, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>	
+			
+			<!-- ** ACTION FIELD 4 ** -->
+			<Field type="menu" id="optionGroupDim34" defaultValue="hidden" hidden="true">
+				<Label>GROUP 4 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelDim34" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupDim34" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueDim34" type="checkbox" visibleBindingId="optionGroupDim34" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueDim34" type="textfield" visibleBindingId="optionGroupDim34" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueDim34" defaultValue="on" visibleBindingId="optionGroupDim34" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=4, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueDim34" defaultValue="on" visibleBindingId="optionGroupDim34" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=4, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>	
+			
+			<!-- ** ACTION FIELD 5 ** -->
+			<Field type="menu" id="optionGroupDim35" defaultValue="hidden" hidden="true">
+				<Label>GROUP 5 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelDim35" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupDim35" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueDim35" type="checkbox" visibleBindingId="optionGroupDim35" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueDim35" type="textfield" visibleBindingId="optionGroupDim35" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueDim35" defaultValue="on" visibleBindingId="optionGroupDim35" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=5, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueDim35" defaultValue="on" visibleBindingId="optionGroupDim35" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=5, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>											
+			
+			<!-- ** END ACTION FIELDS ** -->
+			
+			<!-- Hidden checkbox to toggle getStatusFrom -->
+			<Field type="checkbox" id="showStatusFromDim3" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if the get status menu is shown</Description>
+			</Field>
+			
+			<Field id="sep_showStatusFromDim3" type="separator" visibleBindingId="showStatusFromDim3" visibleBindingValue="true"/>
+			
+			<Field type="menu" id="getStatusFromDim3" defaultValue="state" visibleBindingId="showStatusFromDim3" visibleBindingValue="true">
+				<Label>This is Variance 3 if:</Label>
+				<List>
+					<Option value="none">No Way To Determine</Option>
+					<Option value="state">Device State</Option>
+					<Option value="variable">Variable</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- Hidden checkbox to toggle stateFromDevice -->
+			<Field type="checkbox" id="showStateFromDeviceDim3" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if we request a device to get states from</Description>
+			</Field>
+			
+			<Field type="menu" id="stateFromDeviceDim3" visibleBindingId="showStateFromDeviceDim3" visibleBindingValue="true">
+				<Label>Device:</Label>
+				<List class="self" filter="#filtereddevices#[index=DEVICELIST, excludeself=true]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="deviceStateDim3" defaultValue="onDim3State" visibleBindingId="getStatusFromDim3" visibleBindingValue="state">
+				<Label>State:</Label>
+				<List class="self" filter="#devicestates#[index=deviceStateDim3, srcfield=stateFromDeviceDim3, allowui=True]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="deviceVariableDim3" defaultValue="onOffState" visibleBindingId="getStatusFromDim3" visibleBindingValue="variable">
+				<Label>Variable:</Label>
+				<List class="indigo.variables" />
+			</Field>
+			
+			<!-- Hidden checkbox to toggle valueOperator and value -->
+			<Field type="checkbox" id="showValueAndOperatorDim3" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if show the operator and value fields</Description>
+			</Field>
+			
+			<Field type="menu" id="valueOperatorDim3" defaultValue="equal" visibleBindingId="showValueAndOperatorDim3" visibleBindingValue="true">
+				<Label>Is:</Label>
+				<List class="self" filter="#conditions_operators#[index=valueOperatorDim3]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="textfield" id="valueDim3" defaultValue="" visibleBindingId="showValueAndOperatorDim3" visibleBindingValue="true">
+				<Label>Value:</Label>
+			</Field>
+			
+			<!-- *********** DIM 4 *********** -->
+			<Field type="menu" id="methodDim4" defaultValue="none" visibleBindingId="settingSelect" visibleBindingValue="Dim4">
+				<Label>Method for Variance 4:</Label>
+				<List>
+					<Option value="none">Do Not Implement</Option>
+					<Option value="device">Device</Option>
+					<Option value="action">Action Group</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="brightnessDim4" defaultValue="50" visibleBindingId="methodDim4" visibleBindingValue="device,action">
+				<Label>Requested percent:</Label>
+				<List class="self" filter="#numbers#[index=brightnessDim4, low=1, high=99]" method="getCustomList" />
+			</Field>
+			
+			<Field type="menu" id="actionDim4" visibleBindingId="methodDim4" visibleBindingValue="action">
+				<Label>Action group:</Label>
+				<List class="indigo.actionGroups" />
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="deviceDim4" visibleBindingId="methodDim4" visibleBindingValue="device">
+				<Label>Device:</Label>
+				<List class="self" filter="#filtereddevices#[index=DEVICELIST, excludeself=true]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- Hidden checkbox to toggle deviceAction -->
+			<Field type="checkbox" id="showActionDim4" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if the action is shown</Description>
+			</Field>
+			
+			<Field type="menu" id="deviceActionDim4" defaultValue="turnDim4" visibleBindingId="showActionDim4" visibleBindingValue="true">
+				<Label>Action:</Label>
+				<List class="self" filter="#deviceactions#[index=deviceActionDim4, srcfield=deviceDim4, allowui=true]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- ** ACTION FIELD 1 ** -->
+			<Field type="menu" id="optionGroupDim41" defaultValue="hidden" hidden="true">
+				<Label>GROUP 1 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="sep_fieldsDim4" type="separator" visibleBindingId="optionGroupDim41" visibleBindingValue="textfield,menu,list,checkbox" />
+			
+			<Field id="optionLabelDim41" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupDim41" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueDim41" type="checkbox" visibleBindingId="optionGroupDim41" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueDim41" type="textfield" visibleBindingId="optionGroupDim41" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueDim41" defaultValue="on" visibleBindingId="optionGroupDim41" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=1, method=Dim4]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueDim41" defaultValue="on" visibleBindingId="optionGroupDim41" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=1, method=Dim4]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- ** ACTION FIELD 2 ** -->
+			<Field type="menu" id="optionGroupDim42" defaultValue="hidden" hidden="true">
+				<Label>GROUP 2 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelDim42" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupDim42" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueDim42" type="checkbox" visibleBindingId="optionGroupDim42" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueDim42" type="textfield" visibleBindingId="optionGroupDim42" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueDim42" defaultValue="on" visibleBindingId="optionGroupDim42" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=2, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueDim42" defaultValue="on" visibleBindingId="optionGroupDim42" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=2, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>	
+			
+			<!-- ** ACTION FIELD 3 ** -->
+			<Field type="menu" id="optionGroupDim43" defaultValue="hidden" hidden="true">
+				<Label>GROUP 3 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelDim43" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupDim43" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueDim43" type="checkbox" visibleBindingId="optionGroupDim43" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueDim43" type="textfield" visibleBindingId="optionGroupDim43" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueDim43" defaultValue="on" visibleBindingId="optionGroupDim43" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=3, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueDim43" defaultValue="on" visibleBindingId="optionGroupDim43" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=3, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>	
+			
+			<!-- ** ACTION FIELD 4 ** -->
+			<Field type="menu" id="optionGroupDim44" defaultValue="hidden" hidden="true">
+				<Label>GROUP 4 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelDim44" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupDim44" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueDim44" type="checkbox" visibleBindingId="optionGroupDim44" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueDim44" type="textfield" visibleBindingId="optionGroupDim44" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueDim44" defaultValue="on" visibleBindingId="optionGroupDim44" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=4, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueDim44" defaultValue="on" visibleBindingId="optionGroupDim44" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=4, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>	
+			
+			<!-- ** ACTION FIELD 5 ** -->
+			<Field type="menu" id="optionGroupDim45" defaultValue="hidden" hidden="true">
+				<Label>GROUP 5 DISPLAY</Label>
+				<List>
+					<Option value="hidden">Hidden</Option>
+					<Option value="textfield">Text Field</Option>
+					<Option value="menu">Menu</Option>
+					<Option value="list">List</Option>
+					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="optionLabelDim45" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupDim45" visibleBindingValue="textfield,menu,list,checkbox">
+				<Label>Field:</Label>
+			</Field>
+			
+			<Field id="checkValueDim45" type="checkbox" visibleBindingId="optionGroupDim45" visibleBindingValue="checkbox">
+				<Label> </Label>
+				<Description>Enable</Description>
+			</Field>
+			
+			<Field id="strValueDim45" type="textfield" visibleBindingId="optionGroupDim45" visibleBindingValue="textfield">
+				<Label>Value:</Label>
+			</Field>
+			
+			<Field type="menu" id="menuValueDim45" defaultValue="on" visibleBindingId="optionGroupDim45" visibleBindingValue="menu">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=5, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="list" id="listValueDim45" defaultValue="on" visibleBindingId="optionGroupDim45" visibleBindingValue="list">
+				<Label>Value:</Label>
+				<List class="self" filter="#actionoptionlist#[group=5, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>											
+			
+			<!-- ** END ACTION FIELDS ** -->
+			
+			<!-- Hidden checkbox to toggle getStatusFrom -->
+			<Field type="checkbox" id="showStatusFromDim4" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if the get status menu is shown</Description>
+			</Field>
+			
+			<Field id="sep_showStatusFromDim4" type="separator" visibleBindingId="showStatusFromDim4" visibleBindingValue="true"/>
+			
+			<Field type="menu" id="getStatusFromDim4" defaultValue="state" visibleBindingId="showStatusFromDim4" visibleBindingValue="true">
+				<Label>This is Variance 4 if:</Label>
+				<List>
+					<Option value="none">No Way To Determine</Option>
+					<Option value="state">Device State</Option>
+					<Option value="variable">Variable</Option>
+				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- Hidden checkbox to toggle stateFromDevice -->
+			<Field type="checkbox" id="showStateFromDeviceDim4" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if we request a device to get states from</Description>
+			</Field>
+			
+			<Field type="menu" id="stateFromDeviceDim4" visibleBindingId="showStateFromDeviceDim4" visibleBindingValue="true">
+				<Label>Device:</Label>
+				<List class="self" filter="#filtereddevices#[index=DEVICELIST, excludeself=true]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="deviceStateDim4" defaultValue="onDim4State" visibleBindingId="getStatusFromDim4" visibleBindingValue="state">
+				<Label>State:</Label>
+				<List class="self" filter="#devicestates#[index=deviceStateDim4, srcfield=stateFromDeviceDim4, allowui=True]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="deviceVariableDim4" defaultValue="onOffState" visibleBindingId="getStatusFromDim4" visibleBindingValue="variable">
+				<Label>Variable:</Label>
+				<List class="indigo.variables" />
+			</Field>
+			
+			<!-- Hidden checkbox to toggle valueOperator and value -->
+			<Field type="checkbox" id="showValueAndOperatorDim4" hidden="true" defaultValue="false">
+				<Label> </Label>
+				<Description>Determines if show the operator and value fields</Description>
+			</Field>
+			
+			<Field type="menu" id="valueOperatorDim4" defaultValue="equal" visibleBindingId="showValueAndOperatorDim4" visibleBindingValue="true">
+				<Label>Is:</Label>
+				<List class="self" filter="#conditions_operators#[index=valueOperatorDim4]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="textfield" id="valueDim4" defaultValue="" visibleBindingId="showValueAndOperatorDim4" visibleBindingValue="true">
+				<Label>Value:</Label>
+			</Field>									
+			
+			
+			
+			<Field id="placeholder" type="label" visibleBindingId="treatAs" visibleBindingValue="false" alwaysUseInDialogHeightCalc="true">
+				<Label>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.</Label>
+			</Field>
+			
+		</ConfigUI>
+		
+		<States>
+			<!-- All EPS plugins have this state and use it for the Indigo lists -->
+			<State id="statedisplay">
+				<ValueType>String</ValueType>
+				<TriggerLabel>Current device state</TriggerLabel>
+				<ControlPageLabel>Current device state</ControlPageLabel>
+			</State>
+		</States>
+		<UiDisplayStateId>statedisplay</UiDisplayStateId>
+	</Device>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	<!-- =========== SWITCH =========== -->
 	<Device type="relay" id="Homebridge-Relay">
 		<Name>Homebridge Switch Wrapper</Name>
 		<ConfigUI>
+			<Field id="isNewDevice" type="checkbox" hidden="true">
+				<Label> </Label>
+				<Description>Lets us keep some things hidden until we get a callback that lets us toggle defaults</Description>
+			</Field>
 			
 			<!-- *********** ON *********** -->
 			<Field type="menu" id="methodOn" defaultValue="device" >
@@ -13,6 +2001,7 @@
 					<Option value="device">Single Device</Option>
 					<Option value="action">Action Group</Option>
 				</List>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
 			
 			<Field id="deviceOn" type="menu" visibleBindingId="methodOn" visibleBindingValue="device">
@@ -36,6 +2025,10 @@
 					<Option value="menu">Menu</Option>
 					<Option value="list">List</Option>
 					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
 				</List>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
@@ -74,6 +2067,10 @@
 					<Option value="menu">Menu</Option>
 					<Option value="list">List</Option>
 					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
 				</List>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
@@ -112,6 +2109,10 @@
 					<Option value="menu">Menu</Option>
 					<Option value="list">List</Option>
 					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
 				</List>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
@@ -214,6 +2215,10 @@
 					<Option value="menu">Menu</Option>
 					<Option value="list">List</Option>
 					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
 				</List>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
@@ -252,6 +2257,10 @@
 					<Option value="menu">Menu</Option>
 					<Option value="list">List</Option>
 					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
 				</List>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
@@ -290,6 +2299,10 @@
 					<Option value="menu">Menu</Option>
 					<Option value="list">List</Option>
 					<Option value="checkbox">Checkbox</Option>
+					<Option value="invtxt">Invisible text field</Option>
+					<Option value="invmnu">Invisible menu field</Option>
+					<Option value="invlst">Invisible list field</Option>
+					<Option value="invchk">Invisible checkbox field</Option>
 				</List>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
@@ -364,7 +2377,7 @@
 						
 			<!-- *********** CONDITIONS *********** -->
 			
-			<Field type="menu" id="conditions" defaultValue="none" >
+			<Field type="menu" id="conditions" defaultValue="none" visibleBindingId="isNewDevice" visibleBindingValue="false">
 				<Label>Conditions:</Label>
 				<List class="self" filter="#conditions_topmenu#" method="getCustomList" dynamicReload="true"/>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
