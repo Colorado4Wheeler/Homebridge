@@ -3,6 +3,11 @@ Release Notes
 
 Everything is still in BETA.  Some stuff won't work.  Overall the program works, just a few areas that haven't been enabled yet and lots of optimization yet to do.  Make sure you keep a backup copy of your existing config.json file just in case something doesn't work as planned.
 
+Version 0.4
+---------------
+
+* Fixed problem with plugin config where re-opening it didn't repopulate the lists properly and left the "treat as" lists empty
+
 Version 0.3
 ---------------
 
@@ -51,7 +56,8 @@ Known Issues As Of The Most Current Release
 * When creating a new device if you don't go into On AND Off then warnings will log about not being able to find state '', the workaround for now is to make sure you define both On and Off instead of just letting the UI handle it
 * Multi I/O (IOLinc) devices don't set defaults like relays, dimmers and sensors in the UI, you have to hand configure the settings
 * While the icons are (somewhat) appropriate now, still need to tweak the actual display value since everything is essentially an Indigo dimmer we need the values to reflect the Wrapper type (i.e., open/closed, locked/unlocked, etc)
-
+* The device count shown in save config doesn't match the device count showin in the plugin config UI - its only off by one or two but need to tighten that up
+* After saving a device configuration the default view of the device is supposed to reset to the On config, but it's staying at where ever you left off
 
 Wish List
 ---------------

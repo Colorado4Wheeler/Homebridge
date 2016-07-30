@@ -567,7 +567,7 @@ class Plugin(indigo.PluginBase):
 						elif devId == "-none-":	
 							break						
 						else:
-							if devId in indigo.devices: retList.append ((devId, indigo.devices[int(devId)].name))
+							if int(devId) in indigo.devices: retList.append ((devId, indigo.devices[int(devId)].name))
 							
 					if len(retList) > 0:
 						retList.insert(0, ("-none-", "Don't Exclude Anything"))
@@ -592,7 +592,7 @@ class Plugin(indigo.PluginBase):
 						elif devId == "-none-":	
 							break
 						else:
-							if devId in indigo.devices: retList.append ((devId, indigo.actionGroups[int(devId)].name))
+							if int(devId) in indigo.devices: retList.append ((devId, indigo.actionGroups[int(devId)].name))
 							
 					if len(retList) > 0:
 						retList.insert(0, ("-none-", "Don't Exclude Anything"))
@@ -612,7 +612,8 @@ class Plugin(indigo.PluginBase):
 						elif devId == "-none-":
 							break				
 						else:
-							if devId in indigo.devices: typeList.append ((devId, indigo.devices[int(devId)].name))
+							if int(devId) in indigo.devices: typeList.append ((devId, indigo.devices[int(devId)].name))
+							
 							
 					# Now go through excludes and make sure those are removed
 					if len(valuesDict["devexclude"]) > 0 and valuesDict["devexclude"][0] != "-none-":
@@ -626,12 +627,12 @@ class Plugin(indigo.PluginBase):
 									
 							if isExclude:
 								pass
-							else:
+							else:							
 								retList.append (item)	
 					else:
 						for item in typeList:
 							retList.append (item)
-											
+							
 				typeList = [] # Zero out again so we can start with actions
 					
 				if "actinclude" in valuesDict:
@@ -646,7 +647,7 @@ class Plugin(indigo.PluginBase):
 						elif devId == "-none-":
 							break				
 						else:
-							if devId in indigo.devices: typeList.append ((devId, indigo.actionGroups[int(devId)].name))
+							if int(devId) in indigo.devices: typeList.append ((devId, indigo.actionGroups[int(devId)].name))
 							
 					# Now go through excludes and make sure those are removed
 					if len(valuesDict["actexclude"]) > 0 and valuesDict["actexclude"][0] != "-none-":
@@ -784,6 +785,8 @@ class Plugin(indigo.PluginBase):
 	def onAfter_deviceStartComm (self, dev):
 		try:
 			self.checkDeviceAddress (dev)
+			
+			
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
