@@ -5,11 +5,16 @@
 	<Device type="dimmer" id="Homebridge-Wrapper">
 		<Name>Homebridge Wrapper</Name>
 		<ConfigUI>
+			<Field id="serverDevice" type="menu" >
+				<Label>Homebridge server:</Label>
+				<List class="indigo.devices" filter="com.eps.indigoplugin.homebridge.Homebridge-Server"/>
+			</Field>
+			
 			<Field id="isNewDevice" type="checkbox" hidden="true" defaultValue="true">
 				<Label> </Label>
 				<Description>Lets us keep some things hidden until we get a callback that lets us toggle defaults</Description>
 			</Field>
-		
+			
 			<!-- Find out what kind of wrapper this is before showing any fields, this gives us a chance to set defaults when its selected -->
 			<Field type="menu" id="treatAs" defaultValue="none" >
 				<Label>Type of wrapper:</Label>
@@ -1959,440 +1964,250 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	<!-- =========== SWITCH =========== -->
-	<Device type="relay" id="Homebridge-Relay">
-		<Name>Homebridge Switch Wrapper</Name>
+	<!-- =========== SERVER =========== -->
+	<Device type="relay" id="Homebridge-Server">
+		<Name>Homebridge Server</Name>
 		<ConfigUI>
-			<Field id="isNewDevice" type="checkbox" hidden="true">
-				<Label> </Label>
-				<Description>Lets us keep some things hidden until we get a callback that lets us toggle defaults</Description>
+
+			<Field type="textfield" id="wrappercount" defaultValue="0" readonly="true">
+				<Label>Wrapper devices:</Label>
 			</Field>
 			
-			<!-- *********** ON *********** -->
-			<Field type="menu" id="methodOn" defaultValue="device" >
-				<Label>On method:</Label>
+			<Field type="textfield" id="itemcount" defaultValue="0" readonly="true">
+				<Label>Indigo devices/actions:</Label>
+			</Field>
+
+			<Field type="textfield" id="totalcount" defaultValue="0" readonly="true">
+				<Label>Total item count (out of 99):</Label>
+			</Field>
+	
+			<Field type="button" id="refresh"  >
+				<Label> </Label>
+				<Title>Refresh </Title>
+				<CallbackMethod>btnRefreshDeviceCount</CallbackMethod>
+			</Field>
+			
+			<Field id="sep_prehbselection" type="separator" />
+
+			<Field type="label" id="lbl_intro" >
+				<Label>Use the list below to show the various lists that you want to include in Homebridge by default.  This only toggles the visibility of the list, your selections in each category will be saved regardless of it's visibility here.
+		
+		</Label>
+			</Field>
+			
+			
+	
+			<Field type="menu" id="view" defaultValue="config" >
+				<Label>Select a list to configure:</Label>
 				<List>
-					<Option value="device">Single Device</Option>
-					<Option value="action">Action Group</Option>
+					<Option value="server">Server Configuration</Option>
+					<Option value="config">Homebridge Configuration</Option>
+					<Option value="devinclude">Homebridge Friendly Devices To Include</Option>
+					<Option value="devexclude">Indigo Devices To Exclude</Option>
+					<Option value="actinclude">Action Groups To Include</Option>
+					<Option value="actexclude">Action Groups To Exclude</Option>
+					<Option value="treatasswitch">Treat As Switches</Option>
+					<Option value="treataslock">Treat As Locks</Option>
+					<Option value="treatasdoor">Treat As Doors</Option>
+					<Option value="treatasgarage">Treat As Garage Doors</Option>
+					<Option value="treataswindows">Treat As Windows</Option>
+					<Option value="treatasdrapes">Treat As Window Coverings</Option>
 				</List>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
+	
+			<Field id="sep_hbselection" type="separator" />
 			
-			<Field id="deviceOn" type="menu" visibleBindingId="methodOn" visibleBindingValue="device">
-				<Label>Device:</Label>
-				<List class="indigo.devices" />
-				<CallbackMethod>formFieldChanged</CallbackMethod>
+			<!-- *********** SERVER *********** -->
+	
+			<Field type="label" id="lbl_indigoserver" visibleBindingId="view" visibleBindingValue="server" >
+				<Label>Remote Homebridge server config coming soon, in the meantime this is hard-coded to your Indigo server</Label>
 			</Field>
 			
-			<Field type="menu" id="deviceActionOn" defaultValue="turnOn" visibleBindingId="methodOn" visibleBindingValue="device">
-				<Label>Action:</Label>
-				<List class="self" filter="#deviceactions#[index=deviceActionOn, srcfield=deviceOn, allowui=true]" method="getCustomList" dynamicReload="true"/>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>
-			
-			<!-- ** ACTION FIELD 1 ** -->
-			<Field type="menu" id="optionGroupOn1" defaultValue="hidden" hidden="true">
-				<Label>GROUP 1 DISPLAY</Label>
-				<List>
-					<Option value="hidden">Hidden</Option>
-					<Option value="textfield">Text Field</Option>
-					<Option value="menu">Menu</Option>
-					<Option value="list">List</Option>
-					<Option value="checkbox">Checkbox</Option>
-					<Option value="invtxt">Invisible text field</Option>
-					<Option value="invmnu">Invisible menu field</Option>
-					<Option value="invlst">Invisible list field</Option>
-					<Option value="invchk">Invisible checkbox field</Option>
-				</List>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>
-			
-			<Field id="optionLabelOn1" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupOn1" visibleBindingValue="textfield,menu,list">
-				<Label>Field:</Label>
-			</Field>
-			
-			<Field id="checkValueOn1" type="checkbox" visibleBindingId="optionGroupOn1" visibleBindingValue="checkbox">
+			<Field type="checkbox" id="indigoServer" defaultValue="true" hidden="true" visibleBindingId="view" visibleBindingValue="server">
 				<Label> </Label>
-				<Description>Enable</Description>
-			</Field>
-			
-			<Field id="strValueOn1" type="textfield" visibleBindingId="optionGroupOn1" visibleBindingValue="textfield">
-				<Label>Value:</Label>
-			</Field>
-			
-			<Field type="menu" id="menuValueOn1" defaultValue="on" visibleBindingId="optionGroupOn1" visibleBindingValue="menu">
-				<Label>Value:</Label>
-				<List class="self" filter="#actionoptionlist#[index=menuValueOn1, group=1, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<Description>Homebridge is on the Indigo server</Description>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
-			
-			<Field type="list" id="listValueOn1" defaultValue="on" visibleBindingId="optionGroupOn1" visibleBindingValue="list">
-				<Label>Value:</Label>
-				<List class="self" filter="#actionoptionlist#[index=listValueOn1, group=1, method=Pass]" method="getCustomList" dynamicReload="true"/>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
+	
+			<Field type="textfield" id="computerip" defaultValue="192.168.1.1" visibleBindingId="indigoServer" visibleBindingValue="false">
+				<Label>Remote Mac IP Address:</Label>
 			</Field>
 			
-			<!-- ** ACTION FIELD 2 ** -->
-			<Field type="menu" id="optionGroupOn2" defaultValue="hidden" hidden="true">
-				<Label>GROUP 2 DISPLAY</Label>
-				<List>
-					<Option value="hidden">Hidden</Option>
-					<Option value="textfield">Text Field</Option>
-					<Option value="menu">Menu</Option>
-					<Option value="list">List</Option>
-					<Option value="checkbox">Checkbox</Option>
-					<Option value="invtxt">Invisible text field</Option>
-					<Option value="invmnu">Invisible menu field</Option>
-					<Option value="invlst">Invisible list field</Option>
-					<Option value="invchk">Invisible checkbox field</Option>
-				</List>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
+			<Field type="textfield" id="username" defaultValue="administrator" visibleBindingId="indigoServer" visibleBindingValue="false" >
+				<Label>User Name:</Label>
 			</Field>
 			
-			<Field id="optionLabelOn2" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupOn2" visibleBindingValue="textfield,menu,list">
-				<Label>Field:</Label>
+			<Field type="textfield" id="password" defaultValue="password" visibleBindingId="indigoServer" visibleBindingValue="false" >
+				<Label>Password:</Label>
 			</Field>
 			
-			<Field id="checkValueOn2" type="checkbox" visibleBindingId="optionGroupOn2" visibleBindingValue="checkbox">
+			<Field type="textfield" id="hbpin" defaultValue="031-45-154" visibleBindingId="indigoServer" visibleBindingValue="false" >
+				<Label>Homebridge PIN:</Label>
+			</Field>
+	
+			<!-- *********** CONFIG *********** -->
+	
+			<Field type="textfield" id="name" defaultValue="My Indigo Server" visibleBindingId="view" visibleBindingValue="config" >
+				<Label>Name:</Label>
+			</Field>
+	
+			<Field type="textfield" id="accessory" defaultValue="" visibleBindingId="view" visibleBindingValue="config" >
+				<Label>Accessory name prefix:</Label>
+			</Field>
+	
+			<Field type="checkbox" id="celsius" defaultValue="false" visibleBindingId="view" visibleBindingValue="config">
 				<Label> </Label>
-				<Description>Enable</Description>
+				<Description>Show thermostats in Celsius</Description>
+			</Field>
+	
+			<!-- *********** INCLUDE *********** -->
+	
+			<Field type="label" id="lbl_devinclude" visibleBindingId="view" visibleBindingValue="devinclude" alwaysUseInDialogHeightCalc="true">
+				<Label>Devices you want included in Homebridge.  This list impacts other lists, if you include a device here you cannot exclude it (unless you select All) and if you don't include it here you cannot select it in any of the device type lists.
+		
+		</Label>
 			</Field>
 			
-			<Field id="strValueOn2" type="textfield" visibleBindingId="optionGroupOn2" visibleBindingValue="textfield">
-				<Label>Value:</Label>
-			</Field>
-			
-			<Field type="menu" id="menuValueOn2" defaultValue="on" visibleBindingId="optionGroupOn2" visibleBindingValue="menu">
-				<Label>Value:</Label>
-				<List class="self" filter="#actionoptionlist#[index=menuValueOn2, group=2, method=Pass]" method="getCustomList" dynamicReload="true"/>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>
-			
-			<Field type="list" id="listValueOn2" defaultValue="on" visibleBindingId="optionGroupOn2" visibleBindingValue="list">
-				<Label>Value:</Label>
-				<List class="self" filter="#actionoptionlist#[index=listValueOn2, group=2, method=Pass]" method="getCustomList" dynamicReload="true"/>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>	
-			
-			<!-- ** ACTION FIELD 3 ** -->
-			<Field type="menu" id="optionGroupOn3" defaultValue="hidden" hidden="true">
-				<Label>GROUP 3 DISPLAY</Label>
-				<List>
-					<Option value="hidden">Hidden</Option>
-					<Option value="textfield">Text Field</Option>
-					<Option value="menu">Menu</Option>
-					<Option value="list">List</Option>
-					<Option value="checkbox">Checkbox</Option>
-					<Option value="invtxt">Invisible text field</Option>
-					<Option value="invmnu">Invisible menu field</Option>
-					<Option value="invlst">Invisible list field</Option>
-					<Option value="invchk">Invisible checkbox field</Option>
-				</List>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>
-			
-			<Field id="optionLabelOn3" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupOn3" visibleBindingValue="textfield,menu,list">
-				<Label>Field:</Label>
-			</Field>
-			
-			<Field id="checkValueOn3" type="checkbox" visibleBindingId="optionGroupOn3" visibleBindingValue="checkbox">
+			<Field type="checkbox" id="hideWrappedItems" defaultValue="true" visibleBindingId="view" visibleBindingValue="devinclude">
 				<Label> </Label>
-				<Description>Enable</Description>
-			</Field>
-			
-			<Field id="strValueOn3" type="textfield" visibleBindingId="optionGroupOn3" visibleBindingValue="textfield">
-				<Label>Value:</Label>
-			</Field>
-			
-			<Field type="menu" id="menuValueOn3" defaultValue="on" visibleBindingId="optionGroupOn3" visibleBindingValue="menu">
-				<Label>Value:</Label>
-				<List class="self" filter="#actionoptionlist#[index=menuValueOn3, group=3, method=Pass]" method="getCustomList" dynamicReload="true"/>
+				<Description>Exclude wrapped devices from the lists</Description>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
 			
-			<Field type="list" id="listValueOn3" defaultValue="on" visibleBindingId="optionGroupOn3" visibleBindingValue="list">
-				<Label>Value:</Label>
-				<List class="self" filter="#actionoptionlist#[index=listValueOn3, group=3, method=Pass]" method="getCustomList" dynamicReload="true"/>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>					
-			
-			<!-- ** END ACTION FIELDS ** -->
-			
-			<Field type="checkbox" id="deviceOnShowStates" defaultValue="false" hidden="true">
-				<Label> </Label>
-				<Description>Determines if the user should provide a state and value to indicate status</Description>
-			</Field>
-			
-			<Field type="menu" id="deviceOnState" defaultValue="" visibleBindingId="deviceOnShowStates" visibleBindingValue="true">
-				<Label>State indicating On:</Label>
-				<List class="self" filter="#devicestates#[index=deviceOnState, srcfield=deviceOn, allowui=True]" method="getCustomList" dynamicReload="true"/>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>
-			
-			<Field type="textfield" id="deviceOnStateValue" defaultValue="" visibleBindingId="deviceOnShowStates" visibleBindingValue="true">
-				<Label>State value indicating On:</Label>
-			</Field>
-			
-			<Field id="deviceListOn" type="list" rows="8" visibleBindingId="methodOn" visibleBindingValue="list">
+			<Field id="devinclude" type="list" rows="12" defaultValue="-all-" visibleBindingId="view" visibleBindingValue="devinclude" alwaysUseInDialogHeightCalc="true">
 				<Label>Devices:</Label>
-				<List class="indigo.devices" />
+				<List class="self" filter="#plugin#[index=devinclude, callback=listHBFriendly, ref=hideWrappedItems]" method="getCustomList" dynamicReload="true"/>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
-			
-			<Field id="actionOn" type="menu" visibleBindingId="methodOn" visibleBindingValue="action">
-				<Label>Action group:</Label>
-				<List class="indigo.actionGroups" />
+	
+			<!-- *********** EXCLUDE *********** -->
+	
+			<Field type="label" id="lbl_devexclude" visibleBindingId="view" visibleBindingValue="devexclude">
+				<Label>Devices you want excluded from Homebridge that you have initially included.
+		
+		</Label>
 			</Field>
-			
-			<Field id="sep_on" type="separator" />
-			
-			<!-- *********** OFF *********** -->
-			
-			<Field type="menu" id="methodOffMaster" defaultValue="passthrough" >
-				<Label>Off method:</Label>
-				<List>
-					<Option value="passthrough">Pass Through</Option>
-					<Option value="on">Use On Method</Option>
-					<Option value="device">Single Device</Option>
-					<Option value="action">Action Group</Option>
-				</List>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>
-			
-			<Field type="menu" id="methodOff" defaultValue="hidden" hidden="true">
-				<Label>Changed depending on methodOffMaster</Label>
-				<List>
-					<Option value="hidden">Hidden</Option>
-					<Option value="device">Single Device</Option>
-					<Option value="action">Action Group</Option>
-				</List>
-			</Field>
-			
-			<Field id="deviceOff" type="menu" visibleBindingId="methodOff" visibleBindingValue="device">
-				<Label>Device:</Label>
-				<List class="indigo.devices" />
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>
-			
-			<Field type="menu" id="deviceActionOff" defaultValue="turnOn" visibleBindingId="methodOff" visibleBindingValue="device">
-				<Label>Action:</Label>
-				<List class="self" filter="#deviceactions#[index=deviceActionOff, srcfield=deviceOff, allowui=true]" method="getCustomList" dynamicReload="true"/>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>
-			
-			<!-- ** ACTION FIELD 1 ** -->
-			<Field type="menu" id="optionGroupOff1" defaultValue="hidden" hidden="true">
-				<Label>GROUP 1 DISPLAY</Label>
-				<List>
-					<Option value="hidden">Hidden</Option>
-					<Option value="textfield">Text Field</Option>
-					<Option value="menu">Menu</Option>
-					<Option value="list">List</Option>
-					<Option value="checkbox">Checkbox</Option>
-					<Option value="invtxt">Invisible text field</Option>
-					<Option value="invmnu">Invisible menu field</Option>
-					<Option value="invlst">Invisible list field</Option>
-					<Option value="invchk">Invisible checkbox field</Option>
-				</List>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>
-			
-			<Field id="optionLabelOff1" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupOff1" visibleBindingValue="textfield,menu,list">
-				<Label>Field:</Label>
-			</Field>
-			
-			<Field id="checkValueOff1" type="checkbox" visibleBindingId="optionGroupOff1" visibleBindingValue="checkbox">
-				<Label> </Label>
-				<Description>Enable</Description>
-			</Field>
-			
-			<Field id="strValueOff1" type="textfield" visibleBindingId="optionGroupOff1" visibleBindingValue="textfield">
-				<Label>Value:</Label>
-			</Field>
-			
-			<Field type="menu" id="menuValueOff1" defaultValue="on" visibleBindingId="optionGroupOff1" visibleBindingValue="menu">
-				<Label>Value:</Label>
-				<List class="self" filter="#actionoptionlist#[index=menuValueOff1, group=1, method=Pass]" method="getCustomList" dynamicReload="true"/>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>
-			
-			<Field type="list" id="listValueOff1" defaultValue="on" visibleBindingId="optionGroupOff1" visibleBindingValue="list">
-				<Label>Value:</Label>
-				<List class="self" filter="#actionoptionlist#[index=listValueOff1, group=1, method=Pass]" method="getCustomList" dynamicReload="true"/>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>
-			
-			<!-- ** ACTION FIELD 2 ** -->
-			<Field type="menu" id="optionGroupOff2" defaultValue="hidden" hidden="true">
-				<Label>GROUP 2 DISPLAY</Label>
-				<List>
-					<Option value="hidden">Hidden</Option>
-					<Option value="textfield">Text Field</Option>
-					<Option value="menu">Menu</Option>
-					<Option value="list">List</Option>
-					<Option value="checkbox">Checkbox</Option>
-					<Option value="invtxt">Invisible text field</Option>
-					<Option value="invmnu">Invisible menu field</Option>
-					<Option value="invlst">Invisible list field</Option>
-					<Option value="invchk">Invisible checkbox field</Option>
-				</List>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>
-			
-			<Field id="optionLabelOff2" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupOff2" visibleBindingValue="textfield,menu,list">
-				<Label>Field:</Label>
-			</Field>
-			
-			<Field id="checkValueOff2" type="checkbox" visibleBindingId="optionGroupOff2" visibleBindingValue="checkbox">
-				<Label> </Label>
-				<Description>Enable</Description>
-			</Field>
-			
-			<Field id="strValueOff2" type="textfield" visibleBindingId="optionGroupOff2" visibleBindingValue="textfield">
-				<Label>Value:</Label>
-			</Field>
-			
-			<Field type="menu" id="menuValueOff2" defaultValue="on" visibleBindingId="optionGroupOff2" visibleBindingValue="menu">
-				<Label>Value:</Label>
-				<List class="self" filter="#actionoptionlist#[index=menuValueOff2, group=2, method=Pass]" method="getCustomList" dynamicReload="true"/>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>
-			
-			<Field type="list" id="listValueOff2" defaultValue="on" visibleBindingId="optionGroupOff2" visibleBindingValue="list">
-				<Label>Value:</Label>
-				<List class="self" filter="#actionoptionlist#[index=listValueOff2, group=2, method=Pass]" method="getCustomList" dynamicReload="true"/>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>	
-			
-			<!-- ** ACTION FIELD 3 ** -->
-			<Field type="menu" id="optionGroupOff3" defaultValue="hidden" hidden="true">
-				<Label>GROUP 3 DISPLAY</Label>
-				<List>
-					<Option value="hidden">Hidden</Option>
-					<Option value="textfield">Text Field</Option>
-					<Option value="menu">Menu</Option>
-					<Option value="list">List</Option>
-					<Option value="checkbox">Checkbox</Option>
-					<Option value="invtxt">Invisible text field</Option>
-					<Option value="invmnu">Invisible menu field</Option>
-					<Option value="invlst">Invisible list field</Option>
-					<Option value="invchk">Invisible checkbox field</Option>
-				</List>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>
-			
-			<Field id="optionLabelOff3" type="textfield" defaultValue="" readonly="true" visibleBindingId="optionGroupOff3" visibleBindingValue="textfield,menu,list">
-				<Label>Field:</Label>
-			</Field>
-			
-			<Field id="checkValueOff3" type="checkbox" visibleBindingId="optionGroupOff3" visibleBindingValue="checkbox">
-				<Label> </Label>
-				<Description>Enable</Description>
-			</Field>
-			
-			<Field id="strValueOff3" type="textfield" visibleBindingId="optionGroupOff3" visibleBindingValue="textfield">
-				<Label>Value:</Label>
-			</Field>
-			
-			<Field type="menu" id="menuValueOff3" defaultValue="on" visibleBindingId="optionGroupOff3" visibleBindingValue="menu">
-				<Label>Value:</Label>
-				<List class="self" filter="#actionoptionlist#[index=menuValueOff3, group=3, method=Pass]" method="getCustomList" dynamicReload="true"/>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>
-			
-			<Field type="list" id="listValueOff3" defaultValue="on" visibleBindingId="optionGroupOff3" visibleBindingValue="list">
-				<Label>Value:</Label>
-				<List class="self" filter="#actionoptionlist#[index=listValueOff3, group=3, method=Pass]" method="getCustomList" dynamicReload="true"/>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>			
-			
-			<Field type="checkbox" id="deviceOffShowStates" defaultValue="false" hidden="true">
-				<Label> </Label>
-				<Description>Determines if the user should provide a state and value to indicate status</Description>
-			</Field>
-			
-			<Field type="menu" id="deviceOffState" defaultValue="" visibleBindingId="deviceOffShowStates" visibleBindingValue="true">
-				<Label>State indicating Off:</Label>
-				<List class="self" filter="#devicestates#[index=deviceOffState, srcfield=deviceOff, allowui=True]" method="getCustomList" dynamicReload="true"/>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>
-			
-			<Field type="textfield" id="deviceOffStateValue" defaultValue="" visibleBindingId="deviceOffShowStates" visibleBindingValue="true">
-				<Label>State value indicating Off:</Label>
-			</Field>
-			
-			<Field id="deviceListOff" type="list" rows="8" visibleBindingId="methodOff" visibleBindingValue="list">
+	
+			<Field id="devexclude" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="devexclude">
 				<Label>Devices:</Label>
-				<List class="indigo.devices" />
+				<List class="self" filter="#plugin#[index=devexclude, callback=listHBExclude, ref=devinclude]" method="getCustomList" dynamicReload="true"/>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
-			
-			<Field id="actionOff" type="menu" visibleBindingId="methodOff" visibleBindingValue="action">
-				<Label>Action group:</Label>
-				<List class="indigo.actionGroups" />
+	
+			<!-- *********** INCLUDE ACTION GROUPS *********** -->
+	
+			<Field type="label" id="lbl_actinclude" visibleBindingId="view" visibleBindingValue="actinclude" >
+				<Label>Action groups you want included in Homebridge.  This list impacts other lists, if you include an action group here you cannot exclude it (unless you select All) and if you don't include it here you cannot select it in any of the device type lists.
+		
+		</Label>
 			</Field>
-			
-			<Field id="sep_off" type="separator" />
-			
-			<!-- *********** COMMON *********** -->
-			
-			<Field type="menu" id="treatAs" defaultValue="switch" >
-				<Label>Type of wrapper:</Label>
-				<List>
-					<Option value="switch">Switch</Option>
-					<Option value="lock">Lock</Option>
-					<Option value="door">Door</Option>
-					<Option value="garage">Garage Door</Option>
-					<Option value="window">Window</Option>
-					<Option value="drape">Window Covering (Curtain, Blind, etc)</Option>
-				</List>
-			</Field>
-			
-						
-			<!-- *********** CONDITIONS *********** -->
-			
-			<Field type="menu" id="conditions" defaultValue="none" visibleBindingId="isNewDevice" visibleBindingValue="false">
-				<Label>Conditions:</Label>
-				<List class="self" filter="#conditions_topmenu#" method="getCustomList" dynamicReload="true"/>
+	
+			<Field id="actinclude" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="actinclude" >
+				<Label>Action Groups:</Label>
+				<List class="self" filter="#plugin#[index=actinclude, callback=listHBActionGroups, ref=hideWrappedItems]" method="getCustomList" dynamicReload="true"/>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
-			
-			<Field id="placeholder" type="label" visibleBindingId="methodOff" visibleBindingValue="false" alwaysUseInDialogHeightCalc="true">
-				<Label>
-
-
-
-
-
-.</Label>
+	
+			<!-- *********** EXCLUDE ACTION GROUPS *********** -->
+	
+			<Field type="label" id="lbl_actexclude" visibleBindingId="view" visibleBindingValue="actexclude" >
+				<Label>Action groups you want excluded from Homebridge that you have initially included.
+		
+		</Label>
 			</Field>
-			
+	
+			<Field id="actexclude" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="actexclude" >
+				<Label>Action Groups:</Label>
+				<List class="self" filter="#plugin#[index=actexclude, callback=listHBActionGroupsExclude, ref=actinclude]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+	
+	
+			<!-- *********** SWITCHES *********** -->
+	
+			<Field type="label" id="lbl_treatasswitch" visibleBindingId="view" visibleBindingValue="treatasswitch">
+				<Label>Included devices that you want to be treated as an On/Off switch instead of a dimmer.  If you used a device or action in another "Treat As" it will not be shown in this list.
+		
+		</Label>
+			</Field>
+	
+			<Field id="treatasswitch" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="treatasswitch">
+				<Label>Items:</Label>
+				<List class="self" filter="#plugin#[list=treatasswitch, nocache=true, callback=listHBTreatAs]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+	
+			<!-- *********** LOCKS *********** -->
+	
+			<Field type="label" id="lbl_treataslock" visibleBindingId="view" visibleBindingValue="treataslock">
+				<Label>Included devices that you want to be treated as a lock that responds to lock and unlock Siri commands.  If you used a device or action in another "Treat As" it will not be shown in this list.
+		
+		</Label>
+			</Field>
+	
+			<Field id="treataslock" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="treataslock">
+				<Label>Items:</Label>
+				<List class="self" filter="#plugin#[list=treataslock, nocache=true, callback=listHBTreatAs]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+	
+			<!-- *********** DOORS *********** -->
+	
+			<Field type="label" id="lbl_treatasdoor" visibleBindingId="view" visibleBindingValue="treatasdoor">
+				<Label>Included devices that you want to be treated as a door that responds to open and close Siri commands.  If you used a device or action in another "Treat As" it will not be shown in this list.
+		
+		</Label>
+			</Field>
+	
+			<Field id="treatasdoor" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="treatasdoor">
+				<Label>Items:</Label>
+				<List class="self" filter="#plugin#[list=treatasdoor, nocache=true, callback=listHBTreatAs]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+	
+			<!-- *********** GARAGE DOORS *********** -->
+	
+			<Field type="label" id="lbl_treatasgarage" visibleBindingId="view" visibleBindingValue="treatasgarage">
+				<Label>Included devices that you want to be treated as a door that responds to open and close Siri commands.  If you used a device or action in another "Treat As" it will not be shown in this list.
+		
+		</Label>
+			</Field>
+	
+			<Field id="treatasgarage" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="treatasgarage">
+				<Label>Items:</Label>
+				<List class="self" filter="#plugin#[list=treatasgarage, nocache=true, callback=listHBTreatAs]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+	
+			<!-- *********** WINDOWS *********** -->
+	
+			<Field type="label" id="lbl_treataswindows" visibleBindingId="view" visibleBindingValue="treataswindows">
+				<Label>Included devices that you want to be treated as a window that responds to open and close Siri commands.  If you used a device or action in another "Treat As" it will not be shown in this list.
+		
+		</Label>
+			</Field>
+	
+			<Field id="treataswindows" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="treataswindows">
+				<Label>Items:</Label>
+				<List class="self" filter="#plugin#[list=treataswindows, nocache=true, callback=listHBTreatAs]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+	
+			<!-- *********** DRAPES *********** -->
+	
+			<Field type="label" id="lbl_treatasdrapes" visibleBindingId="view" visibleBindingValue="treatasdrapes">
+				<Label>Included devices that you want to be treated as a window coverings (drapes, blinds, curtains, etc) that responds to open, close and dimmer (as open to/close to) Siri commands.  If you used a device or action in another "Treat As" it will not be shown in this list.
+		
+		</Label>
+			</Field>
+	
+			<Field id="treatasdrapes" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="treatasdrapes">
+				<Label>Items:</Label>
+				<List class="self" filter="#plugin#[list=treatasdrapes, nocache=true, callback=listHBTreatAs]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+
 		</ConfigUI>
 		
 		<States>
@@ -2402,9 +2217,22 @@
 				<TriggerLabel>Current device state</TriggerLabel>
 				<ControlPageLabel>Current device state</ControlPageLabel>
 			</State>
+			
+			<State id="sep1">
+				<ValueType>Separator</ValueType>
+			</State>
+			
+			<State id="lastHealthCheck">
+				<ValueType>String</ValueType>
+				<TriggerLabel>Date and time of the last Homebridge process health check</TriggerLabel>
+				<ControlPageLabel>Date and time of the last Homebridge process health check</ControlPageLabel>
+			</State>
+			
 		</States>
-		<UiDisplayStateId>statedisplay</UiDisplayStateId>
+		<UiDisplayStateId>statedisplay</UiDisplayStateId>		
 	</Device>
+
+	
 	
 
 </Devices>

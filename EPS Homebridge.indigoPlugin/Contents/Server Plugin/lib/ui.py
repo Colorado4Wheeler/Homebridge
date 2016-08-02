@@ -67,6 +67,7 @@ class ui:
 
 			args = {}
 			index = ""
+			callback = ""
 	
 			if filter != "":
 				filter = filter.replace("[", "").replace("]","")
@@ -76,6 +77,9 @@ class ui:
 					args[valkey[0].lower().strip()] = valkey[1].strip()
 					if valkey[0].lower().strip() == "index":
 						index = valkey[1].strip()
+					if valkey[0].lower().strip() == "callback":
+						callback = valkey[1].strip()
+						
 
 			#indigo.server.log(unicode(index))
 			#if index != "": args["index"] = index
@@ -115,6 +119,11 @@ class ui:
 				return cache
 			
 			self.logger.threaddebug ("Generating custom list '{0}' (filter: {1}), typeId of {2}, targetId of {3} and arguments: {4}".format(listType, filter, str(typeId), str(targetId), unicode(args)))
+			
+			# Callback
+			if listType.lower() == "plugin" and callback != "":
+				func = getattr(self.factory.plugin, callback)
+				results = func (args, valuesDict)
 			
 			# System
 			if listType.lower() == "indigofolders":	results = self._getIndigoFolders (args, valuesDict)
@@ -265,7 +274,7 @@ class ui:
 						value = argValue
 						
 					# Now compare our value to the cached value
-					if unicode(value) != unicode(args[argName]):
+					if unicode(value) != unicode(field["args"][argName]):
 						#self.logger.warn ("Value {0} differs from value {1} for argument {2}, not returning cache".format(unicode(value), unicode(args[argName]), argName)) 
 						return False # The argument values passed don't match the argument values stored
 					
@@ -301,12 +310,13 @@ class ui:
 			
 			currentValid = False
 			default = ""
-
+			
 			for result in field["results"]:
 				if str(result[0]) == str(currentVal): 
+					#indigo.server.log(str(result[0]) + " == " + str(currentVal))
 					#indigo.server.log("1", isError=True)
 					currentValid = True	
-			
+				
 				if default == "": default = result[0]
 
 			if currentValid: return currentVal

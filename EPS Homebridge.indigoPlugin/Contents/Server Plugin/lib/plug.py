@@ -7,8 +7,11 @@ import indigo
 import logging
 import sys
 import random # for uniqueIdentifier
+import datetime
+from datetime import date, timedelta
 
 import ext
+import dtutil
 
 # ENUMS
 NOTHING = 0
@@ -19,6 +22,8 @@ class plug:
 	isSubscribedVariables = False
 	isSubscribedDevices = False
 	isSubscribedActionGroups = False
+	
+	lastDeviceLoaded = True # Initialize as the plugin starting up
 
 	#
 	# Initialize the  class
@@ -101,6 +106,35 @@ class plug:
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
 			return retval
+			
+	#
+	# Check to see if we have finished our loading
+	#
+	def isFinishedLoading (self):
+		try:
+			if self.lastDeviceLoaded:
+				try:
+					lastLoad = datetime.datetime.strptime (self.lastDeviceLoaded, "%Y-%m-%d %H:%M:%S")
+				except:
+					return False
+					
+				diff = dtutil.dateDiff ("seconds", indigo.server.getTime(), lastLoad)
+				if diff > 3:
+					self.lastDeviceLoaded = False
+					self.logger.info (self.factory.plugin.pluginDisplayName + " is loaded and ready to process")
+					return True
+				else:
+					return False
+				
+			else:
+				return True
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			return False
+			
+		return False
+		
 			
 	################################################################################
 	# PLUGIN ROUTINES
@@ -203,6 +237,8 @@ class plug:
 				
 				self._callBack (AFTER, [])
 				
+				self.isFinishedLoading() # Passive if we are ready, calculation if we are not - lightweight
+								
 				self.factory.plugin.sleep(1)
 				
 				
@@ -231,10 +267,10 @@ class plug:
 				if ext.valueValid (dev.states, "lastreset", True) == False: dev.updateStateOnServer("lastreset", indigo.server.getTime().strftime("%Y-%m-%d"))
 			
 			self.addPluginDeviceToCache (dev)
-						
+			
 			self._callBack (AFTER, [dev])
 			
-			#indigo.server.log(unicode(dev))
+			if self.lastDeviceLoaded: self.lastDeviceLoaded = indigo.server.getTime().strftime("%Y-%m-%d %H:%M:%S")
 			
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
@@ -305,6 +341,11 @@ class plug:
 	# Device updated (Indigo)
 	def deviceUpdated (self, origDev, newDev):
 		try:
+			if self.isFinishedLoading():
+				pass
+			else:
+				return
+			
 			if newDev.pluginId == self.factory.plugin.pluginId:
 				if len(origDev.pluginProps) > 0: 
 					self.pluginDeviceUpdated (origDev, newDev)
@@ -1102,8 +1143,12 @@ class plug:
 			# See if we cached a list that we can use for default values
 			if devId > 0:
 				for field, value in valuesDict.iteritems():
-					valuesDict[field] = self.factory.ui.getDefaultListItem (devId, field, value)	
-
+					if type(valuesDict[field]) is indigo.List: 
+						# We cannot default lists because they are multiple choice, skip them
+						pass
+					else:
+						valuesDict[field] = self.factory.ui.getDefaultListItem (devId, field, value)
+					
 			else:
 				# See if we have a unique ID we can use instead
 				if ext.valueValid (valuesDict, "uniqueIdentifier"):

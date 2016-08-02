@@ -1,6 +1,11 @@
 <?xml version="1.0"?>
 <!-- EPS (ColoradoFourWheeler) Plugin -->
 <MenuItems>
+	<MenuItem id="devTest">
+    	<Name>DEVELOPMENT TESTING ACTION</Name>
+    	<CallbackMethod>devTest</CallbackMethod>
+    </MenuItem>
+    
 	<MenuItem id="saveHB">
     	<Name>Save Homebridge Config</Name>
     	<CallbackMethod>menuSave</CallbackMethod>

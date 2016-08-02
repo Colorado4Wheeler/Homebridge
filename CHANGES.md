@@ -3,6 +3,25 @@ Release Notes
 
 Everything is still in BETA.  Some stuff won't work.  Overall the program works, just a few areas that haven't been enabled yet and lots of optimization yet to do.  Make sure you keep a backup copy of your existing config.json file just in case something doesn't work as planned.
 
+Version 0.5
+---------------
+
+* NOTE: The first time you reload the plugin under Beta 5 it will migrate your plugin preferences into a new Homebridge Server device located in the Homebridge Companion folder.
+* NOTE: Even though you currently CAN create multiple servers, don't!  It's not yet coded in and may cause problems if you try.
+* Added actions to the Wrapper to force a device state on/off/brightness in case you have something that can't determine it's own state and need to schedule a turn off for it (my TV Wrapper for instance stays on because the TV doesn't feedback it's current state and since both the On and Off commands for my TV are the same thing I cannot "turn it off" again without actually sending a power command to the TV)
+* Removed development template stuff from the Actions.xml
+* Added new Homebridge Server device to replace most of the HB plugin prefs.  When you start the plugin after this upgrade the plugin prefs will be migrated into a new Server device.  Plugin prefs now only show the HB parameters that are common to all HB servers
+* HB server lists (previously in plugin prefs) are now cached and load considerably faster on field changes
+* Fixed UI caching issue where the method was returning false negatives
+* Sped up the initial plugin load time
+* HB config save no longer excludes all devices that are the child of a Wrapper device in the configuration, it was not needed and just added more data to the config.json needlessly
+* Changed logic so that nothing can be excluded unless you select ALL for devices or actions
+* Fixed problem where the server device count mis-matched the config saving device counts
+* All devices being used with Homebridge are now monitored for any changes to their name (we aren't yet doing anything interesting with them but this is the start of that)
+* Removed Switch Wrappers from the plugin entirely now that general Wrappers have taken their place
+* The Server devices (really only one device right now) On/Off state will reflect if the Homebridge server is running or not
+* Enabled using the Server device's On/Off commands to turn on or off the Homebridge server
+
 Version 0.4
 ---------------
 
@@ -44,11 +63,8 @@ Development Notes
 Known Issues As Of The Most Current Release
 ---------------
 
-* In my environment (and this could be the result of just development, still investigating) when I went back into the plugin config all of the "treat as" lists showed nothing at all.  Worst case scenario they can be re-assigned again since it's easy to do but I need to get to the root of the problem and fix it
-* The plugin config window is a little slow, there are lots of custom lists being generated so caching needs to get added there
 * Conditions are not yet configured, waiting until the rest of the Switch Wrapper is done and working before adding more complexity
 * Everything is getting cached but we aren't doing anything interesting with restarting Homebridge when names or addresses change
-* Anything NOT a Wrapper device isn't currently being cached for changes to name or address
 * There's no feedback on Homebridge start/stop/restart/save and restart actions, just running in the blind - need to get feedback so we can test for success and failure
 * Need to add a way to check if Homebridge is running on the server, right now if you try to start it and it's running it will work because HB is configured to check for itself be we should be doing this ourselves
 * Need to watch action groups so we know if one of our On or Off action groups got ran so we can change the device state
@@ -56,15 +72,16 @@ Known Issues As Of The Most Current Release
 * When creating a new device if you don't go into On AND Off then warnings will log about not being able to find state '', the workaround for now is to make sure you define both On and Off instead of just letting the UI handle it
 * Multi I/O (IOLinc) devices don't set defaults like relays, dimmers and sensors in the UI, you have to hand configure the settings
 * While the icons are (somewhat) appropriate now, still need to tweak the actual display value since everything is essentially an Indigo dimmer we need the values to reflect the Wrapper type (i.e., open/closed, locked/unlocked, etc)
-* The device count shown in save config doesn't match the device count showin in the plugin config UI - its only off by one or two but need to tighten that up
 * After saving a device configuration the default view of the device is supposed to reset to the On config, but it's staying at where ever you left off
+* Need to remove Between and Contains from value operators, they won't be in the final release and are not coded in
+* Device address not getting updated on device creation
+* While the ability to have multiple servers is currently in the UI, it is not yet possible to manage multiple servers
 
 Wish List
 ---------------
 
 * Variable manipulation as On/Off/Dim commands.  It would be nice to say "turn on Ajax" and have the Ajax variable set itself to whatever you define
-* Speed up the Wrapper Device configuration form, it's a little slow because of so many calculations.  Why?  Because in order to "alias" or "wrap" a device for Homekit you need to make sure you mirror every aspect of that device so when you use Homekit enabled applications (like Eve) it shows you the current and correct state for your device - that takes some UI magic.
 * Create a auto-create menu option to create aliases for all HB friendly devices in a special folder to cut down on time to create everything by hand
 * Create an option window for running the various support dumps, they are pretty massive in this plugin and could use some fine tuning (general core factory work)
 * Create an option window for the different Homebridge commands to shorten up the plugin menu
-
+* Add a cross-plugin callback so that plugins can ask that they be defined as a certain type when included in Homebridge - this will be for when they are NOT wrapped (since wrapping overrides that kind of thing) but rather when they are just generally included.
