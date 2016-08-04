@@ -3,6 +3,17 @@ Release Notes
 
 Everything is still in BETA.  Some stuff won't work.  Overall the program works, just a few areas that haven't been enabled yet and lots of optimization yet to do.  Make sure you keep a backup copy of your existing config.json file just in case something doesn't work as planned.
 
+
+Version 0.7
+---------------
+
+* When a new Wrapper device is created it will raise an event telling it's connected Server Device to save the configuration and restart Homebridge in 5 minutes (giving the user time to add other devices, each add while the server is pending adds 5 minutes if the time remaining is less than 2 minutes)
+* Creating a new Wrapper device will correctly set the address of the device (until now it was only being set when the plugin got restarted)
+* NOTE TO SELF: Beta 6 was not tested well enough, several serious bugs popped up after releasing - bad developer...
+* Fixed oversight bug from beta 6 that disabled the plugcache and generated errors when creating a new Wrapper device when it tried to find the available actions for that device
+* Fixed a beta 6 bug that when adding the new server selection it broke the form automation where it would automatically select the default ON for on and OFF for off for a new Wrapper device
+* Fixed a beta 6 issue where I forgot to tell a changed server config to SAVE before it restarted
+
 Version 0.6
 ---------------
 
@@ -85,6 +96,9 @@ Known Issues As Of The Most Current Release
 * Device address not getting updated on device creation
 * While the ability to have multiple servers is currently in the UI, it is not yet possible to manage multiple servers
 * Possible wonki-ness with doors and locks and how Homebridge deals with them.  It seems like they may be seen opposite of Indigo in that Indigo reflects a locked door as OFF while Homebridge sees a locked door as ON - same with garage doors.  Case in point, as of this writing I'm looking at Indigo saying my front door is locked/off, my wrapper is also off but Eve says the door is unlocked, if I unlock the door in Indigo it reverses the problem.  It may be a general Homekit issue.
+* Changing a Wrapper type doesn't change it's address or icon properly
+* Copying a device does not raise a new device event, therefor it does not auto-restart Homebridge
+* setServerRestart doesn't seem to pass the description on new Wrapper devices
 
 Wish List
 ---------------
@@ -94,3 +108,6 @@ Wish List
 * Create an option window for running the various support dumps, they are pretty massive in this plugin and could use some fine tuning (general core factory work)
 * Create an option window for the different Homebridge commands to shorten up the plugin menu
 * Add a cross-plugin callback so that plugins can ask that they be defined as a certain type when included in Homebridge - this will be for when they are NOT wrapped (since wrapping overrides that kind of thing) but rather when they are just generally included.
+* Have Homebridge restart if a device wrapper is added or deleted
+* When creating new Wrapper devices do an audit of the server device if the option to exclude wrapped items is enabled so if we wrap an item that was previously sent to HB it now won't be
+* Have Homebridge restart if a device wrapped device is added or deleted

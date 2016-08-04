@@ -11,13 +11,18 @@
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
 			
+			<Field id="isServerSelected" type="checkbox" hidden="true" defaultValue="true">
+				<Label> </Label>
+				<Description>Lets us keep some things hidden until we get a callback that lets us toggle defaults</Description>
+			</Field>
+			
 			<Field id="isNewDevice" type="checkbox" hidden="true" defaultValue="true">
 				<Label> </Label>
 				<Description>Lets us keep some things hidden until we get a callback that lets us toggle defaults</Description>
 			</Field>
 			
 			<!-- Find out what kind of wrapper this is before showing any fields, this gives us a chance to set defaults when its selected -->
-			<Field type="menu" id="treatAs" defaultValue="dimmer" visibleBindingId="isNewDevice" visibleBindingValue="false" >
+			<Field type="menu" id="treatAs" defaultValue="dimmer" visibleBindingId="isServerSelected" visibleBindingValue="false" >
 				<Label>Type of wrapper:</Label>
 				<List>
 					<Option value="dimmer">Dimmer</Option>

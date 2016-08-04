@@ -36,7 +36,7 @@ class Plugin(indigo.PluginBase):
 
 	# Define the plugin-specific things our engine needs to know
 	TVERSION	= "3.2.1"
-	PLUGIN_LIBS = ["cache", "actions"] #["conditions", "cache", "actions"] #["cache"]
+	PLUGIN_LIBS = ["cache", "plugcache", "actions"] #["conditions", "cache", "actions"] #["cache"]
 	UPDATE_URL 	= ""
 	
 	#
@@ -1136,7 +1136,24 @@ class Plugin(indigo.PluginBase):
 			self.logger.error (ext.getException(e))	
 	
 	#
-	# Device updated
+	# Plugin device created
+	#
+	def onAfter_pluginDeviceCreated (self, dev):
+		try:
+			if dev.deviceTypeId == "Homebridge-Wrapper":
+				# We have to restart the server that this device is attached to so it can be recognized
+				if ext.valueValid (dev.pluginProps, "serverDevice", True):
+					self.checkDeviceAddress (dev)
+					self.setDeviceIcon (dev)
+					server = indigo.devices[int(dev.pluginProps["serverDevice"])]
+					self.menuSave()
+					self.setServerRestart (server, dev, "Wrapper device '{0}' was added to '{1}'".format(dev.name, server.name), 5, 120, 5)
+			
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+	#
+	# Plugin device updated
 	#			
 	def onAfter_pluginDeviceUpdated (self, origDev, newDev):
 		try:
@@ -1716,8 +1733,7 @@ class Plugin(indigo.PluginBase):
 						if ext.valueValid (valuesDict, "device" + m, True) == False: 
 							valuesDict["device" + m] = valuesDict["deviceOn"]
 							valuesDict["stateFromDevice" + m] = valuesDict["deviceOn"]
-							
-				
+						
 				# Don't set defaults unless we are looking at the section and we are not at "Do Not Implement"
 				if valuesDict["settingSelect"] == method and ext.valueValid (valuesDict, "method" + method) and valuesDict["method" + method] != "none":
 					if ext.valueValid (valuesDict, "method" + method):
@@ -1772,7 +1788,13 @@ class Plugin(indigo.PluginBase):
 						valuesDict["showStatusFrom" + method] = True
 						valuesDict["showValueAndOperator" + method] = True
 						valuesDict["showStateFromDevice" + method] = False
-					
+				
+			# We can't get here unless a server was selected, if its not yet been toggled then toggle and return so
+			# we don't change isNewDevice
+			if ext.valueValid (valuesDict, "isServerSelected", True):
+				if valuesDict["isServerSelected"]:
+					valuesDict["isServerSelected"] = False
+					return valuesDict	
 												
 			# LAST order of business, if we get here then we're no longer a new device	
 			valuesDict["isNewDevice"] = False	
@@ -1920,12 +1942,14 @@ class Plugin(indigo.PluginBase):
 				if prop == "itemcount": continue
 				if prop == "totalcount": continue
 				if prop == "wrappercount": continue
+				
+				needsRestart = True # If it didn't get caught yet then flag
 			
 			if needsRestart:
 				self.logger.warn ("'{0}' has had a configuration change, restarting the Homebridge server now".format(newDev.name))
-				self.menuReload()
+				self.menuSaveReload()
 
-			
+		
 	#
 	# We got notified of an interesting change, if the parent is a server and the change is a name then restart HB
 	#
@@ -1934,48 +1958,54 @@ class Plugin(indigo.PluginBase):
 			# If the parent is a server and the attribute is name then we need to queue up a Homebridge restart
 			dev = indigo.devices[changeInfo.parentId]
 			if dev.deviceTypeId == "Homebridge-Server" and changeInfo.name == "name":
-				if dev.states["restartPending"] == False:
-					# There isn't a restart pending, set the timer
-					d = indigo.server.getTime()
-					d = dtutil.dateAdd ("minutes", 1, d)
-					
-					self.logger.warn ("'{0}' name changed to '{1}', the Homebridge server will restart at {2}".format(origObj.name, newObj.name, d.strftime("%Y-%m-%d %H:%M:%S")))
-					states = iutil.updateState ("restartTime", d.strftime("%Y-%m-%d %H:%M:%S"))
-					states = iutil.updateState ("restartPending", True, states)
-					dev.updateStatesOnServer (states)
-				
-				else:
-					# If the restart is for less than 5 minutes from now then let the user know
-					d = indigo.server.getTime()
-					restart = datetime.datetime.strptime (dev.states["restartTime"], "%Y-%m-%d %H:%M:%S")
-					secondsLeft = dtutil.dateDiff ("seconds", restart, d)
-				
-					if secondsLeft < 20:
-						# It's near at hand, extend in case they need to rename other devices
-						d = dtutil.dateAdd ("minutes", 1, d)
-					
-						self.logger.warn ("'{0}' name changed to '{1}', the Homebridge server was set to restart in under 20 seconds, extended to {2}".format(origObj.name, newObj.name, d.strftime("%Y-%m-%d %H:%M:%S")))
-						states = iutil.updateState ("restartTime", d.strftime("%Y-%m-%d %H:%M:%S"))
-						dev.updateStatesOnServer (states)
-						
-					elif secondsLeft < 300:
-						self.logger.warn ("'{0}' name changed to '{1}', the Homebridge server is already set to restart at {2}".format(origObj.name, newObj.name, restart.strftime("%Y-%m-%d %H:%M:%S")))	
-						
-					else:
-						# It's further into the future, make it more immediate
-						d = dtutil.dateAdd ("minutes", 1, d)
-					
-						self.logger.warn ("'{0}' name changed to '{1}', the Homebridge server will restart at {2}".format(origObj.name, newObj.name, d.strftime("%Y-%m-%d %H:%M:%S")))
-						states = iutil.updateState ("restartTime", d.strftime("%Y-%m-%d %H:%M:%S"))
-						dev.updateStatesOnServer (states)
-								
-					
+				self.setServerRestart (dev, origObj, "'{0}' name changed to '{1}'".format(origObj.name, newObj.name))
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))		
 		
 		
+	#
+	# Set the server to restart
+	#
+	def setServerRestart (self, dev, origDev, description, restartMinutes = 1, restartAtSeconds = 20, addMinutes = 1):
+		try:
+			if dev.states["restartPending"] == False:
+				# There isn't a restart pending, set the timer
+				d = indigo.server.getTime()
+				d = dtutil.dateAdd ("minutes", restartMinutes, d)
+				
+				self.logger.warn ("{0}, the Homebridge server will restart at {1}".format(description, d.strftime("%Y-%m-%d %H:%M:%S")))
+				states = iutil.updateState ("restartTime", d.strftime("%Y-%m-%d %H:%M:%S"))
+				states = iutil.updateState ("restartPending", True, states)
+				dev.updateStatesOnServer (states)
+			
+			else:
+				# If the restart is for less than 5 minutes from now then let the user know
+				d = indigo.server.getTime()
+				restart = datetime.datetime.strptime (dev.states["restartTime"], "%Y-%m-%d %H:%M:%S")
+				secondsLeft = dtutil.dateDiff ("seconds", restart, d)
+			
+				if secondsLeft < restartAtSeconds:
+					# It's near at hand, extend in case they need to rename other devices
+					d = dtutil.dateAdd ("minutes", addMinutes, d)
+				
+					self.logger.warn ("{0}, the Homebridge server was set to restart in under " + str(restartAtSeconds) + " seconds, extended to {1}".format(description, d.strftime("%Y-%m-%d %H:%M:%S")))
+					states = iutil.updateState ("restartTime", d.strftime("%Y-%m-%d %H:%M:%S"))
+					dev.updateStatesOnServer (states)
+					
+				elif secondsLeft < (restartMinutes * 60):
+					self.logger.warn ("{0}, the Homebridge server is already set to restart at {1}".format(description, restart.strftime("%Y-%m-%d %H:%M:%S")))	
+					
+				else:
+					# It's further into the future, make it more immediate
+					d = dtutil.dateAdd ("minutes", restartMinutes, d)
+				
+					self.logger.warn ("{0}, the Homebridge server will restart at {1}".format(description, d.strftime("%Y-%m-%d %H:%M:%S")))
+					states = iutil.updateState ("restartTime", d.strftime("%Y-%m-%d %H:%M:%S"))
+					dev.updateStatesOnServer (states)	
 		
+		except Exception as e:
+			self.logger.error (ext.getException(e))		
 		
 	#
 	# A watched action group has changed
