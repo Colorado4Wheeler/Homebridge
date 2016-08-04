@@ -36,7 +36,7 @@ class Plugin(indigo.PluginBase):
 
 	# Define the plugin-specific things our engine needs to know
 	TVERSION	= "3.2.1"
-	PLUGIN_LIBS = ["cache", "conditions", "actions"] #["conditions", "cache", "actions"] #["cache"]
+	PLUGIN_LIBS = ["cache", "actions"] #["conditions", "cache", "actions"] #["cache"]
 	UPDATE_URL 	= ""
 	
 	#
@@ -86,6 +86,10 @@ class Plugin(indigo.PluginBase):
 				#d = dtutil.dateDiff ("seconds", indigo.server.getTime(), datetime.datetime.strptime (indigo.devices[devId].states["lastHealthCheck"], "%Y-%m-%d %H:%M:%S"))
 				#if indigo.devices[devId].states["onOffState"] and d > 15: self.checkHealth (indigo.devices[devId])
 				#if indigo.devices[devId].states["onOffState"] == False and d > 2: self.checkHealth (indigo.devices[devId])
+				
+				if indigo.devices[devId].states["restartPending"] and indigo.devices[devId].states["onOffState"]:
+					d = dtutil.dateDiff ("seconds", datetime.datetime.strptime (indigo.devices[devId].states["restartTime"], "%Y-%m-%d %H:%M:%S"), indigo.server.getTime())
+					if d <= 0: self.menuReload()
 			
 		except Exception as e:
 			self.logger.error (ext.getException(e))
@@ -244,8 +248,7 @@ class Plugin(indigo.PluginBase):
 	def devTest (self):
 		try:
 			indigo.server.log ("These are not the droids you are looking for.  Move along.  Move along.")
-			plugin = indigo.server.getPlugin ('com.eps.indigoplugin.homebridge')
-			indigo.server.log(unicode(plugin))
+			
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
@@ -1425,8 +1428,7 @@ class Plugin(indigo.PluginBase):
 			self.logger.error (ext.getException(e))		
 			
 		return False	
-	
-	
+		
 	#
 	# Process a child device's change
 	#
@@ -1443,7 +1445,7 @@ class Plugin(indigo.PluginBase):
 				
 				#indigo.server.log(unicode(changeInfo))
 			
-				if parent.pluginProps["getStatusFrom" + method] != getStatusMethod: continue # wrong event, variables handled elsewhere
+				if parent.pluginProps["getStatusFrom" + method] != getStatusMethod: continue # wrong event
 				
 				if getStatusMethod == "state":
 					if parent.pluginProps["stateFromDevice" + method] != str(child.id): continue # wrong child, move on
@@ -1484,7 +1486,18 @@ class Plugin(indigo.PluginBase):
 						changedMethod.append(method)	
 					else:
 						# See if it's in the first position
-						if propValue[0:len(childValue)] == childValue: changeMethod.append(method)
+						if propValue[0:len(childValue)] == childValue: changedMethod.append(method)
+						
+				elif parent.pluginProps["valueOperator" + method] == "notin":
+					stringIsIn = string.find (propValue, childValue)
+					if stringIsIn > -1: 
+						pass	
+					else:
+						# See if it's in the first position
+						if propValue[0:len(childValue)] == childValue: 
+							pass
+						else:
+							changedMethod.append(method)
 		
 			if len(changedMethod) == 0:
 				pass	
@@ -1578,26 +1591,38 @@ class Plugin(indigo.PluginBase):
 	#
 	# Validate the wrapper config
 	#
-	def validateDeviceConfigUi(self, valuesDict, typeId, devId):
+	def onAfter_validateDeviceConfigUi(self, valuesDict, typeId, devId):
+		errorDict = indigo.Dict()
+		success = True
+		
 		try:
-			# If the device state area is hidden then make sure the selected device matches - this is a safeguard
-			# against them changing the main device after the defaults got set
-			for i in range (1, self.TOTALDIMMING + 2 + 1): # Dimmers + On + Off + 1 (since we aren't starting at 0)
-				method = "Dim" + str(i)
-				if i == self.TOTALDIMMING + 1: method = "On"
-				if i == self.TOTALDIMMING + 2: method = "Off"
+			if typeId == "Homebridge-Wrapper":
+				# If the device state area is hidden then make sure the selected device matches - this is a safeguard
+				# against them changing the main device after the defaults got set
+				for i in range (1, self.TOTALDIMMING + 2 + 1): # Dimmers + On + Off + 1 (since we aren't starting at 0)
+					method = "Dim" + str(i)
+					if i == self.TOTALDIMMING + 1: method = "On"
+					if i == self.TOTALDIMMING + 2: method = "Off"
 				
-				if valuesDict["showStateFromDevice" + method] == False:
-					# We are hiding the device state, sync the device with the deviceIsOn device
-					valuesDict["stateFromDevice" + method] = valuesDict["device" + method]
+					if valuesDict["showStateFromDevice" + method] == False:
+						# We are hiding the device state, sync the device with the deviceIsOn device
+						valuesDict["stateFromDevice" + method] = valuesDict["device" + method]
 					
-			# Make sure no matter what config were were viewing that we return to the On view
-			valuesDict["settingSelect"] = "On"
+				# Make sure no matter what config were were viewing that we return to the On view
+				if valuesDict["settingSelect"] != "On": 
+					valuesDict["settingSelect"] = "On"
+			
+					# Just to be completely safe, run the form value changes
+					valuesDict = self.onAfter_formFieldChanged (valuesDict, typeId, devId)
+					
+			if typeId == "Homebridge-Server":
+				if valuesDict["view"] != "server": 
+					valuesDict["view"] = "server"
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
 			
-		return valuesDict
+		return (success, valuesDict, errorDict)
 	
 	################################################################################
 	# DEVICE CONFIG UI
@@ -1611,7 +1636,7 @@ class Plugin(indigo.PluginBase):
 
 		try:
 			# Common
-			ret.append (("cnd", "Conditions"))
+			#ret.append (("cnd", "Conditions"))
 			ret.append (("On", "On"))
 			ret.append (("Off", "Off"))
 			
@@ -1659,10 +1684,7 @@ class Plugin(indigo.PluginBase):
 			if typeId == "Homebridge-Server": 
 				return self.onAfter_formFieldChanged_Server (valuesDict, typeId, devId)
 		
-			if valuesDict["settingSelect"] == "":
-				# Brand new device but no action selected yet, set the default action and return
-				valuesDict["settingSelect"] = "On"
-				return valuesDict
+			if valuesDict["settingSelect"] == "": valuesDict["settingSelect"] = "On" # new device default
 				
 			# If they changed from a device supporting variances to one that doesn't then handle that here
 			if valuesDict["settingSelect"][0:3] == "Dim":
@@ -1752,7 +1774,7 @@ class Plugin(indigo.PluginBase):
 						valuesDict["showStateFromDevice" + method] = False
 					
 												
-			# LAST order of business, if we get here then we're no longer a new device			
+			# LAST order of business, if we get here then we're no longer a new device	
 			valuesDict["isNewDevice"] = False	
 				
 		except Exception as e:
@@ -1869,41 +1891,121 @@ class Plugin(indigo.PluginBase):
 					if re.search (" homebridge ", p):
 						isRunning = True
 						
-				if isRunning:
+				if isRunning and server.states["onOffState"] == False:
 					states = iutil.updateState ("onOffState", True, states)
+					states = iutil.updateState ("restartPending", False)
+					
 					if server.states["onOffState"] == False: self.logger.info ("The Homebridge server '{0}' is back up".format(server.name))
-				else:
+					server.updateStatesOnServer (states)
+					
+				if isRunning == False and server.states["onOffState"]:
 					states = iutil.updateState ("onOffState", False, states)
 					if server.states["onOffState"]: self.logger.warn ("The Homebridge server '{0}' has stopped".format(server.name))
-					
-				server.updateStatesOnServer (states)
+					server.updateStatesOnServer (states)
+				
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
 		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
 	
+	#
+	# Plugin device config changed
+	#
+	def onAfter_pluginDevicePropChanged (self, origDev, newDev, changedProps):	
+		if newDev.deviceTypeId == "Homebridge-Server":
+			needsRestart = False
 			
+			for prop in changedProps:
+				if prop == "view": continue
+				if prop == "itemcount": continue
+				if prop == "totalcount": continue
+				if prop == "wrappercount": continue
+			
+			if needsRestart:
+				self.logger.warn ("'{0}' has had a configuration change, restarting the Homebridge server now".format(newDev.name))
+				self.menuReload()
+
+			
+	#
+	# We got notified of an interesting change, if the parent is a server and the change is a name then restart HB
+	#
+	def checkForNameChange (self, origObj, newObj, changeInfo):
+		try:
+			# If the parent is a server and the attribute is name then we need to queue up a Homebridge restart
+			dev = indigo.devices[changeInfo.parentId]
+			if dev.deviceTypeId == "Homebridge-Server" and changeInfo.name == "name":
+				if dev.states["restartPending"] == False:
+					# There isn't a restart pending, set the timer
+					d = indigo.server.getTime()
+					d = dtutil.dateAdd ("minutes", 1, d)
+					
+					self.logger.warn ("'{0}' name changed to '{1}', the Homebridge server will restart at {2}".format(origObj.name, newObj.name, d.strftime("%Y-%m-%d %H:%M:%S")))
+					states = iutil.updateState ("restartTime", d.strftime("%Y-%m-%d %H:%M:%S"))
+					states = iutil.updateState ("restartPending", True, states)
+					dev.updateStatesOnServer (states)
+				
+				else:
+					# If the restart is for less than 5 minutes from now then let the user know
+					d = indigo.server.getTime()
+					restart = datetime.datetime.strptime (dev.states["restartTime"], "%Y-%m-%d %H:%M:%S")
+					secondsLeft = dtutil.dateDiff ("seconds", restart, d)
+				
+					if secondsLeft < 20:
+						# It's near at hand, extend in case they need to rename other devices
+						d = dtutil.dateAdd ("minutes", 1, d)
+					
+						self.logger.warn ("'{0}' name changed to '{1}', the Homebridge server was set to restart in under 20 seconds, extended to {2}".format(origObj.name, newObj.name, d.strftime("%Y-%m-%d %H:%M:%S")))
+						states = iutil.updateState ("restartTime", d.strftime("%Y-%m-%d %H:%M:%S"))
+						dev.updateStatesOnServer (states)
+						
+					elif secondsLeft < 300:
+						self.logger.warn ("'{0}' name changed to '{1}', the Homebridge server is already set to restart at {2}".format(origObj.name, newObj.name, restart.strftime("%Y-%m-%d %H:%M:%S")))	
+						
+					else:
+						# It's further into the future, make it more immediate
+						d = dtutil.dateAdd ("minutes", 1, d)
+					
+						self.logger.warn ("'{0}' name changed to '{1}', the Homebridge server will restart at {2}".format(origObj.name, newObj.name, d.strftime("%Y-%m-%d %H:%M:%S")))
+						states = iutil.updateState ("restartTime", d.strftime("%Y-%m-%d %H:%M:%S"))
+						dev.updateStatesOnServer (states)
+								
+					
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))		
+		
+		
+		
+		
+	#
+	# A watched action group has changed
+	#
+	def onWatchedActionGroupChanged (self, origActionGroup, newActionGroup, changeInfo):
+		try:
+			self.checkForNameChange (origActionGroup, newActionGroup, changeInfo)
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))		
 	
-		
+	#
+	# A watched attribute changed
+	#
 	def onWatchedAttributeChanged (self, origDev, newDev, changeInfo):
-		self.logger.info ("I just got a watched attribute change")
-		#indigo.server.log(unicode(changeInfo))
+		try:
+			self.checkForNameChange (origDev, newDev, changeInfo)					
 		
-		dev = indigo.devices[changeInfo.parentId]
-		if dev.deviceTypeId == "epsCustomDev2":
-			eps.plug.checkConditions (dev.pluginProps, dev)
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
 		
 	def onWatchedPropertyChanged (self, origDev, newDev, changeInfo):
 		self.logger.info ("I just got a watched property change")
@@ -1911,9 +2013,7 @@ class Plugin(indigo.PluginBase):
 	
 	
 		
-	def onAfter_pluginDevicePropChanged (self, origDev, newDev, changedProps):	
-		if newDev.deviceTypeId == "epsActionDev":
-			eps.act.runAction (newDev.pluginProps)
+	
 	
 		
 	def onConditionsCheckPass (self, dev):

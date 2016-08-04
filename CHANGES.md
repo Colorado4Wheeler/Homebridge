@@ -3,6 +3,20 @@ Release Notes
 
 Everything is still in BETA.  Some stuff won't work.  Overall the program works, just a few areas that haven't been enabled yet and lots of optimization yet to do.  Make sure you keep a backup copy of your existing config.json file just in case something doesn't work as planned.
 
+Version 0.6
+---------------
+
+* The Server Wrapper will now automatically detect when the name of a device or action group it is managing has changed and schedule a restart of the Homebridge process in 1 minute, this will be extended by another minute if another name change is detected within 20 seconds of the restart just in case the user is changing the names of multiple devices
+* The Server Wrapper will now detect if its configuration has changed and automatically restart the Homebridge process upon exiting the config dialog if it did
+* Added a check for any Action Group name changes to raise an event to restart the Homebridge server(s) impacted by the name change
+* Removed conditions from Wrappers as upon consideration I cannot think of any reason why a condition should be applied to a Wrapper
+* Removed value operators Contains, Not Contains, Between and Not Between from Wrappers as they are not evaluated
+* Fixed an issue where Not In was not being evaluated as an operator
+* Fixed an issue with the server health check where it updated states on every pass (i.e., every concurrent thread run) needlessly
+* Removed "Please select a device type" from the Wrappers combobox since the addition of the server selection negated the need to use that as a way to force the callback to run and set the device defaults
+* Fixed an issue where after saving a device configuration the default view of the device is supposed to reset to the On config, but it instead stayed where you left off when you saved your configuration
+* Fixed an issue where after saving a Server Wrapper the default view would not reset back to the server configuration
+
 Version 0.5
 ---------------
 
@@ -63,19 +77,14 @@ Development Notes
 Known Issues As Of The Most Current Release
 ---------------
 
-* Conditions are not yet configured, waiting until the rest of the Switch Wrapper is done and working before adding more complexity
-* Everything is getting cached but we aren't doing anything interesting with restarting Homebridge when names or addresses change
-* There's no feedback on Homebridge start/stop/restart/save and restart actions, just running in the blind - need to get feedback so we can test for success and failure
-* Need to add a way to check if Homebridge is running on the server, right now if you try to start it and it's running it will work because HB is configured to check for itself be we should be doing this ourselves
 * Need to watch action groups so we know if one of our On or Off action groups got ran so we can change the device state
-* When setting up a new device it doesn't immediately pick up the state of what it is wrapping, it doesn't do that until you change the Wrapper or the device being wrapped
+* When setting up a new device it doesn't immediately pick up the state of what it is wrapping, it doesn't do that until you change the device being wrapped or the state/attribute/variable that defines that state
 * When creating a new device if you don't go into On AND Off then warnings will log about not being able to find state '', the workaround for now is to make sure you define both On and Off instead of just letting the UI handle it
 * Multi I/O (IOLinc) devices don't set defaults like relays, dimmers and sensors in the UI, you have to hand configure the settings
 * While the icons are (somewhat) appropriate now, still need to tweak the actual display value since everything is essentially an Indigo dimmer we need the values to reflect the Wrapper type (i.e., open/closed, locked/unlocked, etc)
-* After saving a device configuration the default view of the device is supposed to reset to the On config, but it's staying at where ever you left off
-* Need to remove Between and Contains from value operators, they won't be in the final release and are not coded in
 * Device address not getting updated on device creation
 * While the ability to have multiple servers is currently in the UI, it is not yet possible to manage multiple servers
+* Possible wonki-ness with doors and locks and how Homebridge deals with them.  It seems like they may be seen opposite of Indigo in that Indigo reflects a locked door as OFF while Homebridge sees a locked door as ON - same with garage doors.  Case in point, as of this writing I'm looking at Indigo saying my front door is locked/off, my wrapper is also off but Eve says the door is unlocked, if I unlock the door in Indigo it reverses the problem.  It may be a general Homekit issue.
 
 Wish List
 ---------------

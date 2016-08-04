@@ -8,6 +8,7 @@
 			<Field id="serverDevice" type="menu" >
 				<Label>Homebridge server:</Label>
 				<List class="indigo.devices" filter="com.eps.indigoplugin.homebridge.Homebridge-Server"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
 			
 			<Field id="isNewDevice" type="checkbox" hidden="true" defaultValue="true">
@@ -16,10 +17,9 @@
 			</Field>
 			
 			<!-- Find out what kind of wrapper this is before showing any fields, this gives us a chance to set defaults when its selected -->
-			<Field type="menu" id="treatAs" defaultValue="none" >
+			<Field type="menu" id="treatAs" defaultValue="dimmer" visibleBindingId="isNewDevice" visibleBindingValue="false" >
 				<Label>Type of wrapper:</Label>
 				<List>
-					<Option value="none">Select How Homebridge Should Treat This</Option>
 					<Option value="dimmer">Dimmer</Option>
 					<Option value="switch">Switch</Option>
 					<Option value="lock">Lock</Option>
@@ -34,18 +34,6 @@
 			<Field type="menu" id="settingSelect" defaultValue="On" visibleBindingId="treatAs" visibleBindingValue="dimmer,switch,lock,door,garage,window,drape" >
 				<Label>Command to modify:</Label>
 				<List class="self" filter="" method="listSettingSelect" dynamicReload="true"/>
-				<CallbackMethod>formFieldChanged</CallbackMethod>
-			</Field>
-			
-			<Field type="menu" id="conditionSelect" defaultValue="1" visibleBindingId="settingSelect" visibleBindingValue="cnd">
-				<Label>Condition to modify:</Label>
-				<List>
-					<Option value="1">Condition 1</Option>
-					<Option value="2">Condition 2</Option>
-					<Option value="3">Condition 3</Option>
-					<Option value="4">Condition 4</Option>
-					<Option value="5">Condition 5</Option>
-				</List>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
 			
@@ -349,7 +337,7 @@
 			
 			<Field type="menu" id="valueOperatorOn" defaultValue="equal" visibleBindingId="showValueAndOperatorOn" visibleBindingValue="true">
 				<Label>Is:</Label>
-				<List class="self" filter="#conditions_operators#[index=valueOperatorOn]" method="getCustomList" dynamicReload="true"/>
+				<List class="self" filter="#conditions_operators#[index=valueOperatorOn, showbetween=false, showcontains=false]" method="getCustomList" dynamicReload="true"/>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
 			
@@ -655,7 +643,7 @@
 			
 			<Field type="menu" id="valueOperatorOff" defaultValue="equal" visibleBindingId="showValueAndOperatorOff" visibleBindingValue="true">
 				<Label>Is:</Label>
-				<List class="self" filter="#conditions_operators#[index=valueOperatorOff]" method="getCustomList" dynamicReload="true"/>
+				<List class="self" filter="#conditions_operators#[index=valueOperatorOff, showbetween=false, showcontains=false]" method="getCustomList" dynamicReload="true"/>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
 			
@@ -966,7 +954,7 @@
 			
 			<Field type="menu" id="valueOperatorDim1" defaultValue="equal" visibleBindingId="showValueAndOperatorDim1" visibleBindingValue="true">
 				<Label>Is:</Label>
-				<List class="self" filter="#conditions_operators#[index=valueOperatorDim1]" method="getCustomList" dynamicReload="true"/>
+				<List class="self" filter="#conditions_operators#[index=valueOperatorDim1, showbetween=false, showcontains=false]" method="getCustomList" dynamicReload="true"/>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
 			
@@ -1277,7 +1265,7 @@
 			
 			<Field type="menu" id="valueOperatorDim2" defaultValue="equal" visibleBindingId="showValueAndOperatorDim2" visibleBindingValue="true">
 				<Label>Is:</Label>
-				<List class="self" filter="#conditions_operators#[index=valueOperatorDim2]" method="getCustomList" dynamicReload="true"/>
+				<List class="self" filter="#conditions_operators#[index=valueOperatorDim2, showbetween=false, showcontains=false]" method="getCustomList" dynamicReload="true"/>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
 			
@@ -1588,7 +1576,7 @@
 			
 			<Field type="menu" id="valueOperatorDim3" defaultValue="equal" visibleBindingId="showValueAndOperatorDim3" visibleBindingValue="true">
 				<Label>Is:</Label>
-				<List class="self" filter="#conditions_operators#[index=valueOperatorDim3]" method="getCustomList" dynamicReload="true"/>
+				<List class="self" filter="#conditions_operators#[index=valueOperatorDim3, showbetween=false, showcontains=false]" method="getCustomList" dynamicReload="true"/>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
 			
@@ -1899,7 +1887,7 @@
 			
 			<Field type="menu" id="valueOperatorDim4" defaultValue="equal" visibleBindingId="showValueAndOperatorDim4" visibleBindingValue="true">
 				<Label>Is:</Label>
-				<List class="self" filter="#conditions_operators#[index=valueOperatorDim4]" method="getCustomList" dynamicReload="true"/>
+				<List class="self" filter="#conditions_operators#[index=valueOperatorDim4, showbetween=false, showcontains=false]" method="getCustomList" dynamicReload="true"/>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
 			
@@ -2226,6 +2214,22 @@
 				<ValueType>String</ValueType>
 				<TriggerLabel>Date and time of the last Homebridge process health check</TriggerLabel>
 				<ControlPageLabel>Date and time of the last Homebridge process health check</ControlPageLabel>
+			</State>
+			
+			<State id="sep2">
+				<ValueType>Separator</ValueType>
+			</State>
+			
+			<State id="restartPending">
+				<ValueType>Boolean</ValueType>
+				<TriggerLabel>A Homebridge process restart is pending</TriggerLabel>
+				<ControlPageLabel>A Homebridge process restart is pending</ControlPageLabel>
+			</State>
+			
+			<State id="restartTime">
+				<ValueType>String</ValueType>
+				<TriggerLabel>Date and time when Homebridge will automatically restart</TriggerLabel>
+				<ControlPageLabel>Date and time when Homebridge will automatically restart</ControlPageLabel>
 			</State>
 			
 		</States>

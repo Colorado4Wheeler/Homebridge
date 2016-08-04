@@ -81,7 +81,7 @@ class cache:
 				
 			else:
 				if self.factory.plug.isSubscribedDevices == False:
-					self.logger.threaddebug ("Device state is being watched, automatically subscribing to device changes")
+					self.logger.threaddebug ("Device is being watched, automatically subscribing to device changes")
 					indigo.devices.subscribeToChanges()
 					self.factory.plug.isSubscribedDevices = True		
 		
@@ -293,6 +293,7 @@ class cache:
 			self.logger.error (ext.getException(e))	
 			
 		return ret
+
 			
 	#
 	# Watch an item (does not watch any states, props, attributes or values, just the device)
@@ -822,7 +823,8 @@ class cacheAg:
 		try:
 			# Until Indigo lets us dig into Action Groups there's nothing to watch for, so any change is interesting
 			for watchinfo in self.watchedBy:
-				ret.append (cacheChange(self, "actiongroup", newActionGroup.name, watchinfo.id, newActionGroup.id, "Action Groups have no value", "Action Groups have no value"))
+				if origActionGroup.name != newActionGroup.name:
+					ret.append (cacheChange(self, "actiongroup", "name", watchinfo.id, newActionGroup.id, origActionGroup.name, newActionGroup.name))
 					
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
@@ -881,7 +883,6 @@ class cacheVar:
 				#indigo.server.log(unicode(watchinfo))
 				if origVar.value != newVar.value:
 					ret.append (cacheChange(self, "variable", newVar.name, watchinfo.id, newVar.id, origVar.value, newVar.value))
-				
 					
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
