@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>PluginVersion</key>
-	<string>0.7</string>
+	<string>0.8</string>
 	<key>ServerApiVersion</key>
 	<string>2.0</string>
 	<key>IwsApiVersion</key>
 	<string>1.0.0</string>
 	<key>CFBundleDisplayName</key>
-	<string>EPS - Homebridge Companion</string>
+	<string>EPS - Homebridge Buddy</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.eps.indigoplugin.homebridge</string>
 	<key>CFBundleVersion</key>

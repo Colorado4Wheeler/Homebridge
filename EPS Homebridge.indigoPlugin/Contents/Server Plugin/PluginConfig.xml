@@ -36,6 +36,41 @@
 	
 	<Field id="sep_general" type="separator" />
 	
+	<!-- *********** PROCESS RESTARTS *********** -->
+	
+	<Field type="label" id="lbl_restarts">
+			<Label>Select which conditions will queue a Homebridge process restart:
+</Label>
+		</Field>
+	
+	<Field type="checkbox" id="restartServerChange" defaultValue="true" >
+		<Label> </Label>
+		<Description>Server configuration changes</Description>
+	</Field>
+
+	<Field type="checkbox" id="restartDeviceType" defaultValue="true" >
+		<Label> </Label>
+		<Description>Wrapper device type changes</Description>
+	</Field>
+	
+	<Field type="checkbox" id="restartNewDevice" defaultValue="true" >
+		<Label> </Label>
+		<Description>New monitored objects are added</Description>
+	</Field>
+		
+	<Field type="checkbox" id="restartNameChanges" defaultValue="true" >
+		<Label> </Label>
+		<Description>Monitored object name/server changes</Description>
+	</Field>
+	
+	<Field type="checkbox" id="restartDeleteDevice" defaultValue="true" >
+		<Label> </Label>
+		<Description>Monitored object is deleted from Indigo</Description>
+	</Field>
+
+	
+	<Field id="sep_restarts" type="separator" />
+	
 	<!-- *********** HOMEBRIDGE *********** -->
 	
 	<Field type="textfield" id="platform" defaultValue="Indigo" readonly="true" >
@@ -46,7 +81,7 @@
 		<Label>Protocol:</Label>
 	</Field>
 	
-	<Field type="textfield" id="host" defaultValue="127.0.0.1"  >
+	<Field type="textfield" id="host" defaultValue="127.0.0.1" >
 		<Label>Indigo server IP:</Label>
 	</Field>
 	

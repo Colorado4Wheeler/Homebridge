@@ -1,19 +1,41 @@
 <?xml version="1.0"?>
 <!-- EPS (ColoradoFourWheeler) Plugin -->
 <MenuItems>
-	<MenuItem id="devTest">
-    	<Name>DEVELOPMENT TESTING ACTION</Name>
-    	<CallbackMethod>devTest</CallbackMethod>
-    </MenuItem>
-    
 	<MenuItem id="saveHB">
     	<Name>Save Homebridge Config</Name>
     	<CallbackMethod>menuSave</CallbackMethod>
+    	<ButtonTitle>Save</ButtonTitle>
+        <ConfigUI>
+        	<Field type="menu" id="server" defaultValue="-all-">
+				<Label>Homebridge Server:</Label>
+				<List class="self" filter="#plugin#[index=server, callback=listServers]" method="getCustomList" dynamicReload="true"/>
+			</Field>
+        	
+			<Field id="sep_notice" type="separator" />
+        	
+        	<Field type="label" id="lbl_devexclude" >
+				<Label>Note that remote Homebridge servers may cause Indigo to time out during this process, in most cases this should be fine but if you experience problems then try using an Action Group to perform this action instead.</Label>
+			</Field>
+        	
+        </ConfigUI>
     </MenuItem>
     
     <MenuItem id="reloadHB">
     	<Name>Reload Homebridge</Name>
     	<CallbackMethod>menuReload</CallbackMethod>
+    	<ButtonTitle>Restart</ButtonTitle>
+        <ConfigUI>
+        	<Field type="menu" id="server" defaultValue="-all-">
+				<Label>Homebridge Server:</Label>
+				<List class="self" filter="#plugin#[index=server, callback=listServers]" method="getCustomList" dynamicReload="true"/>
+			</Field>
+
+			<Field id="sep_notice" type="separator" />
+        	
+        	<Field type="label" id="lbl_devexclude" >
+				<Label>Note that remote Homebridge servers may cause Indigo to time out during this process, in most cases this should be fine but if you experience problems then try using an Action Group to perform this action instead.</Label>
+			</Field>
+        </ConfigUI>
     </MenuItem>
     
     <MenuItem id="sep_hb1"/>
@@ -21,6 +43,19 @@
     <MenuItem id="saveReloadHB">
     	<Name>Save Homebridge Config and Reload</Name>
     	<CallbackMethod>menuSaveReload</CallbackMethod>
+    	<ButtonTitle>Save</ButtonTitle>
+        <ConfigUI>
+        	<Field type="menu" id="server" defaultValue="-all-">
+				<Label>Homebridge Server:</Label>
+				<List class="self" filter="#plugin#[index=server, callback=listServers]" method="getCustomList" dynamicReload="true"/>
+			</Field>
+
+			<Field id="sep_notice" type="separator" />
+        	
+        	<Field type="label" id="lbl_devexclude" >
+				<Label>Note that remote Homebridge servers may cause Indigo to time out during this process, in most cases this should be fine but if you experience problems then try using an Action Group to perform this action instead.</Label>
+			</Field>
+        </ConfigUI>
     </MenuItem>
     
     <MenuItem id="sep_hb2"/>
@@ -28,11 +63,27 @@
     <MenuItem id="startHB">
     	<Name>Start Homebridge</Name>
     	<CallbackMethod>menuStart</CallbackMethod>
+    	<ButtonTitle>Start</ButtonTitle>
+        <ConfigUI>
+        	<Field type="menu" id="server" defaultValue="-all-">
+				<Label>Homebridge Server:</Label>
+				<List class="self" filter="#plugin#[index=server, callback=listServers]" method="getCustomList" dynamicReload="true"/>
+			</Field>
+        	
+        </ConfigUI>
     </MenuItem>
     
     <MenuItem id="stopHB">
     	<Name>Stop Homebridge</Name>
     	<CallbackMethod>menuStop</CallbackMethod>
+        <ButtonTitle>Stop</ButtonTitle>
+        <ConfigUI>
+        	<Field type="menu" id="server" defaultValue="-all-">
+				<Label>Homebridge Server:</Label>
+				<List class="self" filter="#plugin#[index=server, callback=listServers]" method="getCustomList" dynamicReload="true"/>
+			</Field>
+        	
+        </ConfigUI>
     </MenuItem>
     
     <MenuItem id="updateHB">
@@ -137,5 +188,12 @@ Using this method is nit-picking performance since polling is almost equally as 
     <MenuItem id="update">
     	<Name>Check For Plugin Update</Name>
     	<CallbackMethod>pluginMenuCheckUpdates</CallbackMethod>
+    </MenuItem>
+    
+    <MenuItem id="sep_dev"/>
+    
+    <MenuItem id="devTest">
+    	<Name>Development Sandbox</Name>
+    	<CallbackMethod>devTest</CallbackMethod>
     </MenuItem>
 </MenuItems>

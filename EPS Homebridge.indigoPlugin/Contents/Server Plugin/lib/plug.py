@@ -9,6 +9,7 @@ import sys
 import random # for uniqueIdentifier
 import datetime
 from datetime import date, timedelta
+import string
 
 import ext
 import dtutil
@@ -121,7 +122,7 @@ class plug:
 				diff = dtutil.dateDiff ("seconds", indigo.server.getTime(), lastLoad)
 				if diff > 3:
 					self.lastDeviceLoaded = False
-					self.logger.info (self.factory.plugin.pluginDisplayName + " is loaded and ready to process")
+					self.logger.info (self.factory.plugin.pluginDisplayName + " is loaded and ready to use")
 					return True
 				else:
 					return False
@@ -144,6 +145,8 @@ class plug:
 	def startup (self): 
 		try:
 			self.logger.threaddebug ("Plugin '{0}' is starting".format(self.factory.plugin.pluginDisplayName))
+			
+			self._callBack (NOTHING, [], "pluginUpgrade")
 			
 			self._callBack (BEFORE, [])	
 			
@@ -254,6 +257,20 @@ class plug:
 	# DEVICE COMMUNICATION
 	################################################################################			
 	
+	# Call that Indigo makes to change the state display ID on the fly (Indigo)
+	def getDeviceDisplayStateId(self, dev):
+		try:
+			ret = self._callBack (BEFORE, [dev])
+			if ret is not None and ret != "": return ret
+			
+			ret = self._callBack (AFTER, [dev])
+			if ret is not None and ret != "": return ret
+			
+			return self.factory.plugin.devicesTypeDict[dev.deviceTypeId][u'DisplayStateId']
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+	
 	# Device starts communication (Indigo)
 	def deviceStartComm (self, dev):
 		try:
@@ -267,6 +284,13 @@ class plug:
 				if ext.valueValid (dev.states, "lastreset", True) == False: dev.updateStateOnServer("lastreset", indigo.server.getTime().strftime("%Y-%m-%d"))
 			
 			self.addPluginDeviceToCache (dev)
+			
+			# If the name has "copy" as the last word in the name, check if this might have been copied from another device,
+			# but this can only happen after we are already up and running
+			#i = string.find (dev.name, "copy")
+			#if i > -1:
+			#	if self.isFinishedLoading():
+			#		indigo.server.log("copy")
 			
 			self._callBack (AFTER, [dev])
 			
@@ -494,12 +518,27 @@ class plug:
 	# Plugin device deleted (Indigo)
 	def deviceDeleted(self, dev):
 		try:
-			self.logger.threaddebug ("Plugin device '{0}' deleted".format(dev.name))
+			self.logger.threaddebug ("Device '{0}' deleted".format(dev.name))
 			
 			self._callBack (BEFORE, [dev])
 			
 			if "cache" in dir(self.factory):
 				self.factory.cache.removeDevice (dev)	
+				
+			if dev.pluginId == self.factory.plugin.pluginId:
+				self.pluginDeviceDeleted (dev)
+			
+			self._callBack (AFTER, [dev])
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))		
+			
+	# Plugin device deleted (Custom)
+	def pluginDeviceDeleted (self, dev):
+		try:
+			self.logger.threaddebug ("Plugin device '{0}' deleted".format(dev.name))
+			
+			self._callBack (BEFORE, [dev])
 			
 			self._callBack (AFTER, [dev])
 		

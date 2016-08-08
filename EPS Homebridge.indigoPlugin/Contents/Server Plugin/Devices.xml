@@ -1990,7 +1990,7 @@
 			
 			
 	
-			<Field type="menu" id="view" defaultValue="config" >
+			<Field type="menu" id="view" defaultValue="server" >
 				<Label>Select a list to configure:</Label>
 				<List>
 					<Option value="server">Server Configuration</Option>
@@ -2013,11 +2013,7 @@
 			
 			<!-- *********** SERVER *********** -->
 	
-			<Field type="label" id="lbl_indigoserver" visibleBindingId="view" visibleBindingValue="server" >
-				<Label>Remote Homebridge server config coming soon, in the meantime this is hard-coded to your Indigo server</Label>
-			</Field>
-			
-			<Field type="checkbox" id="indigoServer" defaultValue="true" hidden="true" visibleBindingId="view" visibleBindingValue="server">
+			<Field type="checkbox" id="indigoServer" defaultValue="true" hidden="false" visibleBindingId="view" visibleBindingValue="server">
 				<Label> </Label>
 				<Description>Homebridge is on the Indigo server</Description>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
@@ -2031,17 +2027,37 @@
 				<Label>User Name:</Label>
 			</Field>
 			
-			<Field type="textfield" id="password" defaultValue="password" visibleBindingId="indigoServer" visibleBindingValue="false" >
+			<Field type="textfield" id="password" defaultValue="password" secure="true" visibleBindingId="indigoServer" visibleBindingValue="false" >
 				<Label>Password:</Label>
 			</Field>
 			
-			<Field type="textfield" id="hbpin" defaultValue="031-45-154" visibleBindingId="indigoServer" visibleBindingValue="false" >
-				<Label>Homebridge PIN:</Label>
+			<Field type="textfield" id="password2" defaultValue="password" secure="true" visibleBindingId="indigoServer" visibleBindingValue="false" >
+				<Label>Re-type password:</Label>
 			</Field>
-	
+			
 			<!-- *********** CONFIG *********** -->
 	
-			<Field type="textfield" id="name" defaultValue="My Indigo Server" visibleBindingId="view" visibleBindingValue="config" >
+			<Field type="checkbox" id="auto_hbuser" defaultValue="true" hidden="true" visibleBindingId="view" visibleBindingValue="config">
+				<Label> </Label>
+				<Description>When true the callback will generate a unique hbuser</Description>
+			</Field>
+	
+			<Field type="checkbox" id="show_hbuser" defaultValue="false" visibleBindingId="view" visibleBindingValue="config">
+				<Label> </Label>
+				<Description>Edit Homebridge user (Advanced only)</Description>
+			</Field>
+	
+			<!-- This changes automatically each time a server device is added, the first server is always the default value -->
+			<Field type="textfield" id="hbuser" defaultValue="CC:22:3D:E3:CE:30" visibleBindingId="show_hbuser" visibleBindingValue="true" readonly="false" >
+				<Label>Homebridge User:</Label>
+			</Field>
+			
+			<Field type="textfield" id="hbpin" defaultValue="031-45-154" visibleBindingId="view" visibleBindingValue="config" readonly="true" >
+				<Label>Homebridge PIN:</Label>
+			</Field>
+			
+			<!-- Only here for future proofing, the name is the same as the Indigo device name to make sure things stay unique -->
+			<Field type="textfield" id="name" defaultValue="My Indigo Server" hidden="true">
 				<Label>Name:</Label>
 			</Field>
 	

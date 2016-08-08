@@ -10,14 +10,47 @@
 		<CallbackMethod>updateDevice</CallbackMethod>
 	</Action>
 	
-	<Action id="forceOn" deviceFilter="self" uiPath="DeviceActions">
+	<Action id="sep_general" uiPath="DeviceActions"/>
+	
+	<Action id="forceOn" deviceFilter="com.eps.indigoplugin.homebridge.Homebridge-Wrapper" uiPath="DeviceActions">
 		<Name>Force to an On state</Name>
 		<CallbackMethod>forceState</CallbackMethod>
 	</Action>
 	
-	<Action id="forceOff" deviceFilter="self" uiPath="DeviceActions">
+	<Action id="forceOff" deviceFilter="com.eps.indigoplugin.homebridge.Homebridge-Wrapper" uiPath="DeviceActions">
 		<Name>Force to an Off state</Name>
 		<CallbackMethod>forceState</CallbackMethod>
+	</Action>
+	
+	<Action id="sep_wrappers" uiPath="DeviceActions"/>
+	
+	<Action id="startHomebridge" deviceFilter="com.eps.indigoplugin.homebridge.Homebridge-Server" uiPath="DeviceActions">
+		<Name>Start a Homebridge server</Name>
+		<CallbackMethod>serverActions</CallbackMethod>
+	</Action>
+	
+	<Action id="stopHomebridge" deviceFilter="com.eps.indigoplugin.homebridge.Homebridge-Server" uiPath="DeviceActions">
+		<Name>Stop a Homebridge server</Name>
+		<CallbackMethod>serverActions</CallbackMethod>
+	</Action>
+	
+	<Action id="sep_server1" uiPath="DeviceActions"/>
+	
+	<Action id="reloadHomebridge" deviceFilter="com.eps.indigoplugin.homebridge.Homebridge-Server" uiPath="DeviceActions">
+		<Name>Reload a Homebridge server</Name>
+		<CallbackMethod>serverActions</CallbackMethod>
+	</Action>
+	
+	<Action id="saveHomebridge" deviceFilter="com.eps.indigoplugin.homebridge.Homebridge-Server" uiPath="DeviceActions">
+		<Name>Save a Homebridge server configuration</Name>
+		<CallbackMethod>serverActions</CallbackMethod>
+	</Action>
+	
+	<Action id="sep_server2" uiPath="DeviceActions"/>
+	
+	<Action id="saveReloadHomebridge" deviceFilter="com.eps.indigoplugin.homebridge.Homebridge-Server" uiPath="DeviceActions">
+		<Name>Save a Homebridge server configuration and reload Homebridge</Name>
+		<CallbackMethod>serverActions</CallbackMethod>
 	</Action>
 	
 </Actions>

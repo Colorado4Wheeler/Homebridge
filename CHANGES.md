@@ -4,7 +4,44 @@ Release Notes
 Everything is still in BETA.  Some stuff won't work.  Overall the program works, just a few areas that haven't been enabled yet and lots of optimization yet to do.  Make sure you keep a backup copy of your existing config.json file just in case something doesn't work as planned.
 
 
-Version 0.7
+Version 0.8 (Beta 8)
+---------------
+
+* NOTE: There is a minor glitch from some of the UI work done in the previous beta where a change in the status of a wrapped device may not get reflected in the wrapper, just go into each device and if you don't see any of the fields unlocked simply select the server again to show them then save the device, this should resolve the issue
+* Resolved an issue where changing a Wrapper type didn't change it's address or icon properly
+* Added ability that when a Wrapper type is changed it will re-save the config and queue a HB restart
+* Reorganized the methods in the plugin.py, so the Git change history will look like a lot more happened than actually did
+* Added plugin config options to control when automatic HB restarts happen
+* Fixed an issue where when creating a new device if you don't go into On AND Off then warnings will log about not being able to find state '' because the other state parameters were empty
+* Added ability to save and restart Homebridge if a monitored device is deleted from Indigo (Wrapper or otherwise)
+* Tentatively renamed Homebridge Companion to Homebridge Buddy because the longer name made it hard to read the debug logs :).  This name may stick, maybe not, but I can read the logs now so for the moment I don't care.
+* Wrapper devices will now properly set the default values for an IO device's On state
+* Fixed issue where device address was not getting updated on device creation
+* Got remote (and multiple) servers running after a lot of fiddling around to get a second copy of HB running (the trick is in the config file, something the plugin will handle - getting additional copies of HB installed and ready on other computers is no different than Webdeck's instructions)
+* Rewrote the routine to check on Homebridge's current running status and streamlined the process considerably
+* Homebridge process status is now much more accurate by checking for when the listening port is active rather than if the process is running - a much better indicator that HB is ready to receive commands or not
+* Moved the gigantic development menu item to the bottom of the list and renamed it to Development Sandbox (this may stick around into the release phase since it's pretty handy to have for testing)
+* Set the 'secure' flag on the remote server password field in server config
+* Added a second password field in the Server config since the field value gets hidden by Indigo just to make sure the user typed it the same way twice
+* Changed the Start, Stop and Restart menu items to show a list of servers
+* Start, Stop and Restart menu items will control "local" and remote servers
+* On startup the plugin will raise an error if there is a non-local HB server and the Indigo address is set for a loopback (localhost or 127.0.01)
+* Removed Name from the server configuration, the HB config will use the name of the Server Device instead
+* Made the Server PIN a read-only field, it will remain the same for all HB servers
+* Save & Reload will now prompt for the server and perform the action locally or remotely
+* NOTE: Save, Reload and Save & Reload all may cause Indigo plugin timeouts because of the time it takes for SSH to do it's thing, this should be OK but could cause confusion in end users, may require action groups to perform tasks on remote servers instead to avoid this but for now I'm not going to sweat it
+* All automatic save/start/stop/reload actions for Homebridge pointed to new local/remote routines
+* Fixed bug where the device state would change but the Wrapper device icon would not reflect the change properly
+* Deleting a Server device will automatically re-home all attached Wrapper devices to the next Server device in Indigo if there is one, if there isn't then the Wrappers server will be set to nothing.  In either case the event log will show the devices being changed as a result of a server getting removed.
+* Fixed bug in Server config that could generate an error if during list generation no wrappers were found that were assigned to the server
+* Added ability to change the HB user name if needed - shouldn't be needed except in strange circumstances where there is a duplicate user on the HB network since we auto generate the user when the server is added but it's there just in case
+* Adding a new server will now automatically assign the address of "SERVER @ Indigo Server" or "SERVER @ [ip address]" so it's easy to distinguish in the Indigo device list
+* Changed Wrapper addresses to include the server name
+* Added validation to Server device config to make sure that a remote server login is successful and that the user is not trying to create a duplicate Server device in Indigo
+* Added server commands to the device actions (Start, Stop, Reload, etc).  One big benefit of this in a multiple HB server environment is that you can have an action on one server that restarts others - a handy use might be to put all security on one HB server and then you can tell Siri to turn that server off so there is no chance of it getting compromised by a hacker.
+
+
+Version 0.7 (Beta 7)
 ---------------
 
 * When a new Wrapper device is created it will raise an event telling it's connected Server Device to save the configuration and restart Homebridge in 5 minutes (giving the user time to add other devices, each add while the server is pending adds 5 minutes if the time remaining is less than 2 minutes)
@@ -14,7 +51,7 @@ Version 0.7
 * Fixed a beta 6 bug that when adding the new server selection it broke the form automation where it would automatically select the default ON for on and OFF for off for a new Wrapper device
 * Fixed a beta 6 issue where I forgot to tell a changed server config to SAVE before it restarted
 
-Version 0.6
+Version 0.6 (Beta 6)
 ---------------
 
 * The Server Wrapper will now automatically detect when the name of a device or action group it is managing has changed and schedule a restart of the Homebridge process in 1 minute, this will be extended by another minute if another name change is detected within 20 seconds of the restart just in case the user is changing the names of multiple devices
@@ -28,7 +65,7 @@ Version 0.6
 * Fixed an issue where after saving a device configuration the default view of the device is supposed to reset to the On config, but it instead stayed where you left off when you saved your configuration
 * Fixed an issue where after saving a Server Wrapper the default view would not reset back to the server configuration
 
-Version 0.5
+Version 0.5 (Beta 5)
 ---------------
 
 * NOTE: The first time you reload the plugin under Beta 5 it will migrate your plugin preferences into a new Homebridge Server device located in the Homebridge Companion folder.
@@ -47,12 +84,12 @@ Version 0.5
 * The Server devices (really only one device right now) On/Off state will reflect if the Homebridge server is running or not
 * Enabled using the Server device's On/Off commands to turn on or off the Homebridge server
 
-Version 0.4
+Version 0.4 (Beta 4)
 ---------------
 
 * Fixed problem with plugin config where re-opening it didn't repopulate the lists properly and left the "treat as" lists empty
 
-Version 0.3
+Version 0.3 (Beta 3)
 ---------------
 
 * UPGRADE NOTE: Delete your old "Switch Wrappers" since those are now defunct, there is now just a universal Wrapper device, the Switch Wrappers are still in Devices.xml for now to prevent any big issues but they mostly don't work and will be removed before the next beta release
@@ -72,7 +109,7 @@ Version 0.3
 * Fixed an issue in the main configuration where if you had deleted devices that were previously in any of the lists it would error out, now it will detect those
 
 
-Version 0.2
+Version 0.2 (Beta 2)
 ---------------
 
 * Changed the version number to better reflect beta status, it's now at 0.2 rather than 1.0
@@ -88,26 +125,26 @@ Development Notes
 Known Issues As Of The Most Current Release
 ---------------
 
-* Need to watch action groups so we know if one of our On or Off action groups got ran so we can change the device state
 * When setting up a new device it doesn't immediately pick up the state of what it is wrapping, it doesn't do that until you change the device being wrapped or the state/attribute/variable that defines that state
-* When creating a new device if you don't go into On AND Off then warnings will log about not being able to find state '', the workaround for now is to make sure you define both On and Off instead of just letting the UI handle it
-* Multi I/O (IOLinc) devices don't set defaults like relays, dimmers and sensors in the UI, you have to hand configure the settings
-* While the icons are (somewhat) appropriate now, still need to tweak the actual display value since everything is essentially an Indigo dimmer we need the values to reflect the Wrapper type (i.e., open/closed, locked/unlocked, etc)
-* Device address not getting updated on device creation
-* While the ability to have multiple servers is currently in the UI, it is not yet possible to manage multiple servers
+* While the icons are (somewhat) appropriate now, still need to tweak the actual display value since everything is essentially an Indigo dimmer we need the values to reflect the Wrapper type (i.e., open/closed, locked/unlocked, etc) - note, this is not possible until the API changes since modifying the deviceState value cannot be done on non-custom Indigo devices
 * Possible wonki-ness with doors and locks and how Homebridge deals with them.  It seems like they may be seen opposite of Indigo in that Indigo reflects a locked door as OFF while Homebridge sees a locked door as ON - same with garage doors.  Case in point, as of this writing I'm looking at Indigo saying my front door is locked/off, my wrapper is also off but Eve says the door is unlocked, if I unlock the door in Indigo it reverses the problem.  It may be a general Homekit issue.
-* Changing a Wrapper type doesn't change it's address or icon properly
-* Copying a device does not raise a new device event, therefor it does not auto-restart Homebridge
+* Copying a device does not raise a new device event, therefor it does not auto-restart Homebridge - this is low priority because typically someone would then change the name of the device which DOES queue a restart
 * setServerRestart doesn't seem to pass the description on new Wrapper devices
+* Uploading a config to a remote computer is a little slow and Indigo will time out on ConfigUI actions, need to find a good way to upload that more efficiently - it works now so somewhat low priority
 
 Wish List
 ---------------
 
+* Watch action groups so we know if one of our On or Off action groups got ran so we can change the device state
 * Variable manipulation as On/Off/Dim commands.  It would be nice to say "turn on Ajax" and have the Ajax variable set itself to whatever you define
 * Create a auto-create menu option to create aliases for all HB friendly devices in a special folder to cut down on time to create everything by hand
 * Create an option window for running the various support dumps, they are pretty massive in this plugin and could use some fine tuning (general core factory work)
 * Create an option window for the different Homebridge commands to shorten up the plugin menu
 * Add a cross-plugin callback so that plugins can ask that they be defined as a certain type when included in Homebridge - this will be for when they are NOT wrapped (since wrapping overrides that kind of thing) but rather when they are just generally included.
-* Have Homebridge restart if a device wrapper is added or deleted
-* When creating new Wrapper devices do an audit of the server device if the option to exclude wrapped items is enabled so if we wrap an item that was previously sent to HB it now won't be
-* Have Homebridge restart if a device wrapped device is added or deleted
+* Have Homebridge restart if a device wrapped device is added
+* Add ability to have a Wrapper run something for each percentage of a brightness requested - i.e., an amplifier that is controlled via I/R if told to set to 50% will run the command to send that I/R as many times as is needed to get to 50%
+* Create a new stripped down "Alias" device.  The Wrapper was originally intended to offer an easy way to rename Indigo devices but evolved into a much more complicated device that allows you to create complex devices for Homebridge, the Alias is stripped down and does nothing more than give you the ability to rename an Indigo device for the sake of Homebridge.
+* User request: Being able to mass ignore based on criteria (i.e., ignore all devices of a certain type)
+* When the plugin is first installed have it automatically assume an Indigo server based HB server and create that device so users don't have to
+* Get the various HB commands to run in the background and return back to Indigo right away so that the plugin doesn't time out, this will also allow for those various commands to include "All Servers" as an option instead of doing them each one-by-one
+* Finish testing and implementation of Homebridge installation in the plugin
