@@ -232,7 +232,7 @@ class Plugin(indigo.PluginBase):
 				
 			else:
 				# See any server is either referencing this device specifically or all Indigo devices in general
-				for serv in indig.devices.iter(self.pluginId + ".Homebridge-Server"):
+				for serv in indigo.devices.iter(self.pluginId + ".Homebridge-Server"):
 					for devId in serv.pluginProps["devinclude"]:
 						if devId == str(dev.id) or devId == "-all-":
 							restartNeeded = True

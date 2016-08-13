@@ -72,7 +72,9 @@ class conditions:
 				if propsDict["evaluation" + str(i)] == "in" or propsDict["evaluation" + str(i)] == "notin": val = self.conditionIn (propsDict, i) # 2.2
 					
 				isTrue = isTrue + val[0]
-				isFalse = isFalse + val[1]			
+				isFalse = isFalse + val[1]	
+				
+				self.logger.debug ("\tCondition {0} returned {1}".format(str(i), unicode(val)))		
 		
 			self.logger.debug("\tConditions returning true: %i, returning false: %i" % (isTrue, isFalse))
 		
@@ -578,7 +580,7 @@ class conditions:
 				isFalse = isFalse + val[1]						
 			else:
 				# It's the negative version so reverse the values
-				self.logger.debug ("\tThe value is true and the condition is searching for the opposite, marking result as false: %s" % unicode(val))
+				self.logger.debug ("\tThe condition is 'not equal' returning the opposite of 'equal' (which evaluated to %s)" % unicode(val))
 				isTrue = isTrue + val[1]
 				isFalse = isFalse + val[0]
 		

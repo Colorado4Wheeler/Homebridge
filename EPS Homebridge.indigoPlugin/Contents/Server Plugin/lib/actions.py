@@ -13,7 +13,7 @@ class actions:
 	# MAIN TERMS
 	FORMTERMS = ["Pass", "Fail"]
 	VALIDATION = "isActionConfig"
-	FIELDPREFIX = "If"
+	FIELDPREFIX = "if"
 	
 	# ACTION OBJECT TERMS
 	DEV = "device"
@@ -97,6 +97,27 @@ class actions:
 						
 						return self._executeAction (dev, rawAction, actionItem, args)
 						
+			if objType == "server":
+				# Get the action list from plugcache for this device
+				actions = self.factory.plugcache.getActions ("server")
+				args = {}
+				actionItem = None
+				rawAction = ""
+				
+				fieldIdx = 1
+				for id, action in actions.iteritems():
+					if id == propsDict["serverAction" + method]:
+						actionItem = action
+						rawAction = id
+						
+						if "ConfigUI" in action:
+							if "Fields" in action["ConfigUI"]:
+								for field in action["ConfigUI"]["Fields"]:
+									args[field["id"]] = self._getGroupFieldValue (propsDict, method, field["ValueType"], field["Default"], fieldIdx)
+									fieldIdx = fieldIdx + 1		
+									
+				return self._executeAction (None, rawAction, actionItem, args)	
+						
 			if objType == "variable":
 				if ext.valueValid (propsDict, self.VAR + method, True):
 					# No sense proceeding here unless they selected an action so we know what options to turn on
@@ -158,6 +179,50 @@ class actions:
 				
 				for devId in args["devices"]:
 					indigo.dimmer.setBrightness (int(devId), value=obj.states["brightnessLevel"], delay=args["delay"])
+					
+			elif rawAction == "indigo_sendEmailTo":		
+				self.logger.threaddebug ("Executing custom command {0} using arguments {1}".format(rawAction, unicode(args)))	
+				indigo.server.sendEmailTo(args["to"], subject=args["subject"], body=args["body"])
+					
+			elif rawAction == "indigo_removeDelayedAll":		
+				self.logger.threaddebug ("Executing custom command {0} using arguments {1}".format(rawAction, unicode(args)))	
+				indigo.server.removeAllDelayedActions()
+					
+			elif rawAction == "indigo_removeDelayedDevice":
+				self.logger.threaddebug ("Executing custom command {0} using arguments {1}".format(rawAction, unicode(args)))
+				indigo.device.removeDelayedActions(args["device"])
+				
+			elif rawAction == "indigo_removeDelayedTrigger":
+				self.logger.threaddebug ("Executing custom command {0} using arguments {1}".format(rawAction, unicode(args)))
+				indigo.trigger.removeDelayedActions(args["trigger"])
+				
+			elif rawAction == "indigo_removeDelayedSchedule":
+				self.logger.threaddebug ("Executing custom command {0} using arguments {1}".format(rawAction, unicode(args)))		
+				indigo.schedule.removeDelayedActions(args["schedule"])
+					
+			elif rawAction == "indigo_enableDevice":
+				self.logger.threaddebug ("Executing custom command {0} using arguments {1}".format(rawAction, unicode(args)))
+				indigo.device.enable(args["device"], value=True)
+				
+			elif rawAction == "indigo_enableTrigger":
+				self.logger.threaddebug ("Executing custom command {0} using arguments {1}".format(rawAction, unicode(args)))
+				indigo.trigger.enable(args["trigger"], value=True, duration=args["duration"], delay=args["delay"])
+				
+			elif rawAction == "indigo_enableSchedule":
+				self.logger.threaddebug ("Executing custom command {0} using arguments {1}".format(rawAction, unicode(args)))		
+				indigo.schedule.enable(args["schedule"], value=True, duration=args["duration"], delay=args["delay"])
+					
+			elif rawAction == "indigo_disableDevice":
+				self.logger.threaddebug ("Executing custom command {0} using arguments {1}".format(rawAction, unicode(args)))
+				indigo.device.enable(args["device"], value=False)
+								
+			elif rawAction == "indigo_disableTrigger":
+				self.logger.threaddebug ("Executing custom command {0} using arguments {1}".format(rawAction, unicode(args)))
+				indigo.trigger.enable(args["trigger"], value=False, duration=args["duration"], delay=args["delay"])
+				
+			elif rawAction == "indigo_disableSchedule":
+				self.logger.threaddebug ("Executing custom command {0} using arguments {1}".format(rawAction, unicode(args)))
+				indigo.schedule.enable(args["schedule"], value=False, duration=args["duration"], delay=args["delay"])
 					
 			elif rawAction == "indigo_setBinaryOutput_3":
 				# Turn off all binary outputs
@@ -509,7 +574,7 @@ class actions:
 					else:
 						# It's blank or a line or something, just skip
 						continue
-				
+						
 				# Assume no fields unless we find some
 				maxFormFields = 0
 				for j in range (1, self.maxFields): 
@@ -540,6 +605,20 @@ class actions:
 											for field in action["ConfigUI"]["Fields"]:
 												propsDict = self._addFieldToUI (propsDict, var, action, field, method, fieldIdx)
 												fieldIdx = fieldIdx + 1
+												
+				elif objType == "server":
+					actions = self.factory.plugcache.getActions ("server")
+					fieldIdx = 1
+					for id, action in actions.iteritems():
+						if id == propsDict["serverAction" + method]:
+							if "ConfigUI" in action:
+								if "Fields" in action["ConfigUI"]:
+									# First make sure we have enough fields to support the action
+									if len(action["ConfigUI"]["Fields"]) > maxFormFields: propsDict["showFieldWarning" + method] = True
+								
+									for field in action["ConfigUI"]["Fields"]:
+										propsDict = self._addFieldToUI (propsDict, None, action, field, method, fieldIdx)
+										fieldIdx = fieldIdx + 1
 						
 				elif objType == "device":
 					if ext.valueValid (propsDict, self.DEV + method, True):
@@ -640,11 +719,14 @@ class actions:
 				objType = "device"
 				if ext.valueValid (valuesDict, self.FIELDPREFIX + method, True):
 					if valuesDict[self.FIELDPREFIX + method] == "variable": objType = "variable"
+					if valuesDict[self.FIELDPREFIX + method] == "server": objType = "server"
 				
 				# In order to populate we have to have a device and an action
-				if ext.valueValid (valuesDict, objType + method, True):
+				if ext.valueValid (valuesDict, objType + method, True) or objType == "server":
 					if objType == "device": obj = indigo.devices[int(valuesDict[objType + method])]
 					if objType == "variable": obj = indigo.variables[int(valuesDict[objType + method])]
+					if objType == "server": obj = "server"
+
 					listData = self._getActionOptionUIList (obj, objType, valuesDict, method)
 					
 					#indigo.server.log(unicode(listData))
@@ -670,6 +752,16 @@ class actions:
 								
 						elif listItem["class"] == "indigo.dimmer":
 							for d in indigo.devices.iter("indigo.dimmer"):
+								option = (d.id, d.name)
+								retList.append (option)
+								
+						elif listItem["class"] == "indigo.triggers":
+							for d in indigo.triggers:
+								option = (d.id, d.name)
+								retList.append (option)
+								
+						elif listItem["class"] == "indigo.schedules":
+							for d in indigo.schedules:
 								option = (d.id, d.name)
 								retList.append (option)
 								

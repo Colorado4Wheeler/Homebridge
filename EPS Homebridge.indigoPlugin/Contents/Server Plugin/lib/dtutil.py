@@ -93,3 +93,14 @@ def dateDiff (t, d1, d2):
 		indigo.server.log ("DateDiff ERROR: Got an error converting to " + t)
 		raise
 		return
+		
+#
+# Convert string date/time from one format to another
+#
+def dateStringFormat (value, oldFormat, newFormat):
+	try:
+		oldDate = datetime.datetime.strptime (value, oldFormat)
+		return oldDate.strftime (newFormat)
+	
+	except Exception as e:
+		self.logger.error (ext.getException(e))	

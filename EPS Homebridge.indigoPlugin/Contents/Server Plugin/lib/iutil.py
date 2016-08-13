@@ -24,4 +24,4 @@ def updateState (key, value, states = [], uiValue = None, decimalPlaces = None):
 		return states
 	
 	except Exception as e:
-			self.logger.error (ext.getException(e))	
+		self.logger.error (ext.getException(e))	

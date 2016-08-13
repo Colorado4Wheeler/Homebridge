@@ -1,8 +1,17 @@
 Release Notes
 ==========
 
-Everything is still in BETA.  Some stuff won't work.  Overall the program works, just a few areas that haven't been enabled yet and lots of optimization yet to do.  Make sure you keep a backup copy of your existing config.json file just in case something doesn't work as planned.
+This latest version is Release Candidate status, barring any significant issues this will represent version 1.0 of the plugin.  Make sure you keep a backup copy of your existing config.json file just in case something doesn't work as planned.
 
+Version 0.9 (Version 1.0 RC1)
+---------------
+
+* Fixed a typo in the code that would throw an error when deleting a device
+
+Core Package Changes:
+
+* Enable Duration and Delay By as fields when controlling a dimmer or relay device
+* Allow using .UI states to determine on/off/dim state
 
 Version 0.8 (Beta 8)
 ---------------
@@ -64,6 +73,7 @@ Version 0.6 (Beta 6)
 * Removed "Please select a device type" from the Wrappers combobox since the addition of the server selection negated the need to use that as a way to force the callback to run and set the device defaults
 * Fixed an issue where after saving a device configuration the default view of the device is supposed to reset to the On config, but it instead stayed where you left off when you saved your configuration
 * Fixed an issue where after saving a Server Wrapper the default view would not reset back to the server configuration
+
 
 Version 0.5 (Beta 5)
 ---------------
@@ -131,6 +141,7 @@ Known Issues As Of The Most Current Release
 * Copying a device does not raise a new device event, therefor it does not auto-restart Homebridge - this is low priority because typically someone would then change the name of the device which DOES queue a restart
 * setServerRestart doesn't seem to pass the description on new Wrapper devices
 * Uploading a config to a remote computer is a little slow and Indigo will time out on ConfigUI actions, need to find a good way to upload that more efficiently - it works now so somewhat low priority
+* Some devices (such as WeatherSnoop) build their states dynamically in the plugin, so on these devices it is impossible to resolve their full state descriptions and we will end up with the raw state name instead - nothing can be done about this at the moment
 
 Wish List
 ---------------

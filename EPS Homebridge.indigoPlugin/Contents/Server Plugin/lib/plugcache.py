@@ -110,7 +110,7 @@ class plugcache:
 	#
 	# Get a list of states suitable for a list or menu UI field
 	#
-	def getStateUIList (self, obj):
+	def getStateUIList (self, obj, showUi = False):
 		ret = []
 		
 		try:
@@ -123,7 +123,7 @@ class plugcache:
 			if "xml" in plugInfo == False: return ret
 			if "devices" in plugInfo["xml"] == False: return ret
 										
-			ret = self._getStateUIList (obj, plugInfo, deviceTypeId)
+			ret = self._getStateUIList (obj, plugInfo, deviceTypeId, showUi)
 							
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
@@ -133,7 +133,7 @@ class plugcache:
 	#
 	# Run the state list builder from getStateUIList
 	#
-	def _getStateUIList (self, obj, plugInfo, deviceTypeId):
+	def _getStateUIList (self, obj, plugInfo, deviceTypeId, showUi = False):
 		ret = []
 		statesfound = []
 
@@ -171,6 +171,10 @@ class plugcache:
 				
 				option = (state, self.factory.ui.resolveStateNameToString(state))
 				retadded.append(option)	
+				
+				if state + ".ui" in obj.states and showUi:
+					option = (state + ".ui", self.factory.ui.resolveStateNameToString(state) + " (UI Value)")
+					retadded.append(option)	
 				
 			if len(ret) > 0 and len(retadded) > 0:
 				option = ("-line-", self.factory.ui.getSeparator())
@@ -246,6 +250,26 @@ class plugcache:
 		try:
 			plugInfo = self.pluginCache["Indigo"]
 			deviceTypeId = "indigo.variable"	
+			
+			if "xml" in plugInfo == False: return ret
+			if "actions" in plugInfo["xml"] == False: return ret
+			
+			ret = self._getActionUIList (plugInfo, deviceTypeId, showUIConfig, "indigo_")
+			
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+		return self._cleanReturnList (ret)
+		
+	#
+	# Get a list of sesrver actions suitable for a list or menu UI field
+	#
+	def getServerActionUIList (self, showUIConfig = False):
+		ret = []
+		
+		try:
+			plugInfo = self.pluginCache["Indigo"]
+			deviceTypeId = "indigo.server"	
 			
 			if "xml" in plugInfo == False: return ret
 			if "actions" in plugInfo["xml"] == False: return ret
@@ -414,7 +438,10 @@ class plugcache:
 			plugInfo = None
 			deviceTypeId = ""
 			
-			self.logger.threaddebug ("Object '{0}' is typed as '{1}'".format(obj.name, unicode(type(obj))))
+			if type(obj) is str:
+				self.logger.threaddebug ("Object is typed as '{0}'".format(unicode(type(obj))))
+			else:
+				self.logger.threaddebug ("Object '{0}' is typed as '{1}'".format(obj.name, unicode(type(obj))))
 			
 			if type(obj) is indigo.Variable:
 				return self._resolveIndigoDevice (obj)
@@ -427,6 +454,11 @@ class plugcache:
 				
 			elif type(obj) is indigo.ActionGroup:
 				X = 1
+				
+			elif type(obj) is str:
+				if obj == "server":
+					plugInfo = self.pluginCache["Indigo"]
+					deviceTypeId = "indigo.server"
 				
 			else:
 				# It's a device

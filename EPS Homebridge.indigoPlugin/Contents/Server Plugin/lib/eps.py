@@ -14,7 +14,7 @@ from ui import ui
 from support import support
 
 class eps:
-	VERSION = "2.5.0"
+	VERSION = "2.7.0"
 	
 	#
 	# Initialize the  class

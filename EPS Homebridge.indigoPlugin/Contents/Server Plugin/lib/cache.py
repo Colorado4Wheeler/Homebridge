@@ -25,6 +25,8 @@ class cache:
 		self.logger = logging.getLogger ("Plugin.cache")
 		self.factory = factory
 		self.items = cacheDict()
+		self.pluginItems = indigo.Dict() # Plugin devices by type
+		self.pluginDevices = indigo.List() # All plugin devices
 		
 		self.logger.threaddebug ("Caching initialized")
 		
@@ -47,9 +49,29 @@ class cache:
 		
 			cDev = cacheDev(dev)
 			self.items.add(cDev)
-		
-			if cDev.pluginId == self.factory.plugin.pluginId: self._autoCacheFields (dev)
 			
+			if cDev.pluginId == self.factory.plugin.pluginId: 
+				self._autoCacheFields (dev)
+				
+				if cDev.id in self.pluginDevices:
+					pass
+				else:
+					self.pluginDevices.append(cDev.id) 
+				
+				pluginItem = indigo.Dict()
+				if cDev.deviceTypeId in self.pluginItems:
+					pluginItem = self.pluginItems[cDev.deviceTypeId]
+				
+				else:
+					pluginItem = indigo.List()
+
+				if cDev.id in pluginItem:
+					pass
+				else:
+					pluginItem.append(cDev.id)
+					
+				self.pluginItems[cDev.deviceTypeId] = pluginItem	
+				
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
 			

@@ -380,20 +380,20 @@ class plug:
 				elif len(origDev.pluginProps) == 0 and len(newDev.pluginProps) > 0:
 					self.pluginDeviceCreated (newDev)
 					
-			else:
-				# It's not a plugin device, see if it's a cache device
-				if "cache" in dir(self.factory):
-					ret = self.factory.cache.watchedItemChanges (origDev, newDev)
-					for change in ret:
-						self.logger.debug ("'{0}' {1} '{2}' has changed".format(newDev.name, change.type, change.name))
-						
-						if change.itemType == "Device":
-							if change.type == "state": self._callBack (NOTHING, [origDev, newDev, change], "onWatchedStateChanged")
-							if change.type == "property": self._callBack (NOTHING, [origDev, newDev, change], "onWatchedPropertyChanged")
-							if change.type == "attribute": self._callBack (NOTHING, [origDev, newDev, change], "onWatchedAttributeChanged")
+			
+			# See if we are watching this
+			if "cache" in dir(self.factory):
+				ret = self.factory.cache.watchedItemChanges (origDev, newDev)
+				for change in ret:
+					self.logger.debug ("'{0}' {1} '{2}' has changed".format(newDev.name, change.type, change.name))
+					
+					if change.itemType == "Device":
+						if change.type == "state": self._callBack (NOTHING, [origDev, newDev, change], "onWatchedStateChanged")
+						if change.type == "property": self._callBack (NOTHING, [origDev, newDev, change], "onWatchedPropertyChanged")
+						if change.type == "attribute": self._callBack (NOTHING, [origDev, newDev, change], "onWatchedAttributeChanged")
 		
 		except Exception as e:
-			self.logger.error (ext.getException(e))				
+			self.logger.error (ext.getException(e))	
 	
 	# New plugin device entering configuration
 	def pluginDeviceBegun (self, dev):
@@ -416,6 +416,8 @@ class plug:
 			
 			# Collapse conditions to return form to correct size if conditions are loaded
 			if "cond" in dir(self.factory):	self.factory.cond.collapseAllConditions (dev)
+			
+			self.addPluginDeviceToCache (dev)
 									
 			self._callBack (AFTER, [dev])
 		

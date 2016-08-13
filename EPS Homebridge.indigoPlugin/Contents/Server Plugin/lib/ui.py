@@ -106,7 +106,10 @@ class ui:
 								
 								# Return a single list item with the current value as the only option, this way we don't
 								# lose our value since it would no longer be a valid list item
-								if str(valuesDict[index]) != "":
+								if ext.valueValid (valuesDict, index) == False:
+									# Just in case the field doesn't exist
+									return ret
+								elif str(valuesDict[index]) != "":
 									return [(str(valuesDict[index]), "Condition collapsed, refreshing value")]
 								else:
 									return ret
@@ -149,11 +152,14 @@ class ui:
 			if listType.lower() == "stateoptions": results = ret
 			if listType.lower() == "propoptions": results = ret
 			
-			# Actions
+			# Actions - providing an index for this (and thus caching it) may cause the list not to get updated properly
 			if listType.lower() == "actionoptionlist": results = self.factory.act.getActionOptionUIList (args, valuesDict)
 		
 			# Variables
 			if listType.lower() == "variableactions": results = self._getActionsForVariable (args, valuesDict)
+			
+			# Server
+			if listType.lower() == "serveractions": results = self._getActionsForServer (args, valuesDict)
 		
 			# Devices
 			if listType.lower() == "filtereddevices": results = self._getFilteredDeviceList (args, valuesDict)
@@ -959,14 +965,14 @@ class ui:
 			allowUi = False
 			if ext.valueValid (args, "allowui", True): 
 				if args["allowui"].lower() == "true": allowUi = True
-			
+				
 			dev = indigo.devices[int(valuesDict[args["srcfield"]])]
 		
 			retList = []
 		
 			# If we have a plug cache then use that instead
 			if "plugcache" in dir(self.factory) and self.factory.plugcache is not None:
-				retList = self.factory.plugcache.getStateUIList (dev)
+				retList = self.factory.plugcache.getStateUIList (dev, allowUi)
 				return retList
 	
 			for stateName, stateValue in dev.states.iteritems():
@@ -1096,6 +1102,33 @@ class ui:
 			if "plugcache" in dir(self.factory) and self.factory.plugcache is not None:
 				retList = self.factory.plugcache.getVariableActionUIList (allowUi)
 				if len(retList) == 0: return [("-none-", "No Variable Actions Found")]
+		
+				return retList
+			
+			else:
+				return ret
+
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			return ret	
+			
+	#
+	# Get all actions for servers
+	#
+	def _getActionsForServer(self, args, valuesDict):
+		ret = [("default", "No actions")]
+				
+		try:		
+			allowUi = False
+			if ext.valueValid (args, "allowui", True): 
+				if args["allowui"].lower() == "true": allowUi = True
+		
+			retList = []
+		
+			# This requires the plugcache for anything other than basic Indigo commands
+			if "plugcache" in dir(self.factory) and self.factory.plugcache is not None:
+				retList = self.factory.plugcache.getServerActionUIList (allowUi)
+				if len(retList) == 0: return [("-none-", "No Server Actions Found")]
 		
 				return retList
 			

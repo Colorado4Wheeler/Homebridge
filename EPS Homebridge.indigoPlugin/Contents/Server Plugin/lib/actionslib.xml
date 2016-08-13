@@ -6,11 +6,30 @@
 	<Action id="turnOn" deviceFilter="indigo.dimmer,indigo.relay">
 		<Name>Turn On</Name>
 		<CallbackMethod>Nil</CallbackMethod>
+		<ConfigUI>
+			<Field id="duration" type="textfield" defaultValue="0" valueType="delay">
+				<Label>Duration (HH:MM:SS)</Label>
+			</Field>
+			
+			<Field id="delay" type="textfield" defaultValue="0" valueType="delay">
+				<Label>Delay by (HH:MM:SS)</Label>
+			</Field>
+		</ConfigUI>
+		
 	</Action>
 	
 	<Action id="turnOff" deviceFilter="indigo.dimmer,indigo.relay">
 		<Name>Turn Off</Name>
 		<CallbackMethod>Nil</CallbackMethod>
+		<ConfigUI>
+			<Field id="duration" type="textfield" defaultValue="0" valueType="delay">
+				<Label>Duration (HH:MM:SS)</Label>
+			</Field>
+			
+			<Field id="delay" type="textfield" defaultValue="0" valueType="delay">
+				<Label>Delay by (HH:MM:SS)</Label>
+			</Field>
+		</ConfigUI>
 	</Action>
 	
 	<Action id="toggle" deviceFilter="indigo.dimmer,indigo.relay">
@@ -405,11 +424,13 @@
 		<CallbackMethod>Nil</CallbackMethod>
 	</Action>
 	
+	<Action id="sep_server" deviceFilter="indigo.server"/>
+	
 	<Action id="removeDelayedDevice" deviceFilter="indigo.server">
 		<Name>Remove Delayed Device Actions</Name>
 		<CallbackMethod>Nil</CallbackMethod>
 		<ConfigUI>
-			<Field type="menu" id="devices" valueType="integer">
+			<Field type="menu" id="device" valueType="integer">
 				<Label>Select the device to remove delayed actions for</Label>
 				<List class="indigo.devices" />
 			</Field>
@@ -420,7 +441,7 @@
 		<Name>Remove Delayed Trigger Actions</Name>
 		<CallbackMethod>Nil</CallbackMethod>
 		<ConfigUI>
-			<Field type="menu" id="triggers" valueType="integer">
+			<Field type="menu" id="trigger" valueType="integer">
 				<Label>Select the trigger to remove delayed actions for</Label>
 				<List class="indigo.triggers" />
 			</Field>
@@ -431,9 +452,131 @@
 		<Name>Remove Delayed Schedule Actions</Name>
 		<CallbackMethod>Nil</CallbackMethod>
 		<ConfigUI>
-			<Field type="menu" id="schedules" valueType="integer">
+			<Field type="menu" id="schedule" valueType="integer">
 				<Label>Select the schedule to remove delayed actions for</Label>
 				<List class="indigo.schedules" />
+			</Field>
+		</ConfigUI>
+	</Action>
+	
+	<Action id="sep_server2" deviceFilter="indigo.server"/>
+	
+	<Action id="enableDevice" deviceFilter="indigo.server">
+		<Name>Enable Device</Name>
+		<CallbackMethod>Nil</CallbackMethod>
+		<ConfigUI>
+			<Field type="menu" id="device" valueType="integer">
+				<Label>Enable</Label>
+				<List class="indigo.devices" />
+			</Field>
+		</ConfigUI>
+	</Action>
+	
+	<Action id="enableTrigger" deviceFilter="indigo.server">
+		<Name>Enable Trigger</Name>
+		<CallbackMethod>Nil</CallbackMethod>
+		<ConfigUI>
+			<Field type="menu" id="trigger" valueType="integer">
+				<Label>Enable</Label>
+				<List class="indigo.triggers" />
+			</Field>
+			
+			<Field id="delay" type="textfield" defaultValue="0" valueType="delay">
+				<Label>Delay by (HH:MM:SS)</Label>
+			</Field>
+			
+			<Field id="duration" type="textfield" defaultValue="0" valueType="delay">
+				<Label>Auto disable after (HH:MM:SS)</Label>
+			</Field>
+		</ConfigUI>
+	</Action>
+	
+	<Action id="enableSchedule" deviceFilter="indigo.server">
+		<Name>Enable Schedule</Name>
+		<CallbackMethod>Nil</CallbackMethod>
+		<ConfigUI>
+			<Field type="menu" id="schedule" valueType="integer">
+				<Label>Enable</Label>
+				<List class="indigo.schedules" />
+			</Field>
+			
+			<Field id="delay" type="textfield" defaultValue="0" valueType="delay">
+				<Label>Delay by (HH:MM:SS)</Label>
+			</Field>
+			
+			<Field id="duration" type="textfield" defaultValue="0" valueType="delay">
+				<Label>Auto disable after (HH:MM:SS)</Label>
+			</Field>
+		</ConfigUI>
+	</Action>
+	
+	<Action id="sep_server3" deviceFilter="indigo.server"/>
+	
+	<Action id="disableDevice" deviceFilter="indigo.server">
+		<Name>Disable Device</Name>
+		<CallbackMethod>Nil</CallbackMethod>
+		<ConfigUI>
+			<Field type="menu" id="device" valueType="integer">
+				<Label>Disable</Label>
+				<List class="indigo.devices" />
+			</Field>
+		</ConfigUI>
+	</Action>
+	
+	<Action id="disableTrigger" deviceFilter="indigo.server">
+		<Name>Disable Trigger</Name>
+		<CallbackMethod>Nil</CallbackMethod>
+		<ConfigUI>
+			<Field type="menu" id="trigger" valueType="integer">
+				<Label>Disable</Label>
+				<List class="indigo.triggers" />
+			</Field>
+			
+			<Field id="delay" type="textfield" defaultValue="0" valueType="delay">
+				<Label>Delay by (HH:MM:SS)</Label>
+			</Field>
+			
+			<Field id="duration" type="textfield" defaultValue="0" valueType="delay">
+				<Label>Auto enable after (HH:MM:SS)</Label>
+			</Field>
+		</ConfigUI>
+	</Action>
+	
+	<Action id="disableSchedule" deviceFilter="indigo.server">
+		<Name>Disable Schedule</Name>
+		<CallbackMethod>Nil</CallbackMethod>
+		<ConfigUI>
+			<Field type="menu" id="schedule" valueType="integer">
+				<Label>Disable</Label>
+				<List class="indigo.schedules" />
+			</Field>
+			
+			<Field id="delay" type="textfield" defaultValue="0" valueType="delay">
+				<Label>Delay by (HH:MM:SS)</Label>
+			</Field>
+			
+			<Field id="duration" type="textfield" defaultValue="0" valueType="delay">
+				<Label>Auto enable after (HH:MM:SS)</Label>
+			</Field>
+		</ConfigUI>
+	</Action>
+	
+	<Action id="sep_server4" deviceFilter="indigo.server"/>
+	
+	<Action id="sendEmailTo" deviceFilter="indigo.server">
+		<Name>Send Email</Name>
+		<CallbackMethod>Nil</CallbackMethod>
+		<ConfigUI>
+			<Field id="to" type="textfield" defaultValue="" valueType="string">
+				<Label>To</Label>
+			</Field>
+			
+			<Field id="subject" type="textfield" defaultValue="" valueType="string">
+				<Label>Subject</Label>
+			</Field>
+			
+			<Field id="body" type="textfield" defaultValue="" valueType="string">
+				<Label>Body</Label>
 			</Field>
 		</ConfigUI>
 	</Action>
