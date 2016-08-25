@@ -24,9 +24,10 @@ class cache:
 	def __init__(self, factory):
 		self.logger = logging.getLogger ("Plugin.cache")
 		self.factory = factory
-		self.items = cacheDict()
+		self.items = cacheDict(factory)
 		self.pluginItems = indigo.Dict() # Plugin devices by type
 		self.pluginDevices = indigo.List() # All plugin devices
+		self.pluginLocalCache = indigo.List() # If the plugin needs to cache something special
 		
 		self.logger.threaddebug ("Caching initialized")
 		
@@ -355,9 +356,10 @@ class cacheDict:
 	#
 	# Initialize the  class
 	#
-	def __init__(self):
+	def __init__(self, factory):
 		self.logger = logging.getLogger ("Plugin.cacheDict")
 		self.items = {}
+		self.factory = factory
 		
 	def __len__ (self):
 		try:
@@ -518,6 +520,11 @@ class cacheDict:
 			self.addWatchedItem (parent, child)
 			
 		parentWatch = self.items[parent.id]
+		
+		# It's possible the record is here but the watched/watching is empty, account for that here
+		if len(parentWatch.watching) == 0:
+			self.addWatchedItem (parent, child)
+			
 		for w in parentWatch.watching:
 			if w.id == child.id:
 				if state in w.states: 
@@ -633,6 +640,16 @@ class cacheDict:
 				
 			if isFound == False: self.items[parent.id].watchedBy.append(watchRec(child))
 			
+		if "devices" in dir(self.factory):
+			devEx = self.factory.devices.add (child)
+			
+			if devEx:
+				watchers = devEx.getWatchList()
+				for state in watchers["states"]:
+					self.addWatchedState (parent, child, state)
+					
+				for attrib in watchers["attribs"]:
+					self.addWatchedAttribute (parent, child, attrib)
 		
 #
 # Cache watch record

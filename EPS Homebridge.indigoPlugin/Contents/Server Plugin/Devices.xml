@@ -1955,7 +1955,142 @@
 		<UiDisplayStateId>statedisplay</UiDisplayStateId>
 	</Device>
 
+	<!-- =========== ALIAS =========== -->
+	<Device type="dimmer" id="Homebridge-Alias">
+		<Name>Homebridge Alias</Name>
+		<ConfigUI>
+			<Field id="serverDevice" type="menu" >
+				<Label>Homebridge server:</Label>
+				<List class="indigo.devices" filter="com.eps.indigoplugin.homebridge.Homebridge-Server"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="device" >
+				<Label>Device:</Label>
+				<List class="self" filter="#filtereddevices#[index=DEVICELIST, excludeself=true]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="checkbox" id="isSprinkler" defaultValue="false" hidden="true" >
+				<Label> </Label>
+				<Description>When enabled the device is a sprinkler</Description>
+			</Field>
+			
+			<Field type="checkbox" id="manageZones" defaultValue="true" visibleBindingId="isSprinkler" visibleBindingValue="true" alwaysUseInDialogHeightCalc="true">
+				<Label> </Label>
+				<Description>Automatically create/manage zone devices</Description>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="sprinklerOptions" defaultValue="controller" enabledBindingId="manageZones" enabledBindingNegate="true" visibleBindingId="isSprinkler" visibleBindingValue="true" alwaysUseInDialogHeightCalc="true">
+				<Label>Sprinkler control:</Label>
+				<List>
+					<Option value="controller">Sprinkler controller</Option>
+					<Option value="1">Zone 1</Option>
+					<Option value="2">Zone 2</Option>
+					<Option value="3">Zone 3</Option>
+					<Option value="4">Zone 4</Option>
+					<Option value="5">Zone 5</Option>
+					<Option value="6">Zone 6</Option>
+					<Option value="7">Zone 7</Option>
+					<Option value="8">Zone 8</Option>
+				</List>
+			</Field>
+			
+			<Field type="checkbox" id="autoSchedule" defaultValue="false" visibleBindingId="isSprinkler" visibleBindingValue="true">
+				<Label> </Label>
+				<Description>Use dynamic schedules and durations</Description>
+			</Field>
+			
+			<Field type="textfield" id="schedule" defaultValue="0, 0, 0, 0, 0, 0, 0, 0" enabledBindingId="autoSchedule" enabledBindingNegate="true" visibleBindingId="sprinklerOptions" visibleBindingValue="controller">
+				<Label>Schedule when turned On:</Label>
+			</Field>
+			
+			<Field type="textfield" id="zoneTime" defaultValue="20" enabledBindingId="autoSchedule" enabledBindingNegate="true" visibleBindingId="sprinklerOptions" visibleBindingValue="1,2,3,4,5,6,7,8">
+				<Label>Duration when turned On:</Label>
+			</Field>
+			
+			<Field type="checkbox" id="lock_treatAs" defaultValue="false" hidden="true" >
+				<Label> </Label>
+				<Description>When enabled the treat as menu is locked</Description>
+			</Field>
+			
+			<Field type="menu" id="treatAs" defaultValue="dimmer" enabledBindingId="lock_treatAs" enabledBindingNegate="true">
+				<Label>Type of device:</Label>
+				<List>
+					<Option value="dimmer">Dimmer</Option>
+					<Option value="switch">Switch</Option>
+					<Option value="lock">Lock</Option>
+					<Option value="door">Door</Option>
+					<Option value="garage">Garage Door</Option>
+					<Option value="window">Window</Option>
+				</List>
+			</Field>
+			
+			<Field id="sep_devices" type="separator" />
 
+			<Field type="label" id="lbl_dimmer" visibleBindingId="treatAs" visibleBindingValue="dimmer" alwaysUseInDialogHeightCalc="true">
+				<Label>On/Off/Brightness matches to the device</Label>
+			</Field>
+			
+			<Field type="label" id="lbl_switch" visibleBindingId="treatAs" visibleBindingValue="switch">
+				<Label>On/Off matches to the device, no brightness level</Label>
+			</Field>
+			
+			<Field type="label" id="lbl_lock" visibleBindingId="treatAs" visibleBindingValue="lock">
+				<Label>On when device is locked, Off when device is unlocked</Label>
+			</Field>
+			
+			<Field type="label" id="lbl_door" visibleBindingId="treatAs" visibleBindingValue="door">
+				<Label>On when device is closed, Off when device is open</Label>
+			</Field>
+			
+			<Field type="label" id="lbl_garage" visibleBindingId="treatAs" visibleBindingValue="garage">
+				<Label>Off when binary input 1 is closed, on when binary input 1 is open</Label>
+			</Field>
+			
+			<Field type="label" id="lbl_window" visibleBindingId="treatAs" visibleBindingValue="window">
+				<Label>Off when binary input 1 is closed, on when binary input 1 is open</Label>
+			</Field>
+			
+			<Field type="label" id="lbl_sprinkler" visibleBindingId="isSprinkler" visibleBindingValue="true" alwaysUseInDialogHeightCalc="true">
+				<Label>Homekit/Homebridge doesn't support sprinklers by default so this is a way of tricking Homebridge into using a sprinkler.  This device will be on when an active zone is running and off when it is not.  Use the plugin configuration to configure how brightness is used to represent the run times.
+
+To find out how to control this device via Homebridge click the "?" icon below.</Label>
+			</Field>
+			
+			
+		</ConfigUI>
+		
+		<States>
+			<!-- All EPS plugins have this state and use it for the Indigo lists -->
+			<State id="sprinklerSchedule">
+				<ValueType>Number</ValueType>
+				<TriggerLabel>Sprinkler scheduled minutes</TriggerLabel>
+				<ControlPageLabel>Sprinkler scheduled minutes</ControlPageLabel>
+			</State>
+			
+			<State id="sprinklerStartTime">
+				<ValueType>String</ValueType>
+				<TriggerLabel>Sprinkler start time</TriggerLabel>
+				<ControlPageLabel>Sprinkler start time</ControlPageLabel>
+			</State>
+			
+			<State id="sprinklerEndTime">
+				<ValueType>String</ValueType>
+				<TriggerLabel>Sprinkler end time</TriggerLabel>
+				<ControlPageLabel>Sprinkler end time</ControlPageLabel>
+			</State>
+			
+			<State id="sprinklerPaused">
+				<ValueType>Boolean</ValueType>
+				<TriggerLabel>Sprinkler is paused</TriggerLabel>
+				<ControlPageLabel>Sprinkler is paused</ControlPageLabel>
+			</State>
+			
+		</States>
+		<UiDisplayStateId>statedisplay</UiDisplayStateId>
+	</Device>
 
 	<!-- =========== SERVER =========== -->
 	<Device type="relay" id="Homebridge-Server">

@@ -95,14 +95,7 @@ class plug:
 				if caller != "runConcurrentThread":		
 					self.logger.threaddebug ("Raising {0} in plugin.py from call to {1}".format(funcname, caller))
 			
-				func = getattr(self.factory.plugin, funcname)
-				
-				if len(args) > 0: 
-					retval = func(*args)
-				else:
-					retval = func()
-				
-			return retval
+				return self.factory.raiseEvent (funcname, args)
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
@@ -237,6 +230,9 @@ class plug:
 				
 				if "update" in dir(self.factory):
 					self.factory.update.check (False, False)
+					
+				if "devices" in dir(self.factory):
+					self.factory.devices.runConcurrentThread()
 				
 				self._callBack (AFTER, [])
 				
@@ -369,7 +365,7 @@ class plug:
 				pass
 			else:
 				return
-			
+				
 			if newDev.pluginId == self.factory.plugin.pluginId:
 				if len(origDev.pluginProps) > 0: 
 					self.pluginDeviceUpdated (origDev, newDev)
@@ -384,13 +380,17 @@ class plug:
 			# See if we are watching this
 			if "cache" in dir(self.factory):
 				ret = self.factory.cache.watchedItemChanges (origDev, newDev)
+				
 				for change in ret:
-					self.logger.debug ("'{0}' {1} '{2}' has changed".format(newDev.name, change.type, change.name))
-					
+					self.logger.debug ("'{0}' {1} '{2}' has changed, notifying '{3}'".format(newDev.name, change.type, change.name, indigo.devices[change.parentId].name))
+										
 					if change.itemType == "Device":
 						if change.type == "state": self._callBack (NOTHING, [origDev, newDev, change], "onWatchedStateChanged")
 						if change.type == "property": self._callBack (NOTHING, [origDev, newDev, change], "onWatchedPropertyChanged")
 						if change.type == "attribute": self._callBack (NOTHING, [origDev, newDev, change], "onWatchedAttributeChanged")
+						
+						if "devices" in dir(self.factory) and newDev.id in self.factory.devices.items:
+							self.factory.devices.deviceUpdated (origDev, newDev, change)
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))	

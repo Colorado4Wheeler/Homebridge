@@ -38,7 +38,7 @@ class Plugin(indigo.PluginBase):
 
 	# Define the plugin-specific things our engine needs to know
 	TVERSION	= "3.2.1"
-	PLUGIN_LIBS = ["cache", "plugcache", "actions"] #["conditions", "cache", "actions"] #["cache"]
+	PLUGIN_LIBS = ["cache", "plugcache", "actions", "devices"] #["conditions", "cache", "actions"] #["cache"]
 	UPDATE_URL 	= ""
 	
 	#
@@ -144,6 +144,10 @@ class Plugin(indigo.PluginBase):
 				if indigo.devices[devId].states["restartPending"] and indigo.devices[devId].states["onOffState"]:
 					d = dtutil.dateDiff ("seconds", datetime.datetime.strptime (indigo.devices[devId].states["restartTime"], "%Y-%m-%d %H:%M:%S"), indigo.server.getTime())
 					if d <= 0: self.homebridgeRestart (indigo.devices[devId])
+					
+			#indigo.server.log(unicode(self.SPRINKLERS))
+			#for devId in self.SPRINKLERS:
+			#	self.setIrrigationBrightness (devId)
 			
 		except Exception as e:
 			self.logger.error (ext.getException(e))
@@ -165,6 +169,9 @@ class Plugin(indigo.PluginBase):
 			self.TOTALFIELDS = 5 # Total number of option settings fields we allow for actions
 			
 			self.SERVERS = []
+			self.SPRINKLERS = []
+			
+			self.MANUALZONE = False # If a zone is turned on instead of a controller, this prevents auto-scheduling from being saved
 			
 		except Exception as e:
 			self.logger.error (ext.getException(e))		
@@ -182,7 +189,7 @@ class Plugin(indigo.PluginBase):
 			restartNeeded = False
 			server = False			
 			
-			if dev.deviceTypeId == "Homebridge-Wrapper" and ext.valueValid (dev.pluginProps, "serverDevice", True):
+			if (dev.deviceTypeId == "Homebridge-Wrapper" or dev.deviceTypeId == "Homebridge-Alias") and ext.valueValid (dev.pluginProps, "serverDevice", True):
 				restartNeeded = True
 				server = indigo.devices[int(dev.pluginProps["serverDevice"])]
 				
@@ -197,7 +204,7 @@ class Plugin(indigo.PluginBase):
 				msg = "\n" + eps.ui.debugHeaderEx()
 			
 				if server:
-					msg += eps.ui.debugLine ("The following Wrapper devices have been modified to point to a")
+					msg += eps.ui.debugLine ("The following devices have been modified to point to a")
 					msg += eps.ui.debugLine ("new server since '{0}' has been deleted:".format(dev.name))
 							
 				else:
@@ -213,6 +220,14 @@ class Plugin(indigo.PluginBase):
 						props = wrapper.pluginProps
 						props["serverDevice"] = str(server.id)
 						wrapper.replacePluginPropsOnServer (props)
+						
+				for wrapper in indigo.devices.iter(self.pluginId + ".Homebridge-Alias"):
+					if wrapper.pluginProps["serverDevice"] == str(dev.id):
+						showWarning = True
+						msg += eps.ui.debugLine (wrapper.name)
+						props = wrapper.pluginProps
+						props["serverDevice"] = str(server.id)
+						wrapper.replacePluginPropsOnServer (props)		
 					
 				if showWarning: 
 					if server:
@@ -260,8 +275,9 @@ class Plugin(indigo.PluginBase):
 					
 				self.homebridgeIsRunning (dev)
 				
-			if dev.deviceTypeId == "Homebridge-Wrapper": 
-				pass
+			if dev.deviceTypeId == "Homebridge-Alias": 
+				self.auditSprinklerZones (dev, indigo.devices[int(dev.pluginProps["device"])])
+				
 			
 		
 		except Exception as e:
@@ -272,14 +288,14 @@ class Plugin(indigo.PluginBase):
 	#
 	def onAfter_pluginDeviceCreated (self, dev):
 		try:
-			if dev.deviceTypeId == "Homebridge-Wrapper":
+			if dev.deviceTypeId == "Homebridge-Wrapper" or dev.deviceTypeId == "Homebridge-Alias":
 				# We have to restart the server that this device is attached to so it can be recognized
 				self.checkDeviceAddress (dev)
 					
 				if ext.valueValid (dev.pluginProps, "serverDevice", True):
 					server = indigo.devices[int(dev.pluginProps["serverDevice"])]
 					self.homebridgeSaveConfig (server, self.buildServerConfig (server))
-					if self.pluginPrefs["restartNewDevice"]: self.setServerRestart (server, dev, "Wrapper device '{0}' was added to '{1}'".format(dev.name, server.name), 5, 120, 5)
+					if self.pluginPrefs["restartNewDevice"]: self.setServerRestart (server, dev, "Wrapper or Alias device '{0}' was added to '{1}'".format(dev.name, server.name), 5, 120, 5)
 			
 			if dev.deviceTypeId == "Homebridge-Server":
 				self.checkDeviceAddress (dev)
@@ -305,7 +321,7 @@ class Plugin(indigo.PluginBase):
 	#			
 	def onAfter_pluginDeviceUpdated (self, origDev, newDev):
 		try:
-			if newDev.deviceTypeId == "Homebridge-Wrapper":
+			if newDev.deviceTypeId == "Homebridge-Wrapper" or newDev.deviceTypeId == "Homebridge-Alias":
 				if origDev.pluginProps["treatAs"] != newDev.pluginProps["treatAs"] or newDev.address == "":
 					self.checkDeviceAddress (newDev)
 		
@@ -317,7 +333,7 @@ class Plugin(indigo.PluginBase):
 	#
 	def onAfter_pluginDevicePropChanged (self, origDev, newDev, changedProps):	
 		try:
-			if newDev.deviceTypeId == "Homebridge-Wrapper":
+			if newDev.deviceTypeId == "Homebridge-Wrapper" or newDev.deviceTypeId == "Homebridge-Alias":
 				if "treatAs" in changedProps:
 					self.checkDeviceAddress (newDev)
 				
@@ -339,6 +355,10 @@ class Plugin(indigo.PluginBase):
 						self.setServerRestart (oldserver, newDev, "{0}'s server changed to this server".format(newDev.name))	
 						if newDev.pluginProps["serverDevice"] != "": self.setServerRestart (newserver, newDev, "{0}'s server changed from this server".format(newDev.name))					
 					
+		
+			if newDev.deviceTypeId == "Homebridge-Alias":
+				if newDev.pluginProps["isSprinkler"] and newDev.pluginProps["sprinklerOptions"] == "controller" and newDev.pluginProps["manageZones"]:
+					self.auditSprinklerZones (newDev, indigo.devices[int(newDev.pluginProps["device"])])
 		
 			if newDev.deviceTypeId == "Homebridge-Server":
 				needsRestart = False
@@ -364,8 +384,151 @@ class Plugin(indigo.PluginBase):
 
 
 	################################################################################	
+	# EXTENDED DEVICE
+	################################################################################	
+	
+	#
+	# Sprinkler progress changed
+	#
+	def onSprinklerProgressChanged (self, devEx, update):
+		try:
+			parents = eps.cache.getDevicesWatchingId (devEx.dev.id)
+			for devId in parents:
+				if devId in indigo.devices == False: continue
+				parent = indigo.devices[devId]
+				
+				if parent.deviceTypeId == "Homebridge-Alias":
+					if parent.pluginProps["isSprinkler"]:
+						if parent.pluginProps["sprinklerOptions"] == "controller":
+							if parent.states["brightnessLevel"] != devEx.schedulePercentRemaining: parent.updateStateOnServer ("brightnessLevel", devEx.schedulePercentRemaining)
+							
+						else:
+							if int(parent.pluginProps["sprinklerOptions"]) == devEx.activeZone:
+								if parent.states["brightnessLevel"] != devEx.zonePercentRemaining: parent.updateStateOnServer ("brightnessLevel", devEx.zonePercentRemaining)	
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+	
+	#
+	# Monitored sprinkler started a schedule
+	#
+	def onSprinklerScheduleStarted (self, devEx, change, update):
+		try:
+			# Currently only handle sprinkler commands for sprinkler aliases
+			parent = indigo.devices[change.parentId]
+			child = indigo.devices[change.childId]
+			
+			if ext.valueValid (parent.pluginProps, "isSprinkler"):
+				if parent.pluginProps["isSprinkler"] == True:
+					if parent.pluginProps["sprinklerOptions"] == "controller":
+						#indigo.server.log("SPRINKLER SCHEDULE STARTED")
+						parent.updateStateOnServer ("onOffState", True)
+						
+						# Update auto schedules if they are enabled
+						self.autoSchedule (parent, child)
+						
+						#indigo.server.log(unicode(devEx))
+					else:
+						if int(parent.pluginProps["sprinklerOptions"]) == devEx.activeZone:
+							parent.updateStateOnServer ("onOffState", True)
+							parent.updateStateOnServer ("brightnessLevel", devEx.zonePercentRemaining)
+			
+				parent.updateStateOnServer ("sprinklerPaused", False)					
+				self._setDeviceIcon (parent)
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+	
+	#
+	# Monitored sprinkler was stopped
+	#		
+	def onSprinklerScheduleStopped (self, devEx, change, update):
+		try:
+			# Currently only handle sprinkler commands for sprinkler aliases
+			parent = indigo.devices[change.parentId]
+			child = indigo.devices[change.childId]
+			
+			if ext.valueValid (parent.pluginProps, "isSprinkler"):
+				parent.updateStateOnServer ("onOffState", False)	
+				parent.updateStateOnServer ("sprinklerPaused", False)	
+				self._setDeviceIcon (parent)		
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))		
+			
+	#
+	# Monitored sprinkler was paused
+	#		
+	def onSprinklerSchedulePaused (self, devEx, change, update):
+		try:
+			# Currently only handle sprinkler commands for sprinkler aliases
+			parent = indigo.devices[change.parentId]
+			child = indigo.devices[change.childId]
+			
+			if ext.valueValid (parent.pluginProps, "isSprinkler"):
+				parent.updateStateOnServer ("sprinklerPaused", True)	
+				self._setDeviceIcon (parent)		
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))		
+			
+	#
+	# Monitored sprinkler was resumed
+	#		
+	def onSprinklerScheduleResumed (self, devEx, change, update):
+		try:
+			# Currently only handle sprinkler commands for sprinkler aliases
+			parent = indigo.devices[change.parentId]
+			child = indigo.devices[change.childId]
+			
+			if ext.valueValid (parent.pluginProps, "isSprinkler"):
+				parent.updateStateOnServer ("sprinklerPaused", False)	
+				self._setDeviceIcon (parent)		
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))							
+
+	################################################################################	
 	# DEVICE UI
 	################################################################################	
+	
+	#
+	# Alias device form field changed
+	#
+	def onAfter_formFieldChanged_Alias (self, valuesDict, typeId, devId):
+		try:
+			if ext.valueValid (valuesDict, "device", True):
+				child = indigo.devices[int(valuesDict["device"])]
+				
+				valuesDict["lock_treatAs"] = True # Assume we know the device until we don't
+				valuesDict["isSprinkler"] = False
+				
+				if type(child) is indigo.DimmerDevice:
+					valuesDict["treatAs"] = "dimmer"
+					
+				elif type(child) is indigo.SensorDevice:
+					valuesDict["treatAs"] = "switch"
+					
+				elif type(child) is indigo.SprinklerDevice:
+					valuesDict["treatAs"] = "dimmer"		
+					valuesDict["isSprinkler"] = True
+					
+					if valuesDict["manageZones"]:
+						valuesDict["sprinklerOptions"] = "controller"	
+					
+				elif type(child) is indigo.MultiIODevice:
+					valuesDict["treatAs"] = "garage"
+					valuesDict["lock_treatAs"] = False		
+					
+				else:
+					valuesDict["treatAs"] = "switch"
+					valuesDict["lock_treatAs"] = False	
+
+			
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+		return valuesDict
 			
 	#
 	# Server device form field changed
@@ -407,6 +570,9 @@ class Plugin(indigo.PluginBase):
 		try:
 			if typeId == "Homebridge-Server": 
 				return self.onAfter_formFieldChanged_Server (valuesDict, typeId, devId)
+				
+			if typeId == "Homebridge-Alias": 
+				return self.onAfter_formFieldChanged_Alias (valuesDict, typeId, devId)	
 		
 			if valuesDict["settingSelect"] == "": valuesDict["settingSelect"] = "On" # new device default
 				
@@ -672,6 +838,22 @@ class Plugin(indigo.PluginBase):
 							ret[devId].append (state)
 						else:
 							ret[devId] = [state]
+							
+			if dev.deviceTypeId == "Homebridge-Alias":			
+				states = []
+					
+				if ext.valueValid (dev.pluginProps, "device", True):
+					child = indigo.devices[int(dev.pluginProps["device"])]
+					
+					if dev.pluginProps["treatAs"] == "dimmer":
+						if "onOffState" in child.states: states.append("onOffState")
+						if "brightnessLevel" in child.states: states.append("brightnessLevel")	
+						if "activeZone" in child.states: states.append("activeZone")	
+						
+					elif dev.pluginProps["treatAs"] == "switch":
+						if "onOffState" in child.states: states.append("onOffState")
+					
+					ret[child.id] = states
 								
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
@@ -778,9 +960,18 @@ class Plugin(indigo.PluginBase):
 					indigo.actionGroup.execute(int(dev.pluginProps["actionOn"]))
 					return True
 					
+				if dev.pluginProps["methodOn"] == "none":
+					return True
+					
 			elif dev.deviceTypeId == "Homebridge-Server":
 				self.homebridgeStart (dev)
 				return True
+				
+			elif dev.deviceTypeId == "Homebridge-Alias":
+				if dev.states["onOffState"]: return True # It's already on
+				return self.aliasTurnOn (dev)
+				
+				
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))		
@@ -805,14 +996,23 @@ class Plugin(indigo.PluginBase):
 					indigo.actionGroup.execute(int(dev.pluginProps["actionOff"]))
 					return True
 					
+				if dev.pluginProps["methodOff"] == "none":
+					return True	
+					
 			elif dev.deviceTypeId == "Homebridge-Server":
 				self.homebridgeStop (dev)
 				return True
+				
+			elif dev.deviceTypeId == "Homebridge-Alias":
+				if dev.states["onOffState"] == False: return True # It's already off
+				return self.aliasTurnOff (dev)	
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))		
 			
 		return False	
+		
+	
 		
 	#
 	# Our device brightness was changed
@@ -857,6 +1057,9 @@ class Plugin(indigo.PluginBase):
 					else:
 						self.logger.error ("A command to change the brightness of '{0}' failed because the device doesn't support changing brightness".format(devEx.name))
 						return False
+						
+			elif dev.deviceTypeId == "Homebridge-Alias":
+				return self.aliasSetBrightness (dev, value)
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))		
@@ -1064,8 +1267,271 @@ class Plugin(indigo.PluginBase):
 	
 		
 	################################################################################	
-	# GENERAL
+	# SPRINKLER METHODS
 	################################################################################	
+	
+	#
+	# Set up auto schedule for irrigation device(s)
+	#
+	def autoSchedule (self, parent, child):
+		try:
+			if parent.pluginProps["autoSchedule"] == False: return
+			
+			if self.MANUALZONE:
+				self.logger.debug ("Auto scheduling is enabled for '{0}' but '{1}' was turned on by a single zone, '{0}' will not be updated".format(parent.name, child.name))
+				self.MANUALZONE = False # Reset the flag for the next time we run
+				return
+			
+			if len(child.zoneScheduledDurations) == 0:
+				self.logger.debug ("Auto scheduling is enabled for '{0}' but '{1}' appears to be running without a schedule, '{0}' will not be updated".format(parent.name, child.name))
+				return
+				
+			# This should only be called for the controller, since the controller is the one that gets the schedule
+			schedule = ""
+			for i in child.zoneScheduledDurations:
+				schedule = schedule + str(i) + ", "
+				
+			schedule = schedule[0:len(schedule) - 2]
+			
+			parentProps = parent.pluginProps
+			parentProps["schedule"] = schedule
+			parent.replacePluginPropsOnServer(parentProps)
+			
+			self.logger.debug ("Auto scheduling is enabled for '{0}', setting schedule to '{1}'".format(parent.name, schedule))
+			
+			# Now find any attached zones that also have the option enabled
+			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Alias"):
+				if dev.pluginProps["isSprinkler"]:
+					if dev.pluginProps["device"] == parent.pluginProps["device"] and dev.pluginProps["sprinklerOptions"] != "controller" and dev.pluginProps["autoSchedule"]:
+						duration = str(child.zoneScheduledDurations[int(dev.pluginProps["sprinklerOptions"]) - 1])
+						self.logger.debug ("Auto scheduling is enabled for '{0}', setting duration to '{1}'".format(dev.name, duration))
+		
+						devProps = dev.pluginProps
+						devProps["zoneTime"] = duration
+						dev.replacePluginPropsOnServer(devProps)
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))
+			
+	#
+	# Audit zones for a managed controller
+	#
+	def auditSprinklerZones (self, parent, child):
+		try:
+			self.logger.threaddebug ("Checking if '{0}' is a controller and if it is managing zones".format(parent.name))
+			if parent.pluginProps["isSprinkler"] and parent.pluginProps["sprinklerOptions"] == "controller" and parent.pluginProps["manageZones"]:
+				# Make sure we have each zone
+				zones = child.zoneEnableList
+				
+				for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Alias"):
+					if dev.pluginProps["isSprinkler"] and dev.pluginProps["sprinklerOptions"] != "controller" and dev.pluginProps["device"] == parent.pluginProps["device"]:
+						zoneIdx = int(dev.pluginProps["sprinklerOptions"]) - 1
+						zones[zoneIdx] = 9
+						
+				self.logger.threaddebug ("Checking managed zones on plugin device '{0}' resulted in {1}".format(parent.name, unicode(zones)))
+				
+				zoneIdx = 0
+				for z in zones:
+					zoneIdx = zoneIdx + 1
+					
+					if z == False:
+						self.logger.debug ("Not managing zone {0} on '{1}' because the zone is disabled".format(str(zoneIdx), child.name))
+						continue
+						
+					elif z == 9:
+						self.logger.debug ("Zone {0} on '{1}' is already a device in Indigo".format(str(zoneIdx), child.name))
+						continue
+						
+					else:
+						self.logger.debug ("Zone {0} on '{1}' does not have a device in Indigo, creating a new device in the same folder where '{2}' resides".format(str(zoneIdx), child.name, parent.name))
+						needsReload = True
+						
+						try:
+							props = indigo.Dict()
+							props["serverDevice"] = parent.pluginProps["serverDevice"]
+							props["device"] = parent.pluginProps["device"]
+							props["isSprinkler"] = True
+							props["manageZones"] = False
+							props["sprinklerOptions"] = str(zoneIdx)
+							props["autoSchedule"] = parent.pluginProps["autoSchedule"]
+							props["zoneTime"] = "20"
+							props["lock_treatAs"] = True
+							props["treatAs"] = "dimmer"
+							
+							indigo.device.create(protocol=indigo.kProtocol.Plugin,
+								address='',
+								name='Zone ' + str(zoneIdx), 
+								description='Managed sprinkler zone on ' + parent.name + ' for ' + child.name, 
+								pluginId=self.pluginId,
+								deviceTypeId='Homebridge-Alias',
+								props=props,
+								folder=parent.folderId)
+							
+						except Exception as e:
+							self.logger.error (ext.getException(e))					
+					
+		except Exception as e:
+			self.logger.error (ext.getException(e))
+			
+		#
+	# Turn on an alias device
+	#
+	def aliasTurnOn (self, dev):
+		try:
+			if ext.valueValid (dev.pluginProps, "device", True) == False: return False
+			
+			if dev.pluginProps["treatAs"] == "dimmer":
+				if dev.pluginProps["isSprinkler"] == False:
+					indigo.device.turnOn (int(dev.pluginProps["device"]))
+					
+				else:
+					schedule = []
+					
+					if dev.pluginProps["sprinklerOptions"] == "controller":
+						userSchedule = dev.pluginProps["schedule"].split(",")
+
+						if len(userSchedule) != 1:
+							for zone in userSchedule:
+								zone = float(zone.strip())
+								schedule.append(zone)
+								
+						else:
+							for i in range (0, 8):
+								schedule.append (int(dev.pluginProps["schedule"]))		
+								
+					else:
+						for i in range (0, 8):
+							if (i + 1) != int(dev.pluginProps["sprinklerOptions"]):
+								schedule.append (0.0)
+							else:
+								schedule.append (float(dev.pluginProps["zoneTime"]))
+								
+						self.MANUALZONE = True
+								
+					indigo.sprinkler.run (int(dev.pluginProps["device"]), schedule=schedule)
+					
+			self._setDeviceIcon (dev)
+			return True
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))		
+			
+		return False
+		
+	#
+	# Turn off an alias device
+	#
+	def aliasTurnOff (self, dev):
+		try:
+			if ext.valueValid (dev.pluginProps, "device", True) == False: return False
+			
+			if dev.pluginProps["treatAs"] == "dimmer":
+				if dev.pluginProps["isSprinkler"] == False:
+					indigo.device.turnOff (int(dev.pluginProps["device"]))
+					
+				else:
+					indigo.sprinkler.stop (int(dev.pluginProps["device"]))
+					
+			self._setDeviceIcon (dev)
+			return True
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))		
+			
+		return False	
+		
+	#
+	# Set brightness of an alias device
+	#
+	def aliasSetBrightness (self, dev, value):
+		try:
+			if ext.valueValid (dev.pluginProps, "device", True) == False: return False
+			
+			if dev.pluginProps["treatAs"] == "dimmer":
+				if dev.pluginProps["isSprinkler"] == False:
+					child = indigo.devices[int(dev.pluginProps["device"])]
+					if type(child) is indigo.DimmerDevice:
+						indigo.dimmer.setBrightness (child.id, value=value)
+					else:
+						self.logger.warn ("Alias device '{0}' cannot set the brightness of '{1}' because it is not a dimmer".format(dev.name, child.name))
+					
+				else:
+					# If a schedule is running then stop it now
+					child = indigo.devices[int(dev.pluginProps["device"])]
+					if child.states["activeZone"] != 0 or child.pausedScheduleZone is not None: indigo.sprinkler.stop (child.id)
+						
+					schedule = []
+					adjusted = float(value) / 100
+					
+					controllerMethod = "on"
+					zoneMethod = "on"
+					if ext.valueValid (self.pluginPrefs, "sprinklerDim", True): controllerMethod = self.pluginPrefs["sprinklerDim"]
+					if ext.valueValid (self.pluginPrefs, "zoneDim", True): zoneMethod = self.pluginPrefs["zoneDim"]
+					
+					if dev.pluginProps["sprinklerOptions"] == "controller":
+						if controllerMethod == "on":					
+							userSchedule = dev.pluginProps["schedule"].split(",")
+
+							if len(userSchedule) != 1:
+								for zone in userSchedule:
+									zone = float(zone.strip())
+									schedule.append(zone * adjusted)
+							else:
+								for i in range (0, 8):
+									schedule.append (float(dev.pluginProps["schedule"]) * adjusted)		
+									
+						elif controllerMethod == "max":							
+							for i in range (0, 8):
+								if child.zoneEnableList[i] and child.zoneMaxDurations[i] > 0:
+									schedule.append(child.zoneMaxDurations[i] * adjusted)
+								else:
+									schedule.append(0.0)
+									
+						elif controllerMethod == "100":
+							for i in range (0, 8):
+								if child.zoneEnableList[i]:
+									schedule.append(value)
+								else:
+									schedule.append(0.0)
+					
+					else:
+						if zoneMethod == "on":
+							for i in range (0, 8):
+								if (i + 1) != int(dev.pluginProps["sprinklerOptions"]):
+									schedule.append (0.0)
+								else:
+									schedule.append (float(dev.pluginProps["zoneTime"]) * adjusted)
+									
+						elif zoneMethod == "max":							
+							for i in range (0, 8):
+								if str(i + 1) == dev.pluginProps["sprinklerOptions"] and child.zoneEnableList[i] and child.zoneMaxDurations[i] > 0:
+									schedule.append(child.zoneMaxDurations[i] * adjusted)
+								else:
+									schedule.append(0.0)
+									
+						elif zoneMethod == "100":							
+							for i in range (0, 8):
+								if str(i + 1) == dev.pluginProps["sprinklerOptions"] and child.zoneEnableList[i]:
+									schedule.append(value)
+								else:
+									schedule.append(0.0)			
+							
+					# No matter what, treat this as a manual schedule so we don't overwrite
+					self.MANUALZONE = True
+								
+					indigo.sprinkler.run (child.id, schedule=schedule)
+					
+			self._setDeviceIcon (dev)
+			return True
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))		
+			
+		return False	
+		
+	################################################################################	
+	# GENERAL
+	################################################################################			
 		
 	#
 	# We got notified of an interesting change, if the parent is a server and the change is a name then restart HB
@@ -1130,6 +1596,7 @@ class Plugin(indigo.PluginBase):
 	def _setDeviceIcon (self, dev):
 		try:
 			img = False
+			dev.refreshFromServer() # just in case we got set a stale copy
 			
 			if "brightnessLevel" in dev.states:
 				pass
@@ -1151,7 +1618,15 @@ class Plugin(indigo.PluginBase):
 			if dev.pluginProps["treatAs"] == "dimmer": 
 				if dev.states["brightnessLevel"] == 0: img = indigo.kStateImageSel.DimmerOff
 				if dev.states["brightnessLevel"] != 0: img = indigo.kStateImageSel.DimmerOn
-			
+				
+				# In case it's a sprinkler
+				if ext.valueValid (dev.pluginProps, "isSprinkler"):
+					if dev.pluginProps["isSprinkler"]:
+						if dev.states["brightnessLevel"] == 0: img = indigo.kStateImageSel.SprinklerOff
+						if dev.states["brightnessLevel"] != 0: img = indigo.kStateImageSel.SprinklerOn
+						
+						if dev.states["sprinklerPaused"]: img = indigo.kStateImageSel.AvPaused
+						
 			if dev.pluginProps["treatAs"] == "garage": 
 				if dev.states["brightnessLevel"] == 0: img = indigo.kStateImageSel.DoorSensorClosed
 				if dev.states["brightnessLevel"] != 0: img = indigo.kStateImageSel.DoorSensorOpened
@@ -1176,7 +1651,7 @@ class Plugin(indigo.PluginBase):
 	def checkDeviceAddress (self, dev):
 		try:
 			# If it doesn't have an address for some reason then give it one
-			if dev.deviceTypeId == "Homebridge-Wrapper" and ext.valueValid (dev.pluginProps, "treatAs", True):
+			if (dev.deviceTypeId == "Homebridge-Wrapper" or dev.deviceTypeId == "Homebridge-Alias") and ext.valueValid (dev.pluginProps, "treatAs", True):
 				if dev.pluginProps["treatAs"] != "none":
 					address = "Unknown Device"
 					
@@ -1218,11 +1693,99 @@ class Plugin(indigo.PluginBase):
 					
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
+			
+	#
+	# Calculate a schedule or zone run time and append state changes
+	#
+	def calculateIrrigationRunTime (self, parent, child, states):
+		try:
+			if len(child.zoneScheduledDurations) > 0:
+				zoneTimes = child.zoneScheduledDurations
+			else:
+				zoneTimes = child.zoneMaxDurations
+				
+			# Default to using the "on" method unless otherwise stated
+			if ext.valueValid (self.pluginPrefs, "sprinklerDim", True):
+				if self.pluginPrefs["sprinklerDim"] == "max":
+					zoneTimes = child.zoneMaxDurations	
+					
+			totalTime = 0
+			zoneIdx = 1 # 1 based because activeZone is 1 based
+			for zoneTime in zoneTimes:
+				if child.states["activeZone"] <= (zoneIdx):
+					totalTime = totalTime + zoneTime
+					
+				zoneIdx = zoneIdx + 1
+				
+			d = indigo.server.getTime()
+			dend = dtutil.dateAdd ("minutes", totalTime, d)
+			states = iutil.updateState ("sprinklerSchedule", totalTime, states)
+			states = iutil.updateState ("sprinklerStartTime", d.strftime("%Y-%m-%d %H:%M:%S"), states)
+			states = iutil.updateState ("sprinklerEndTime", dend.strftime("%Y-%m-%d %H:%M:%S"), states)
+					
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+		return states
+		
+	#
+	# Update a sprinkler alias' brightness based on user criteria
+	#
+	def setIrrigationBrightness (self, devId):
+		try:
+			# If we get here then we were cached and therefor irrigation is running
+			parent = indigo.devices[devId]
+			child = indigo.devices[int(parent.pluginProps["device"])]
+			
+			d = indigo.server.getTime()
+			#startTime = datetime.datetime.strptime (parent.states["sprinklerStartTime"], "%Y-%m-%d %H:%M:%S")
+			endTime = datetime.datetime.strptime (parent.states["sprinklerEndTime"], "%Y-%m-%d %H:%M:%S")
+			
+			#started = dtutil.dateDiff ("minutes", d, startTime)
+			ends = dtutil.dateDiff ("minutes", endTime, d)
+			
+			perc = int(round(ends / parent.states["sprinklerSchedule"], 2) * 100)
+			
+			if parent.states["brightnessLevel"] != perc: parent.updateStateOnServer ("brightnessLevel", perc)
+			
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+	
+	#
+	# Process a child device's change
+	#
+	def changeParentFromChild_Alias (self, parent, child, changeInfo, getStatusMethod):
+		try:
+			states = []
+			
+			if parent.pluginProps["treatAs"] == "dimmer" and type(child) != indigo.SprinklerDevice:
+				if "onOffState" in child.states: states = iutil.updateState ("onOffState", child.states["onOffState"], states)
+				if "brightnessLevel" in child.states: states = iutil.updateState ("brightnessLevel", child.states["brightnessLevel"], states)
+				
+			elif parent.pluginProps["treatAs"] == "dimmer" and type(child) == indigo.SprinklerDevice:	
+				return # we are handling this with our raised events
+				
+			elif parent.pluginProps["treatAs"] == "switch":
+				if "onOffState" in child.states: states = iutil.updateState ("onOffState", child.states["onOffState"], states)
+					
+			if len(states) > 0:
+				parent.updateStatesOnServer (states)	
+				
+			# Make sure the icon gets changed too
+			self._setDeviceIcon (parent)		
+					
+		except Exception as e:
+			self.logger.error (ext.getException(e))			
 					
 	#
 	# Process a child device's change
 	#
 	def changeParentFromChild (self, parent, child, changeInfo, getStatusMethod):
+		if parent.deviceTypeId == "Homebridge-Alias": 
+			self.changeParentFromChild_Alias (parent, child, changeInfo, getStatusMethod)
+			return
+		
 		# Find out what commands are influenced by this state
 		changedMethod = []
 		isPassthrough = True # Assume we don't have an action to set brightness
@@ -1235,6 +1798,7 @@ class Plugin(indigo.PluginBase):
 				
 				#indigo.server.log(unicode(changeInfo))
 			
+				if ext.valueValid (parent.pluginProps, "getStatusFrom" + method) == False: continue # not configured
 				if parent.pluginProps["getStatusFrom" + method] != getStatusMethod: continue # wrong event
 				
 				if getStatusMethod == "state":
@@ -1318,7 +1882,7 @@ class Plugin(indigo.PluginBase):
 					
 				elif method == "On":
 					stateVal = True
-					
+						
 				elif method[0:3] == "Dim":
 					# We set the brightness to the "requested percent" because we are saying that we are at THIS device
 					# brightness IF the child matches our conditions
@@ -1823,6 +2387,14 @@ class Plugin(indigo.PluginBase):
 									pass
 								else:
 									retList.append (objId)
+									
+				for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Alias"):
+					if ext.valueValid (dev.pluginProps, "device", True): 
+						objId = int(dev.pluginProps["device"])
+						if objId in retList:
+							pass
+						else:
+							retList.append (objId)
 							
 			return retList
 		
@@ -2120,7 +2692,29 @@ class Plugin(indigo.PluginBase):
 					valuesDict["deviceActionOff"] = "indigo_setBinaryOutput"
 					valuesDict["deviceStateOff"] = "binaryInput1"
 					valuesDict["valueOff"] = "true"
+			
+			elif type(dev) is indigo.SprinklerDevice:
+				valuesDict["showStatusFrom" + method] = True
+				valuesDict["showValueAndOperator" + method] = True
+				valuesDict["showStateFromDevice" + method] = True
+			
+				if valuesDict["deviceActionOn"] == "":
+					# Set defaults
+					valuesDict["deviceActionOn"] = "indigo_schedule"
+					valuesDict["optionLabelOn1"] = "Duration for all zones separated by commas"
+					valuesDict["optionGroupOn1"] = "textfield"
+					valuesDict["strValueOn1"] = "0,0,0,0,0,0,0"
+					valuesDict["deviceStateOn"] = "activeZone"
+					valuesDict["valueOn"] = "0"
+					valuesDict["valueOperatorOn"] = "notequal"
 					
+				if valuesDict["deviceActionOff"] == "":
+					# Set defaults
+					valuesDict["deviceActionOff"] = "indigo_stop"
+					valuesDict["deviceStateOff"] = "activeZone"
+					valuesDict["valueOperatorOff"] = "equal"
+					valuesDict["valueOff"] = "0"		
+				
 			
 			elif type(dev) is indigo.RelayDevice or type(dev) is indigo.DimmerDevice or type(dev) is indigo.SensorDevice:
 				# If this was just created then set the defaults for all the various methods
@@ -2259,6 +2853,28 @@ class Plugin(indigo.PluginBase):
 									pass
 								else:
 									excludeDev.append(objId)
+									
+			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Alias"):						
+				if dev.pluginProps["serverDevice"] != str(serverId): continue
+				
+				includeDev.append (dev.id)
+				config["wrapCount"] = config["wrapCount"] + 1
+				
+				if ext.valueValid (dev.pluginProps, "treatAs", True):
+					if dev.pluginProps["treatAs"] == "switch": switches.append (dev.id)
+					if dev.pluginProps["treatAs"] == "lock": locks.append (dev.id)
+					if dev.pluginProps["treatAs"] == "door": doors.append (dev.id)
+					if dev.pluginProps["treatAs"] == "garage": garages.append (dev.id)
+					if dev.pluginProps["treatAs"] == "window": windows.append (dev.id)
+					if dev.pluginProps["treatAs"] == "drape": drapes.append (dev.id)
+					
+				if propsDict["hideWrappedItems"]:			
+					if ext.valueValid (dev.pluginProps, "device", True): 
+						objId = int(dev.pluginProps["device"])
+						if objId in excludeDev:
+							pass
+						else:
+							excludeDev.append (objId)	
 								
 			# Add in each list
 			excludeDev = self._addPrefIdToList (propsDict, "devexclude", excludeDev)

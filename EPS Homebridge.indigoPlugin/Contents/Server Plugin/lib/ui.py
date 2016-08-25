@@ -79,6 +79,10 @@ class ui:
 						index = valkey[1].strip()
 					if valkey[0].lower().strip() == "callback":
 						callback = valkey[1].strip()
+					if valkey[0].lower().strip() == "includetarget":
+						if valkey[1].lower() == "true":
+							del args[valkey[0].lower().strip()]
+							args["targetId"] = str(targetId)
 						
 
 			#indigo.server.log(unicode(index))

@@ -67,9 +67,30 @@
 		<Label> </Label>
 		<Description>Monitored object is deleted from Indigo</Description>
 	</Field>
-
 	
 	<Field id="sep_restarts" type="separator" />
+	
+	<!-- *********** SPRINKLER CONFIG *********** -->
+	
+	<Field type="menu" id="sprinklerDim" defaultValue="on">
+		<Label>Sprinkler run/progress based on:</Label>
+		<List>
+			<Option value="on">Percentage of On value</Option>
+			<Option value="max">Percentage of max duration</Option>
+			<Option value="100">Percentage of 100 minutes</Option>
+		</List>
+	</Field>
+	
+	<Field type="menu" id="zoneDim" defaultValue="on">
+		<Label>Zone run/progress based on:</Label>
+		<List>
+			<Option value="on">Percentage of On value</Option>
+			<Option value="max">Percentage of max duration</Option>
+			<Option value="100">Percentage of 100 minutes</Option>
+		</List>
+	</Field>
+	
+	<Field id="sep_sprinkler" type="separator" />
 	
 	<!-- *********** HOMEBRIDGE *********** -->
 	

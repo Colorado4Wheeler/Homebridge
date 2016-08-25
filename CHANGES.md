@@ -3,6 +3,21 @@ Release Notes
 
 This latest version is Release Candidate status, barring any significant issues this will represent version 1.0 of the plugin.  Make sure you keep a backup copy of your existing config.json file just in case something doesn't work as planned.
 
+Version 0.10 (Version 1.0 RC2)
+---------------
+
+* Added a new stripped down "Alias" device.  The Wrapper was originally intended to offer an easy way to rename Indigo devices but evolved into a much more complicated device that allows you to create complex devices for Homebridge, the Alias is stripped down and does nothing more than give you the ability to rename an Indigo device for the sake of Homebridge.
+* Added special handling if an Alias device is a sprinkler to allow on/off and dim commands to control the sprinklers and each attached zone
+* Added Auto Schedule to sprinkler Alias devices that will automatically set the durations to match whatever the last run schedule was (it will not remember if NO schedule was run and the max durations were used).  If a "zone schedule" is run on it's own this will also be ignored so as not to change the controller or zone durations as the result of running a special one-off schedule
+* Added Auto Manage to sprinkler Alias devices that will create and maintain all zones attached to a sprinkler device if selected
+* Added plugin configuration options to assist in controlling Sprinkler Aliases where you can set the brightness level of a Sprinkler Alias and it will either convert that to a percentage of the configured schedule, a percentage of max duration or a percentage of 100 minutes (allowing you to turn the brightness on to 20% and that equates to watering for 20 minutes)
+* Fixed omission where a device on/off action was set to "do not implement" would cause an error (i.e., you turn On a device that has Do Not Implement would result in an error instead of successfully turning the device on)
+* Fixed issue where sprinkler controllers would not display the fields for determining when the device is in that state (i.e., device is On when state XYZ = True)
+
+Core Package Changes:
+
+* Fixed bug where certain conditions could prevent the library from caching a watched state on devices that were cached for another reason (i.e., attributes)
+
 Version 0.9 (Version 1.0 RC1)
 ---------------
 
@@ -142,6 +157,10 @@ Known Issues As Of The Most Current Release
 * setServerRestart doesn't seem to pass the description on new Wrapper devices
 * Uploading a config to a remote computer is a little slow and Indigo will time out on ConfigUI actions, need to find a good way to upload that more efficiently - it works now so somewhat low priority
 * Some devices (such as WeatherSnoop) build their states dynamically in the plugin, so on these devices it is impossible to resolve their full state descriptions and we will end up with the raw state name instead - nothing can be done about this at the moment
+* When using a sprinkler device as an alias some advanced handling isn't supported such as changing zones mid-schedule, it will count down the percentage of time remaining based on the original schedule, the same applies to pausing and then resuming a schedule
+* Certain conditions may cause Sprinkler Alias device icons to stick in an ON state even though it is off
+* Not all Alias types are enabled yet, currently the Alias only supports Dimmer, Relay and Sprinkler devices (the rest are coming, just not yet ready)
+* Plugin configuration options for how to treat Sprinkler Alias brightness currently only controls when a brightness level is set but should also control what is displayed in the Indigo list
 
 Wish List
 ---------------
@@ -154,7 +173,6 @@ Wish List
 * Add a cross-plugin callback so that plugins can ask that they be defined as a certain type when included in Homebridge - this will be for when they are NOT wrapped (since wrapping overrides that kind of thing) but rather when they are just generally included.
 * Have Homebridge restart if a device wrapped device is added
 * Add ability to have a Wrapper run something for each percentage of a brightness requested - i.e., an amplifier that is controlled via I/R if told to set to 50% will run the command to send that I/R as many times as is needed to get to 50%
-* Create a new stripped down "Alias" device.  The Wrapper was originally intended to offer an easy way to rename Indigo devices but evolved into a much more complicated device that allows you to create complex devices for Homebridge, the Alias is stripped down and does nothing more than give you the ability to rename an Indigo device for the sake of Homebridge.
 * User request: Being able to mass ignore based on criteria (i.e., ignore all devices of a certain type)
 * When the plugin is first installed have it automatically assume an Indigo server based HB server and create that device so users don't have to
 * Get the various HB commands to run in the background and return back to Indigo right away so that the plugin doesn't time out, this will also allow for those various commands to include "All Servers" as an option instead of doing them each one-by-one

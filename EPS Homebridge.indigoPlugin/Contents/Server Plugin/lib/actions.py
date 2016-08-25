@@ -777,7 +777,7 @@ class actions:
 								
 						elif listItem["class"] == "custom.zonenames":
 							for i in range (0, 8):
-								if dev.zoneEnableList[i]:
+								if obj.zoneEnableList[i]:
 									option = (str(i + 1), dev.zoneNames[i])
 									retList.append (option)
 													
