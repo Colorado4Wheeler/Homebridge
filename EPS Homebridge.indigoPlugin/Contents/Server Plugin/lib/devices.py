@@ -365,11 +365,13 @@ class devices:
 					self.isPaused = False
 					self.isResuming = True # So we don't start again
 					
-					indigo.server.log ("P A U S E D !")
-				
 				elif change.name == "activeZone" and change.oldValue == 0 and change.newValue != 0 and self.isPaused == False:
 					if self.isResuming:
-						self.isResuming = False # We now know
+						# We don't handle resumes since we can get a lot of them for one plugin, the plugin needs to make
+						# that determination for us when we notify them
+						self.logger.threaddebug ("'{0}' is trying to start a new schedule but the extension is paused".format(self.dev.name))	
+						update = self.parent.factory.raiseEvent ("onSprinklerReleasePauseState", [self, change])
+						if update is not None: self.isResuming = update
 						
 					else:					
 						# A fresh schedule has begun

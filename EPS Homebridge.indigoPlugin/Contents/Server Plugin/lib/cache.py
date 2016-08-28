@@ -785,7 +785,7 @@ class cacheDev:
 						# Sprinkler active zone number displayed as zone name, check if activeZone changed
 						if state == "custom_activeZoneName": state = "activeZone"				
 				
-					self.logger.threaddebug ("Checking for '{0}' state '{1}' changes".format(newDev.name, state))
+					#self.logger.threaddebug ("Checking for '{0}' state '{1}' changes".format(newDev.name, state))
 					if state in origDev.states and state in newDev.states:
 						if origDev.states[state] != newDev.states[state]:
 							self.logger.threaddebug ("'{0}' state '{1}' has changed, adding change record for '{2}'".format(newDev.name, state, indigo.devices[watchinfo.id].name))
@@ -793,7 +793,7 @@ class cacheDev:
 													
 							
 				for attribute in watchinfo.attributes:
-					self.logger.threaddebug ("Checking for '{0}' attribute '{1}' changes".format(newDev.name, attribute))
+					#self.logger.threaddebug ("Checking for '{0}' attribute '{1}' changes".format(newDev.name, attribute))
 					origFunc = getattr (origDev, attribute)
 					newFunc = getattr (newDev, attribute)
 					
@@ -802,7 +802,7 @@ class cacheDev:
 						ret.append (cacheChange(self, "attribute", attribute, watchinfo.id, newDev.id, origFunc, newFunc))
 						
 				for property in watchinfo.properties:
-					self.logger.threaddebug ("Checking for '{0}' property '{1}' changes".format(newDev.name, property))
+					#self.logger.threaddebug ("Checking for '{0}' property '{1}' changes".format(newDev.name, property))
 					if property in origDev.ownerProps and property in newDev.ownerProps:
 						if origDev.ownerProps[property] != newDev.ownerProps[property]:
 							self.logger.threaddebug ("'{0}' property '{1}' has changed, adding change record for '{2}'".format(newDev.name, property, indigo.devices[watchinfo.id].name))

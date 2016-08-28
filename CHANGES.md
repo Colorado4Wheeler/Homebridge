@@ -3,6 +3,12 @@ Release Notes
 
 This latest version is Release Candidate status, barring any significant issues this will represent version 1.0 of the plugin.  Make sure you keep a backup copy of your existing config.json file just in case something doesn't work as planned.
 
+Version 0.11 (Version 1.0 RC3)
+---------------
+
+* Fixed oversight where a programming debug message of "P A U S E D" was being displayed when you resumed a sprinkler Alias
+
+
 Version 0.10 (Version 1.0 RC2)
 ---------------
 
@@ -161,6 +167,7 @@ Known Issues As Of The Most Current Release
 * Certain conditions may cause Sprinkler Alias device icons to stick in an ON state even though it is off
 * Not all Alias types are enabled yet, currently the Alias only supports Dimmer, Relay and Sprinkler devices (the rest are coming, just not yet ready)
 * Plugin configuration options for how to treat Sprinkler Alias brightness currently only controls when a brightness level is set but should also control what is displayed in the Indigo list
+* When selecting an irrigation controller as a Wrapper device it does not default to the correct "default" action
 
 Wish List
 ---------------
@@ -177,3 +184,5 @@ Wish List
 * When the plugin is first installed have it automatically assume an Indigo server based HB server and create that device so users don't have to
 * Get the various HB commands to run in the background and return back to Indigo right away so that the plugin doesn't time out, this will also allow for those various commands to include "All Servers" as an option instead of doing them each one-by-one
 * Finish testing and implementation of Homebridge installation in the plugin
+* Expand on/off/dim detection for Wrapper devices to include device attributes/properties instead of just states
+* Add field to all devices to let the user select the icon values they want to use

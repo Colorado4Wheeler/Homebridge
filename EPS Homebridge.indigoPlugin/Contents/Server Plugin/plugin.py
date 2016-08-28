@@ -388,6 +388,25 @@ class Plugin(indigo.PluginBase):
 	################################################################################	
 	
 	#
+	# Sprinkler is paused and the library is asking if we want to release the pause state because it's trying to start again
+	#
+	def onSprinklerReleasePauseState (self, devEx, change):
+		try:
+			parents = eps.cache.getDevicesWatchingId (devEx.dev.id)
+			for devId in parents:
+				if devId in indigo.devices == False: continue
+				parent = indigo.devices[devId]
+				
+				if parent.deviceTypeId == "Homebridge-Alias" and parent.pluginProps["sprinklerOptions"] == "controller":
+					# Only release the pause state for controllers, not zones
+					return False # False turns off the pause state
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+		return True # True keeps the extended device paused
+	
+	#
 	# Sprinkler progress changed
 	#
 	def onSprinklerProgressChanged (self, devEx, update):
@@ -452,6 +471,8 @@ class Plugin(indigo.PluginBase):
 				parent.updateStateOnServer ("onOffState", False)	
 				parent.updateStateOnServer ("sprinklerPaused", False)	
 				self._setDeviceIcon (parent)		
+				
+				
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))		
@@ -784,7 +805,13 @@ class Plugin(indigo.PluginBase):
 	#
 	def onWatchedAttributeChanged (self, origDev, newDev, changeInfo):
 		try:
-			self.checkForNameChange (origDev, newDev, changeInfo)					
+			parent = indigo.devices[changeInfo.parentId]
+			child = indigo.devices[changeInfo.childId]
+			
+			self.checkForNameChange (origDev, newDev, changeInfo)	
+			
+			if parent.deviceTypeId == "Homebridge-Wrapper":
+				self.changeParentFromChild (parent, child, changeInfo, "attribute")				
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
@@ -833,6 +860,7 @@ class Plugin(indigo.PluginBase):
 					if dev.pluginProps["getStatusFrom" + method] == "state" and ext.valueValid (dev.pluginProps, "stateFromDevice" + method, True):	
 						devId = int(dev.pluginProps["stateFromDevice" + method])
 						state = dev.pluginProps["deviceState" + method]
+						if state[0:5] == "attr_": continue
 						
 						if devId in ret:
 							ret[devId].append (state)
@@ -878,6 +906,25 @@ class Plugin(indigo.PluginBase):
 				else:
 					for childId in config["includeDev"]:
 						ret[childId] = ["name"]
+						
+			if dev.deviceTypeId == "Homebridge-Wrapper":
+				for i in range (1, self.TOTALDIMMING + 2 + 1): # Dimmers + On + Off + 1 (since we aren't starting at 0)
+					method = "Dim" + str(i)
+					if i == self.TOTALDIMMING + 1: method = "On"
+					if i == self.TOTALDIMMING + 2: method = "Off"
+
+					# We never really use the device, but the device defined for the state to watch
+					if dev.pluginProps["getStatusFrom" + method] == "state" and ext.valueValid (dev.pluginProps, "stateFromDevice" + method, True):	
+						devId = int(dev.pluginProps["stateFromDevice" + method])
+						state = dev.pluginProps["deviceState" + method]
+						if state[0:5] != "attr_": continue
+						
+						state = state.replace ("attr_", "")
+						
+						if devId in ret:
+							ret[devId].append (state)
+						else:
+							ret[devId] = [state]			
 						
 				
 		except Exception as e:
@@ -1804,7 +1851,7 @@ class Plugin(indigo.PluginBase):
 				if getStatusMethod == "state":
 					if parent.pluginProps["stateFromDevice" + method] != str(child.id): continue # wrong child, move on
 					if parent.pluginProps["deviceState" + method] != changeInfo.name: continue # wrong state/variable, move on
-				
+					
 				if parent.pluginProps["method" + method] == "none" and method[0:3] == "Dim": 
 					# The method is not enabled, it's a passthrough brightness if the child supports it
 					#if ext.valueValid (child.states, "brightnessLevel"): isPassthrough = True
