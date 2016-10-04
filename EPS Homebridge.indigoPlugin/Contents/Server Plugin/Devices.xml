@@ -67,6 +67,12 @@
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
 			
+			<Field type="menu" id="variableOn" visibleBindingId="methodOn" visibleBindingValue="variable">
+				<Label>Variable:</Label>
+				<List class="indigo.variables" />
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
 			<!-- Hidden checkbox to toggle deviceAction -->
 			<Field type="checkbox" id="showActionOn" hidden="true" defaultValue="false">
 				<Label> </Label>
@@ -76,6 +82,12 @@
 			<Field type="menu" id="deviceActionOn" defaultValue="turnOn" visibleBindingId="showActionOn" visibleBindingValue="true">
 				<Label>Action:</Label>
 				<List class="self" filter="#deviceactions#[index=deviceActionOn, srcfield=deviceOn, allowui=true]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="menu" id="variableActionOn" visibleBindingId="methodOn" visibleBindingValue="variable">
+				<Label>Action:</Label>
+				<List class="self" filter="#variableactions#[index=variableOn, allowui=true]" method="getCustomList" dynamicReload="true"/>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
 			
@@ -2091,7 +2103,7 @@ To find out how to control this device via Homebridge click the "?" icon below.<
 		</States>
 		<UiDisplayStateId>statedisplay</UiDisplayStateId>
 	</Device>
-
+	
 	<!-- =========== SERVER =========== -->
 	<Device type="relay" id="Homebridge-Server">
 		<Name>Homebridge Server</Name>

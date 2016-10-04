@@ -7,6 +7,8 @@ Version 0.11 (Version 1.0 RC3)
 ---------------
 
 * Fixed oversight where a programming debug message of "P A U S E D" was being displayed when you resumed a sprinkler Alias
+* Added ability to notify Homebridge-Indigo of device changes in Indigo so it can immediately poll Indigo for a status - this should make it more responsive and accurate.  You MUST enabled this in PLUGIN configuration to use it and have installed the experimental version of HB-Indigo to utilize it!
+* Started coding on using Variables in Wrappers, just some of the basic code is there and not yet visible to the public as an option
 
 
 Version 0.10 (Version 1.0 RC2)

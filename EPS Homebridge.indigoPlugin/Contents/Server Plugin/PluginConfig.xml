@@ -122,6 +122,10 @@
 		<Label>Web access password:</Label>
 	</Field>
 	
+	<Field type="checkbox" id="enableStatusUpdate" defaultValue="false" >
+		<Label> </Label>
+		<Description>Enable HB experimental status update</Description>
+	</Field>
 	
 </PluginConfig>
 

@@ -24,6 +24,7 @@ import datetime
 from datetime import date, timedelta
 from bin.pexpect import pxssh # remote connection
 import socket # health checking
+import urllib2 # for sending forced updates to HB-Indigo
 
 eps = eps(None)
 
@@ -593,7 +594,7 @@ class Plugin(indigo.PluginBase):
 				return self.onAfter_formFieldChanged_Server (valuesDict, typeId, devId)
 				
 			if typeId == "Homebridge-Alias": 
-				return self.onAfter_formFieldChanged_Alias (valuesDict, typeId, devId)	
+				return self.onAfter_formFieldChanged_Alias (valuesDict, typeId, devId)		
 		
 			if valuesDict["settingSelect"] == "": valuesDict["settingSelect"] = "On" # new device default
 				
@@ -1124,6 +1125,38 @@ class Plugin(indigo.PluginBase):
 	################################################################################		
 	
 	#
+	# Send request to HB-Indigo to force an update of the device
+	#
+	def homebridgeForceUpdate (self, parent, child):
+		try:
+			serverIp = ""
+			
+			server = indigo.devices[int(parent.pluginProps["serverDevice"])]
+			
+			if server.pluginProps["indigoServer"]:
+				serverIp = "127.0.0.1"
+			else:
+				serverIp = server.pluginProps["computerip"]
+				
+			url = "http://{0}:8445/devices/{1}".format(serverIp, str(parent.id))
+			
+			self.logger.debug ("Homebridge update requested, querying {0}".format(url))
+			
+			if self.pluginPrefs["enableStatusUpdate"] == False:
+				self.logger.debug ("Experimental status update disabled in plugin configuration")
+				return False
+			
+			ret = urllib2.urlopen(url)
+			
+			if int(ret.getcode()) != 200: return False
+		
+			return True		
+				
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			return False
+	
+	#
 	# Save homebridge configuration
 	#
 	def homebridgeSaveConfig (self, dev, config):
@@ -1578,8 +1611,9 @@ class Plugin(indigo.PluginBase):
 		
 	################################################################################	
 	# GENERAL
-	################################################################################			
-		
+	################################################################################	
+	
+	
 	#
 	# We got notified of an interesting change, if the parent is a server and the change is a name then restart HB
 	#
@@ -1971,6 +2005,8 @@ class Plugin(indigo.PluginBase):
 			# Make sure the icon gets changed too
 			self._setDeviceIcon (parent)
 				
+			# Tell HB-Indigo to refresh this device
+			self.homebridgeForceUpdate (parent, child)
 							
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
