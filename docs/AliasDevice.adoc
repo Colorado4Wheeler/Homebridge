@@ -1,0 +1,27 @@
+:plugin: Homebridge Buddy
+:forum: http://forums.indigodomo.com/viewforum.php?f=192[Support Forum]
+:hb: Homebridge Indigo
+
+link:1_START_HERE.adoc[<< Return To Main Documentation]
+
+=== Alias Device
+An Alias Device is a special plugin device that lets you rename an Indigo device for the sake of HomeKit/Siri as well as provoding a way to interact with devices not normally supported by HomeKit.
+
+==== Why Use An Alias?
+Aliases were created for two reasons.  The first was so that you could name your devices in Indigo however you want and not have to use that name when commanding Siri to control the device.  Many Indigo users name their devices according to the room they are in or their function, for example in my Indigo my front porch is called "Outside Front Porch" so that I can easily group all my "Outside" devices together when seeing them on a list in Indigo.  
+
+If you don't want to have to say "turn on outside front porch" you can create an alias of "front porch" that points to "outside front porch" and instead command Siri to "turn on the front porch".
+
+==== Differences Between Aliases and Wrappers
+Aliases are a simple device with few options.  When used with most Indigo devices they simply translate Siri's "on" to "on" and "off" to "off", etc.  Wrappers are complex devices that let you manipulate your "on/off/dim" commands for any given device to do whatever you want in Indigo.
+
+An alias is mostly intended to either rename your device to something more Siri friendly or to give extra functionality such as is given with sprinkler controllers.
+
+A wrapper would be if you want something like, say, an action group to do one thing when commanded on and another when commanded off and yet another when commanded to dim.  Another use of a wrapper would be to reverse commands - perhaps when you use your lock as a native Indigo device in Siri "lock" unlocks your door and "unlock" locks your door - you can use a wrapper to correct this.
+
+=== RELATED LINKS
+* link:HomebridgeConfiguration.adoc[Homebridge Server Device Configuration]
+
+link:1_START_HERE.adoc[<< Return To Main Documentation]
+
+
