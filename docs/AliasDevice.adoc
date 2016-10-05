@@ -26,6 +26,8 @@ An alias is mostly intended to either rename your device to something more Siri 
 
 A wrapper would be if you want something like, say, an action group to do one thing when commanded on and another when commanded off and yet another when commanded to dim.  Another use of a wrapper would be to reverse commands - perhaps when you use your lock as a native Indigo device in Siri "lock" unlocks your door and "unlock" locks your door - you can use a wrapper to correct this.
 
+Wrappers also allow you to perform actions conditionally, such as one action when it's light and another when it's dark.  Wrappers are the big brother to Alias - they both essentially do the same thing but wrappers are bigger and more powerful.
+
 === RELATED LINKS
 * link:HomebridgeConfiguration.adoc[Homebridge Server Device Configuration]
 
