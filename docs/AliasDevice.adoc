@@ -12,6 +12,13 @@ Aliases were created for two reasons.  The first was so that you could name your
 
 If you don't want to have to say "turn on outside front porch" you can create an alias of "front porch" that points to "outside front porch" and instead command Siri to "turn on the front porch".
 
+==== Can't I Do The Same Thing With A HomeKit Application?
+Yes, you can, but if you ever delete your {hb} server from HomeKit or have some issue with HomeKit you'll soon find out that you have to do that all over again.  
+
+At the very least setting up an alias in the plugin and a full sized keyboard is a bit more user friendly than using your phone or tablet to do the same thing.
+
+The choice is yours, either way works fine but you'll still need an alias if you want to control your sprinklers.
+
 ==== Differences Between Aliases and Wrappers
 Aliases are a simple device with few options.  When used with most Indigo devices they simply translate Siri's "on" to "on" and "off" to "off", etc.  Wrappers are complex devices that let you manipulate your "on/off/dim" commands for any given device to do whatever you want in Indigo.
 
