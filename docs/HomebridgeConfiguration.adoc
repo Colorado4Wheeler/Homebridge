@@ -12,8 +12,13 @@ You will be unable to add any Wrapper or Alias devices until you have configured
 === Homebridge Configuration
 Configuring a {hb} server starts with adding a Homebridge Server device in Indigo.  Once the device is added you have two ways to configure the device to talk to {hb}, locally or remotely.
 
-==== {hb} Is Installed On The Same Computer as Indigo
-image:/docs/images/PluginConfig.png[]
+==== Navigating the Server Device Configuration
+To change between configuration options use the combobox "Select a list to configure".
 
-==== {hb} Is Installed On A Different Computer Than Indigo
+==== {hb} Is Installed On The Same Computer as Indigo (List: Server Configuration)
+image:/docs/images/LocalHBServer.png[]
 
+If your {hb} server is on the same computer as Indigo then you simply need to check "Homebridge is on the Indigo server", everything else will be automatically configured for you.
+
+==== {hb} Is Installed On A Different Computer Than Indigo (List: Server Configuration)
+image:/docs/images/RemoteHBServer.png[]
