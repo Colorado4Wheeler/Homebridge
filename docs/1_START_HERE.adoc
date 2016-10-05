@@ -18,7 +18,7 @@ image:/docs/images/product.png[]
 Along with the basic management for {hb}, {plugin} also expands the functionality of {hb} by allowing you to create wrappers and aliases for your Indigo devices where you can either simply rename a devices more suitable for Siri commands or wrap unsupported devices in a way that you can use Siri to control them.
 
 === System Requirements
-{plugin} has been written and optimized for Indigo version 7, earlier versions of Indigo cannot be used for this plugin.
+{plugin} has been written and optimized for Indigo version 7, earlier versions of Indigo cannot be used for this plugin.  Before you try to use this plugin you should have already installed {hb} according to their instructions.  In future versions we hope to automate the installation of {hb} with the plugin but for now you must have that installed FIRST.
 
 === Support
 All support for {plugin} is provided via the {forum} on Indigo's web site.  Please note that this is a companion to Homebridge Indigo, if you have questions about Homebridge or Homebridge Indigo you should post on the http://forums.indigodomo.com/viewforum.php?f=191&sid=2e9e87b22649331c6ff69819cca5519f[Homebridge Indigo Forum] instead.
