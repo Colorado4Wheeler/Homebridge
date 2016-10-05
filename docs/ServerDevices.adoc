@@ -67,6 +67,7 @@ Window Coverings (Drapes)::
 "Close the south curtains";;
 "Set the south curtains to 25%";;
 
+
 === RELATED LINKS
 * link:HomebridgeConfiguration.adoc[Homebridge Server Device Configuration]
 
