@@ -13,6 +13,11 @@ Homebridge can only support a maximum of 99 devices per server (which is why the
 
 Prior to the plugin the only way to do this was to copy the Indigo device/action group ID and painstakingly update the json.config file manually.  The plugin gives you an easy graphical interface to do this.
 
+You can, optionally, decide not to include ANY devices or action groups and instead use Wrappers and Aliases for your devices.
+
+==== Keeping Track of Your Devices
+You'll notice at the top of the server configuraton dialog there is a summary of your devices, this is so you can try to keep to your 99 device limit.  It will show you all your wrapper and alias devices, the Indigo devices/actions you include here and the total count of devices that will be sent to {hb}.  Your goal is to keep the bottom number at 99 or less because anything more than that will simply be ignored by {hb}.
+
 ==== Adding Indigo Devices (List: Homebridge Friendly Devices To Include)
 A "friendly" device is an Indigo device that HomeKit support right out of the gate, such as a dimmer or switch or thermostat.  You can hand select as many of your "friendly" devices as you want in this list, exlude them all or include them all.
 
@@ -66,7 +71,6 @@ Window Coverings (Drapes)::
 "Open the south curtains";;
 "Close the south curtains";;
 "Set the south curtains to 25%";;
-
 
 === RELATED LINKS
 * link:HomebridgeConfiguration.adoc[Homebridge Server Device Configuration]
