@@ -1,0 +1,72 @@
+:plugin: Homebridge Buddy
+:forum: http://forums.indigodomo.com/viewforum.php?f=192[Support Forum]
+:hb: Homebridge Indigo
+
+link:1_START_HERE.adoc[<< Return To Main Documentation]
+
+=== Server Device Management
+Along with configuring your {hb} parameters, the Server Device is also where you can configure what to allow {hb} to see, not see and how to treat the devices.
+
+Homebridge can only support a maximum of 99 devices per server (which is why the plugin allows you to have multiple servers), which in a larger Indigo setup could only represent a small number of devices you want to use with HomeKit.
+
+{hb} allows you to mass include all of your devices and action groups or you can use {plugin} to pare that list down to make sure you don't exceed the 99 device limit (and thus be unable to control devices 100+).
+
+Prior to the plugin the only way to do this was to copy the Indigo device/action group ID and painstakingly update the json.config file manually.  The plugin gives you an easy graphical interface to do this.
+
+==== Adding Indigo Devices (List: Homebridge Friendly Devices To Include)
+A "friendly" device is an Indigo device that HomeKit support right out of the gate, such as a dimmer or switch or thermostat.  You can hand select as many of your "friendly" devices as you want in this list, exlude them all or include them all.
+
+Don't see a device you know is in Indigo?  It's because that device doesn't support standard commands such as On/Off/Dim, and many custom devices do not.  You can use Wrappers to handle those.
+
+image:/docs/images/IncludeDevices.png[]
+
+==== Excluding Indigo Devices (List: Indigo Devices To Exclude)
+You may want to include every "friendly" device in Indigo as a start and, if you do, you can use this list to then exclude some devices that you don't need to control via HomeKit/Siri.  For instance you may not need your front porch to be controlled because you have an action group that handles it in HomeKit instead.
+
+image:/docs/images/ExcludeDevices.png[]
+
+==== Including Indigo Action Groups (List: Action Groups To Include)
+This is the same as including devices except there is no such thing as a "friendly" or "unfriendly" action group, all of them show here.  When you use HomeKit/Siri to "turn on" an action group you are simply executing the action group.  If you want wider control over your action groups, including having actions for "off" and "dim" you may want to consider using a Wrapper Device instead.
+
+image:/docs/images/IncludeActions.png[]
+
+==== Excluding Indigo Action Groups (List: Action Groups To Exclude)
+If you chose to include every action group you can use this list to remove action groups that you don't want to control (as well as prevent you from exceeding the 99 device limit).
+
+image:/docs/images/IncludeActions.png[]
+
+==== Telling {hb} To Treat Your Device(s) Specially (List: Treat As...)
+By default every device you send to {hb} will be treated as a dimmer (on/off/dim) device, but that may not correctly represent your device.  The Treat As configuration lets you instruct {hb} to use different commands to control the device.
+
+Dimmers::
+This is the default and {hb} will send On/Off/Dim commands to Indigo to control this device.
+"Turn on the bedroom lamp";;
+"Turn off the bedroom lamp";;
+"Set the bedroom lamp to 50%";;
+
+Switches::
+{hb} will only control this device using On/Off.
+"Turn on the bedroom lamp";;
+"Turn off the bedroom lamp";;
+
+Locks::
+{hb} will control these devices using Lock/Unlock and require that if you have a passcode set on your iOS device that you enter it.
+"Unlock the front door";;
+"Lock the front door";;
+
+Doors, Windows and Garage Doors::
+{hb} will control these devices using Open/Close.
+"Open the garage door";;
+"Close the garage door";;
+
+Window Coverings (Drapes)::
+{hb} will control these devices using Open/Close as well as a pseudo Dim command to allow you to open the curtains to a certain point.
+"Open the south curtains";;
+"Close the south curtains";;
+"Set the south curtains to 25%";;
+
+=== RELATED LINKS
+* link:HomebridgeConfiguration.adoc[Homebridge Server Device Configuration]
+
+link:1_START_HERE.adoc[<< Return To Main Documentation]
+
