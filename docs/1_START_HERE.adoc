@@ -30,3 +30,4 @@ The master branch of this GitHub repository is always the latest release version
 There are two components to {hb}, an interface to Homebridge and an interface to Indigo and these are configured in seperate areas of the plugin.
 
 * link:IndigoConfiguration.adoc[Indigo Configuration]
+* link:HomebridgeConfiguration.adoc[Homebridge Server Device Configuration]
