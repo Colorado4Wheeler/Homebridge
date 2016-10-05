@@ -33,10 +33,12 @@ image:/docs/images/IncludeActions.png[]
 ==== Excluding Indigo Action Groups (List: Action Groups To Exclude)
 If you chose to include every action group you can use this list to remove action groups that you don't want to control (as well as prevent you from exceeding the 99 device limit).
 
-image:/docs/images/IncludeActions.png[]
+image:/docs/images/ExcludeActions.png[]
 
 ==== Telling {hb} To Treat Your Device(s) Specially (List: Treat As...)
 By default every device you send to {hb} will be treated as a dimmer (on/off/dim) device, but that may not correctly represent your device.  The Treat As configuration lets you instruct {hb} to use different commands to control the device.
+
+image:/docs/images/TreatAs.png[]
 
 Dimmers::
 This is the default and {hb} will send On/Off/Dim commands to Indigo to control this device.
