@@ -34,4 +34,5 @@ There are two components to {hb}, an interface to Homebridge and an interface to
 
 == Configuring {hb} Devices
 * link:ServerDevices.adoc[Native Indigo Devices and Action Groups]
-* link:ServerDevices.adoc[Plugin Wrapper and Alias Devices]
+* link:ServerDevices.adoc[Plugin Alias]
+* link:ServerDevices.adoc[Plugin Wrapper]
