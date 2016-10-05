@@ -41,3 +41,8 @@ This information is used to start, stop and configure {hb} on the specified serv
 ----
 ssh [username]@[ipaddress]
 ----
+
+=== RELATED LINKS
+* link:IndigoConfiguration.adoc[Indigo Configuration]
+
+link:1_START_HERE.adoc[<< Return To Main Documentation]
