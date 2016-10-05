@@ -6,23 +6,22 @@ image:/docs/images/product.png[]
 :toc-placement: preamble
 :toclevels: 2
 :plugin: Homebridge Buddy
-:indigo: http://perceptiveautomation.com[Indigo]
 :forum: http://forums.indigodomo.com/viewforum.php?f=192[Support Forum]
-:hb: http://forums.indigodomo.com/viewtopic.php?f=191&t=15578[Homebridge Indigo]
+:hb: Homebridge Indigo
 
 // Need some preamble to get TOC:
 {empty}
 
 == Introduction
-{plugin} is a plugin for the {indigo} home automation platform and a companion to the {hb} implementation of Homebridge.  This plugin allows you to manage the {hb} installation by giving you a graphical interface within {indigo} to configure which devices to include, exclude and define as specialty devices (such as doors, windows, etc).
+{plugin} is a plugin for the http://perceptiveautomation.com[Indigo] home automation platform and a companion to the http://forums.indigodomo.com/viewtopic.php?f=191&t=15578[Homebridge Indigo] implementation of Homebridge.  This plugin allows you to manage the {hb} installation by giving you a graphical interface within {indigo} to configure which devices to include, exclude and define as specialty devices (such as doors, windows, etc).
 
 Along with the basic management for {hb}, {plugin} also expands the functionality of {hb} by allowing you to create wrappers and aliases for your {indigo} devices where you can either simply rename a devices more suitable for Siri commands or wrap unsupported devices in a way that you can use Siri to control them.
 
 === System Requirements
-{plugin} has been written and optimized for {indigo} version 7, earlier versions of {indigo} cannot be used for this plugin.
+{plugin} has been written and optimized for Indigo version 7, earlier versions of Indigo cannot be used for this plugin.
 
 === Support
-All support for {plugin} is provided via the {forum} on {indigo}'s web site.
+All support for {plugin} is provided via the {forum} on Indigo's web site.
 
 === Updates and Changes
 The master branch of this GitHub repository is always the latest release version.  If you want to try other versions just change the branch to the version you are interested in and download the plugin from there.
@@ -31,5 +30,25 @@ The master branch of this GitHub repository is always the latest release version
 There are two components to {hb}, an interface to Homebridge and an interface to Indigo and these are configured in seperate areas of the plugin.
 
 === Indigo Configuration
-The connection to {indigo} is configured throught the plugin configuration (Plugins->EPS Homebridge Buddy->Configure).
+The connection to Indigo is configured throught the plugin configuration (Plugins->EPS Homebridge Buddy->Configure).
 image:/docs/images/PluginConfig.png[]
+
+Log Level::
+The log detail you want displayed in Indigo as well as output to the log file for the plugin.
+Homebridge Process Restart Conditions::
+Which conditions will automatically restart your {hb} process
+
+Server configuration changes;;
+Any change to the {hb} server devices will automatically restart {hb}.
+
+Wrapper device changes;;
+If you change the connected server device in a wrapper or alias then {hb} will be restarted automatically.
+
+New monitored objects are added;;
+If you add an Alias or Wrapper device then {hb} will automatically restart after you add them.
+
+Monitored object name/server changes;;
+If you change the connected server of any Wrapper or Alias device or if you change the name of ANY device that is being monitored by a Server Device it will prompt a {hb} restart.
+
+Monitored object is deleted from Indigo;;
+If you delete ANY device that is being referenced or monitored by a Server Device then {hb} will automatically restart.
