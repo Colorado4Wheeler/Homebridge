@@ -12,6 +12,9 @@ You will be unable to add any Wrapper or Alias devices until you have configured
 === Homebridge Configuration
 Configuring a {hb} server starts with adding a Homebridge Server device in Indigo.  Once the device is added you have two ways to configure the device to talk to {hb}, locally or remotely.
 
+==== Device Name
+Whatever you name this device in Indigo will be how the device is named when you open a HomeKit application on your iOS device.  The default "Homebridge Server" is used in the {hb} documentation but you can call your servers anything you want to easily identify it in HomeKit (i.e., "Main Homebridge", "Downstairs Lighting", etc).
+
 ==== Navigating the Server Device Configuration
 To change between configuration options use the combobox "Select a list to configure".
 
@@ -22,3 +25,19 @@ If your {hb} server is on the same computer as Indigo then you simply need to ch
 
 ==== {hb} Is Installed On A Different Computer Than Indigo (List: Server Configuration)
 image:/docs/images/RemoteHBServer.png[]
+
+Remote Mac IP Address::
+The IP address of the computer where {hb} is installed.
+
+User Name::
+A valid user that can SSH to the Mac.
+
+Password::
+The password for the configured user.
+
+This information is used to start, stop and configure {hb} on the specified server.  When a remote computer is used instead of using the same computer as Indigo then commands are sent via SSH, so the user that you use here must be able to SSH to the {hb} computer.  You can test this by typing the following command and providing your password:
+
+[source]
+----
+ssh [username]@[ipaddress]
+----
