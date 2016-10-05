@@ -1,3 +1,5 @@
+link:1_START_HERE.adoc[<< Return To Main Documentation]
+
 === Indigo Configuration
 The connection to Indigo is configured throught the plugin configuration (Plugins->EPS Homebridge Buddy->Configure).
 image:/docs/images/PluginConfig.png[]
