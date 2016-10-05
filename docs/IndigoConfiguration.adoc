@@ -1,3 +1,7 @@
+:plugin: Homebridge Buddy
+:forum: http://forums.indigodomo.com/viewforum.php?f=192[Support Forum]
+:hb: Homebridge Indigo
+
 link:1_START_HERE.adoc[<< Return To Main Documentation]
 
 [NOTE]
