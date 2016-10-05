@@ -21,7 +21,7 @@ Along with the basic management for {hb}, {plugin} also expands the functionalit
 {plugin} has been written and optimized for Indigo version 7, earlier versions of Indigo cannot be used for this plugin.
 
 === Support
-All support for {plugin} is provided via the {forum} on Indigo's web site.
+All support for {plugin} is provided via the {forum} on Indigo's web site.  Please note that this is a companion to Homebridge Indigo, if you have questions about Homebridge or Homebridge Indigo you should post on the http://forums.indigodomo.com/viewforum.php?f=191&sid=2e9e87b22649331c6ff69819cca5519f[Homebridge Indigo Forum] instead.
 
 === Updates and Changes
 The master branch of this GitHub repository is always the latest release version.  If you want to try other versions just change the branch to the version you are interested in and download the plugin from there.
