@@ -48,4 +48,7 @@ This is to simplify how to control your sprinklers via Siri, so telling Siri "se
 Indigo Server Configuration::
 This area simply tells {hb} where to find the Indigo web server when it needs to pass a Siri command on.  Instructions on how to use these fields are outlined in the http://forums.indigodomo.com/viewtopic.php?f=191&t=15578[Homebridge Indigo] installation instructions and documentation.
 
+=== RELATED LINKS
+* link:HomebridgeConfiguration.adoc[Homebridge Server Device Configuration]
+
 link:1_START_HERE.adoc[<< Return To Main Documentation]
