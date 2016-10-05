@@ -32,5 +32,6 @@ There are two components to {hb}, an interface to Homebridge and an interface to
 * link:IndigoConfiguration.adoc[Indigo Configuration]
 * link:HomebridgeConfiguration.adoc[Homebridge Server Device Configuration]
 
-== Sending Indigo Devices and Actions to {hb} Via Your Server Device
-* link:ServerDevices.adoc[Server Device Devices]
+== Configuring {hb} Devices
+* link:ServerDevices.adoc[Native Indigo Devices and Action Groups]
+* link:ServerDevices.adoc[Plugin Wrapper and Alias Devices]
