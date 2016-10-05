@@ -42,6 +42,19 @@ This information is used to start, stop and configure {hb} on the specified serv
 ssh [username]@[ipaddress]
 ----
 
+==== {hb} HomeKit Configuration (List: Homebridge Configuration)
+If you are installing just a single {hb} server device then the defaults are all you need, otherwise you can change some of the parameters in this screen.  Under normal cirumstances (with the exception of showing temperatures in Celsius) you will never need to change these settings.
+
+image:/docs/images/HomebridgeConfig.png[]
+
+Edit Homebridge user::
+You should never have to change the user unless you have multiple servers (in which case the plugin will change the user automatically anyway) or if you remove {hb} from HomeKit and need to add it again but it doesn't appear on the list of available HomeKit servers to select.  In either case you don't need to change much, just a single character will do the trick, just keep within the rules of ethernet addresses in that you can only use letters A through F and numbers 0 through 9 and, just like ethernet addresses, no two {hb} servers can have the same user name.
+
+Homebridge PIN::
+This is only provided to show you what is being saved to {hb}, it cannot be changed - nor does it need to be.  You can have as many servers as you want in your network and use the same PIN to access all of them.
+
+
+
 === RELATED LINKS
 * link:IndigoConfiguration.adoc[Indigo Configuration]
 
