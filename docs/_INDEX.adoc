@@ -29,46 +29,4 @@ The master branch of this GitHub repository is always the latest release version
 == Configuration
 There are two components to {hb}, an interface to Homebridge and an interface to Indigo and these are configured in seperate areas of the plugin.
 
-=== Indigo Configuration
-The connection to Indigo is configured throught the plugin configuration (Plugins->EPS Homebridge Buddy->Configure).
-image:/docs/images/PluginConfig.png[]
-
-Log Level::
-The log detail you want displayed in Indigo as well as output to the log file for the plugin.
-Homebridge Process Restart Conditions::
-Which conditions will automatically restart your {hb} process
-
-Server configuration changes;;
-Any change to the {hb} server devices will automatically restart {hb}.
-
-Wrapper device changes;;
-If you change the connected server device in a wrapper or alias then {hb} will be restarted automatically.
-
-New monitored objects are added;;
-If you add an Alias or Wrapper device then {hb} will automatically restart after you add them.
-
-Monitored object name/server changes;;
-If you change the connected server of any Wrapper or Alias device or if you change the name of ANY device that is being monitored by a Server Device it will prompt a {hb} restart.
-
-Monitored object is deleted from Indigo;;
-If you delete ANY device that is being referenced or monitored by a Server Device then {hb} will automatically restart.
-
-[NOTE]
-====
-Sprinkler control is currently experimental in {plugin}, use at your own risk.  Basic control of the sprinklers works fine but you may get Indigo log messages if the schedule is paused.
-====
-
-Sprinkler Run/Progress and Zone Run/Progress::
-How you will use Siri to control a sprinkler or zone as well as how it is reported back in the Indigo device list.
-
-Percentage of On;;
-The Indigo device list will show the percentage complete as how much of the original run time has passed.  Siri commands will be representative of the percentage of the run time you have defined in your sprinkler and zone devices (i.e., if you provide a 10 minute run time you can tell Siri to "set zone 1 to 50%" and this will run that zone for 5 minutes).
-
-Percentage of Max;;
-The Indigo device list will show the percentage complete as how much of the Indigo maximum run time has passed.  Siri commands will be representative of the percentage of the maximum run time for your zones (i.e., if you configure Indigo for a maximum 90 minute run time you can tell Siri to "set zone 1 to 50%" and this will run that zone for 45 minutes).
-
-Percentage of 100;;
-This is to simplify how to control your sprinklers via Siri, so telling Siri "set zone 1 to 50%" it will water for 50 minutes while "set zone 8 to 75%" will run your zone for 75 minutes.  Note that Indigo will not water for more than 90 minutes, so the last 10% of this cannot be used and will default to 90 minutes if you attempt to exceed Indigo's maximum run time.
-
-Indigo Server Configuration::
-This area simply tells {hb} where to find the Indigo web server when it needs to pass a Siri command on.  Instructions on how to use these fields are outlined in the http://forums.indigodomo.com/viewtopic.php?f=191&t=15578[Homebridge Indigo] installation instructions and documentation.
+include::IndigoConfiguration.adoc[]
