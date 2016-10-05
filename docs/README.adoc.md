@@ -1,0 +1,4 @@
+image:/docs/images/product.png
+
+Homebridge Buddy
+==========

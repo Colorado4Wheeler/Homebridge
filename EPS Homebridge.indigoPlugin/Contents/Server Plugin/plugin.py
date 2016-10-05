@@ -1854,7 +1854,10 @@ class Plugin(indigo.PluginBase):
 				parent.updateStatesOnServer (states)	
 				
 			# Make sure the icon gets changed too
-			self._setDeviceIcon (parent)		
+			self._setDeviceIcon (parent)	
+			
+			# Tell HB-Indigo to refresh this device
+			self.homebridgeForceUpdate (parent, child)	
 					
 		except Exception as e:
 			self.logger.error (ext.getException(e))			

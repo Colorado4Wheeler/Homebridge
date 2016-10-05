@@ -3,6 +3,11 @@ Release Notes
 
 This latest version is Release Candidate status, barring any significant issues this will represent version 1.0 of the plugin.  Make sure you keep a backup copy of your existing config.json file just in case something doesn't work as planned.
 
+Version 0.12 (Version 1.0 RC4)
+---------------
+
+* Expanded experimental HB-Indigo status updates to apply to Alias devices
+
 Version 0.11 (Version 1.0 RC3)
 ---------------
 
@@ -188,3 +193,4 @@ Wish List
 * Finish testing and implementation of Homebridge installation in the plugin
 * Expand on/off/dim detection for Wrapper devices to include device attributes/properties instead of just states
 * Add field to all devices to let the user select the icon values they want to use
+* For menu options if they have just one server then default to that server instead of presenting a list 
