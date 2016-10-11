@@ -7,6 +7,7 @@ Version 0.12 (Version 1.0 RC4)
 ---------------
 
 * Expanded experimental HB-Indigo status updates to apply to Alias devices
+* Added JSON exchange with HB-Indigo for more real-time updating
 
 Version 0.11 (Version 1.0 RC3)
 ---------------
