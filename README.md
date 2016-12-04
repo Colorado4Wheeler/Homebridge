@@ -1,4 +1,4 @@
-Homebridge Companion
+Homebridge Buddy
 ==========
 
 A plugin for the Indigo home automation system (http://indigodomo.com)
