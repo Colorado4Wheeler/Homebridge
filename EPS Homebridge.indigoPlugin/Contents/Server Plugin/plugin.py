@@ -24,7 +24,10 @@ import datetime
 from datetime import date, timedelta
 from bin.pexpect import pxssh # remote connection
 import socket # health checking
-import urllib2 # for sending forced updates to HB-Indigo
+import urllib2 # for sending forced updates to HB-Indigo (GET)
+import json # for sending forced updates to HB-Indigo (POST JSON)
+import requests # for sending forced updates to HB-Indigo (POST JSON)
+
 
 eps = eps(None)
 
@@ -586,6 +589,18 @@ class Plugin(indigo.PluginBase):
 		return valuesDict
 		
 	#
+	# Camera device form field changed
+	#
+	def onAfter_formFieldChanged_Camera (self, valuesDict, typeId, devId):	
+		try:
+			pass
+			
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+		return valuesDict
+		
+	#
 	# A form field changed, update defaults
 	#
 	def onAfter_formFieldChanged (self, valuesDict, typeId, devId):
@@ -594,7 +609,10 @@ class Plugin(indigo.PluginBase):
 				return self.onAfter_formFieldChanged_Server (valuesDict, typeId, devId)
 				
 			if typeId == "Homebridge-Alias": 
-				return self.onAfter_formFieldChanged_Alias (valuesDict, typeId, devId)		
+				return self.onAfter_formFieldChanged_Alias (valuesDict, typeId, devId)	
+				
+			if typeId == "Homebridge-Camera": 
+				return self.onAfter_formFieldChanged_Camera (valuesDict, typeId, devId)			
 		
 			if valuesDict["settingSelect"] == "": valuesDict["settingSelect"] = "On" # new device default
 				
@@ -1125,9 +1143,42 @@ class Plugin(indigo.PluginBase):
 	################################################################################		
 	
 	#
-	# Send request to HB-Indigo to force an update of the device
+	# Send request to HB-Indigo to force an update of the device (JSON POST)
 	#
 	def homebridgeForceUpdate (self, parent, child):
+		try:
+			serverIp = ""
+			
+			server = indigo.devices[int(parent.pluginProps["serverDevice"])]
+			
+			if server.pluginProps["indigoServer"]:
+				serverIp = "127.0.0.1"
+			else:
+				serverIp = server.pluginProps["computerip"]
+				
+			url = "http://{0}:8445/devices/{1}".format(serverIp, str(parent.id))
+			
+			if self.pluginPrefs["enableStatusUpdate"] == False:
+				self.logger.debug ("Experimental status update disabled in plugin configuration")
+				return False
+			
+			data = {'temperature':'24.3'}
+			data_json = json.dumps(data)
+			payload = {'json_payload': data_json, 'apikey': 'YOUR_API_KEY_HERE'}
+			r = requests.get('http://myserver/emoncms2/api/post', data=payload)
+			
+			self.logger.debug ("Homebridge update requested, querying {0}".format(url))
+			
+			return True		
+				
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			return False
+	
+	#
+	# Send request to HB-Indigo to force an update of the device (GET)
+	#
+	def homebridgeForceUpdateEx (self, parent, child):
 		try:
 			serverIp = ""
 			
@@ -2890,6 +2941,10 @@ class Plugin(indigo.PluginBase):
 			config["actCount"] = 0
 			config["wrapCount"] = 0
 			
+			# Count up add-ons
+			config["addons"] = 0
+			config["camera"] = 0
+			
 			includeDev = []
 			excludeDev = []
 			includeAct = []
@@ -2901,6 +2956,13 @@ class Plugin(indigo.PluginBase):
 			garages = []
 			windows = []
 			drapes = []
+			
+			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Camera"):
+				if dev.pluginProps["serverDevice"] != str(serverId): continue
+				
+				config["addons"] = config["addons"] + 1
+				config["camera"] = config["camera"] + 1
+				
 			
 			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Wrapper"):
 				if dev.pluginProps["serverDevice"] != str(serverId): continue
@@ -3183,7 +3245,7 @@ class Plugin(indigo.PluginBase):
 				
 			config = self.buildConfigDict (server.pluginProps, server.id)
 			
-			idCount = config["actCount"] + config["devCount"]
+			idCount = config["actCount"] + config["devCount"] + config["addons"]
 			
 			if idCount > 99:
 				msg = eps.ui.debugHeader ("WARNING")
@@ -3285,7 +3347,52 @@ class Plugin(indigo.PluginBase):
 			cfg +=	'\t\t\t"thermostatsInCelsius": {0},\n'.format(unicode(server.pluginProps["celsius"]).lower())
 
 			cfg +=	'\t\t\t"accessoryNamePrefix": "{0}"\n'.format(server.pluginProps["accessory"])			
-			cfg +=	'\t\t}\n'
+			#cfg +=	'\t\t}\n'
+			
+			# 0.13 - If we are defining plugin devices they get added here
+			
+			if config["addons"] == 0:
+				cfg +=	'\t\t}\n'
+			else:
+				cfg +=	'\t\t},\n'
+				
+			# Homebridge-Camera-FFMPEG
+			if config["camera"] > 0:
+				cfg +=	'\t\t{\n'		
+				cfg +=	'\t\t\t"platform": "{0}",\n'.format('Camera-ffmpeg')
+				cfg +=	'\t\t\t"cameras": [\n'
+				
+				for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Camera"):
+					if dev.pluginProps["serverDevice"] != str(server.id): continue
+					
+					cfg +=	'\t\t\t\t{\n'
+					
+					cfg +=	'\t\t\t\t\t"name": "{0}",\n'.format(dev.pluginProps["name"])
+					
+					cfg +=	'\t\t\t\t\t"videoConfig": {\n'
+					
+					cfg +=	'\t\t\t\t\t\t"source": "{0}",\n'.format(dev.pluginProps["videoSource"])
+					cfg +=	'\t\t\t\t\t\t"stillImageSource": "{0}",\n'.format(dev.pluginProps["stillSource"])
+					cfg +=	'\t\t\t\t\t\t"maxStreams": {0},\n'.format(dev.pluginProps["maxStreams"])
+					cfg +=	'\t\t\t\t\t\t"maxWidth": {0},\n'.format(dev.pluginProps["maxWidth"])
+					cfg +=	'\t\t\t\t\t\t"maxHeight": {0},\n'.format(dev.pluginProps["maxHeight"])
+					cfg +=	'\t\t\t\t\t\t"maxFPS": {0}\n'.format(dev.pluginProps["maxFPS"])
+					
+					cfg +=	'\t\t\t\t\t}\n'
+					
+					config["addons"] = config["addons"] - 1
+					config["camera"] = config["camera"] - 1
+					
+					if config["camera"] == 0:
+						cfg +=	'\t\t\t\t}\n'
+					else:
+						cfg +=	'\t\t\t\t},\n'
+					
+					
+				cfg +=	'\t\t\t]\n'
+				
+				cfg +=	'\t\t}\n'
+			
 			cfg += 	'\t],\n\n'
 		
 			cfg += 	'\t"accessories": [\n'
@@ -3299,7 +3406,7 @@ class Plugin(indigo.PluginBase):
 			self.logger.error (ext.getException(e))	
 	
 		return cfg
-	
+			
 	################################################################################
 	# INDIGO COMMAND HAND-OFFS
 	#

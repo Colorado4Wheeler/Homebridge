@@ -2104,6 +2104,100 @@ To find out how to control this device via Homebridge click the "?" icon below.<
 		<UiDisplayStateId>statedisplay</UiDisplayStateId>
 	</Device>
 	
+	<!-- =========== CAMERA =========== -->
+	<Device type="relay" id="Homebridge-Camera">
+		<Name>Homebridge Camera</Name>
+		<ConfigUI>
+			<Field type="label" id="lbl_plugin" >
+				<Label>Adding this device requires that ffmpeg and Homebridge-Camera have been installed!
+				
+This device type is currently experimental, use at your own risk.</Label>
+			</Field>
+			
+			<Field id="sep_plugin" type="separator" />
+			
+			<Field id="serverDevice" type="menu" >
+				<Label>Homebridge server:</Label>
+				<List class="indigo.devices" filter="com.eps.indigoplugin.homebridge.Homebridge-Server"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field type="textfield" id="name" defaultValue="Camera" >
+				<Label>Camera name:</Label>
+			</Field>
+			
+			<Field type="menu" id="cameraType" defaultValue="generic" readonly="true" hidden="true">
+				<Label>Camera type:</Label>
+				<List>
+					<Option value="generic">Generic Camera (HB-Camera)</Option>
+					<Option value="foscam">Foscam (HB-Foscam)</Option>
+				</List>
+			</Field>
+			
+			
+			<Field type="textfield" id="videoSource" defaultValue="-re -i rtsp://my_camera_ip" >
+				<Label>Video source:</Label>
+			</Field>
+			
+			<Field type="textfield" id="stillSource" defaultValue="-i http://my_camera_ip/optional_image_name.jpg" >
+				<Label>Still source:</Label>
+			</Field>
+			
+			<Field type="textfield" id="maxStreams" defaultValue="2" >
+				<Label>Maximum video streams:</Label>
+			</Field>
+			
+			<Field type="textfield" id="maxWidth" defaultValue="160" >
+				<Label>Maximum width:</Label>
+			</Field>
+			
+			<Field type="textfield" id="maxHeight" defaultValue="320" >
+				<Label>Maximum height:</Label>
+			</Field>
+			
+			<Field type="textfield" id="maxFPS" defaultValue="30" >
+				<Label>Maximum FPS:</Label>
+			</Field>
+			
+			<Field type="textfield" id="treatAs" defaultValue="camera" hidden="true">
+				<Label>Type of device:</Label>
+			</Field>
+			
+			
+
+			
+		</ConfigUI>
+		
+		<States>
+			<!-- All EPS plugins have this state and use it for the Indigo lists -->
+			<State id="sprinklerSchedule">
+				<ValueType>Number</ValueType>
+				<TriggerLabel>Sprinkler scheduled minutes</TriggerLabel>
+				<ControlPageLabel>Sprinkler scheduled minutes</ControlPageLabel>
+			</State>
+			
+			<State id="sprinklerStartTime">
+				<ValueType>String</ValueType>
+				<TriggerLabel>Sprinkler start time</TriggerLabel>
+				<ControlPageLabel>Sprinkler start time</ControlPageLabel>
+			</State>
+			
+			<State id="sprinklerEndTime">
+				<ValueType>String</ValueType>
+				<TriggerLabel>Sprinkler end time</TriggerLabel>
+				<ControlPageLabel>Sprinkler end time</ControlPageLabel>
+			</State>
+			
+			<State id="sprinklerPaused">
+				<ValueType>Boolean</ValueType>
+				<TriggerLabel>Sprinkler is paused</TriggerLabel>
+				<ControlPageLabel>Sprinkler is paused</ControlPageLabel>
+			</State>
+			
+		</States>
+		<UiDisplayStateId>statedisplay</UiDisplayStateId>
+	</Device>
+	
 	<!-- =========== SERVER =========== -->
 	<Device type="relay" id="Homebridge-Server">
 		<Name>Homebridge Server</Name>
@@ -2199,7 +2293,7 @@ To find out how to control this device via Homebridge click the "?" icon below.<
 				<Label>Homebridge User:</Label>
 			</Field>
 			
-			<Field type="textfield" id="hbpin" defaultValue="031-45-154" visibleBindingId="view" visibleBindingValue="config" readonly="true" >
+			<Field type="textfield" id="hbpin" defaultValue="031-45-154" visibleBindingId="view" visibleBindingValue="config" readonly="false" >
 				<Label>Homebridge PIN:</Label>
 			</Field>
 			

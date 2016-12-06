@@ -3,6 +3,14 @@ Release Notes
 
 This latest version is Release Candidate status, barring any significant issues this will represent version 1.0 of the plugin.  Make sure you keep a backup copy of your existing config.json file just in case something doesn't work as planned.
 
+Version 0.13 (Version 1.0 RC5)
+---------------
+
+* Changed the server web password field to be character hidden in the plugin configuration
+* Unlocked the PIN field so the PIN could be changed if a user desires
+* Added MANUAL addition of Homebridge-Camera configuration - this does not yet incorporate the actual plugin itself but allows the user to define a device that modifies the configuration file to utilize an already installed Homebridge-Camera configuration
+
+
 Version 0.12 (Version 1.0 RC4)
 ---------------
 
@@ -195,3 +203,4 @@ Wish List
 * Expand on/off/dim detection for Wrapper devices to include device attributes/properties instead of just states
 * Add field to all devices to let the user select the icon values they want to use
 * For menu options if they have just one server then default to that server instead of presenting a list 
+* Automatically back up 3 generations of the config.json file whenever overwriting it - this also helps new users that already had HB running

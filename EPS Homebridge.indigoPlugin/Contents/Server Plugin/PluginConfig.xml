@@ -118,7 +118,7 @@
 		<Label>Web access user name:</Label>
 	</Field>
 	
-	<Field type="textfield" id="password" defaultValue=""  >
+	<Field type="textfield" id="password" defaultValue="" secure="true" >
 		<Label>Web access password:</Label>
 	</Field>
 	
