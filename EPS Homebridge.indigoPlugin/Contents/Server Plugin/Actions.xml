@@ -53,4 +53,21 @@
 		<CallbackMethod>serverActions</CallbackMethod>
 	</Action>
 	
+	<Action id="sep_server3" uiPath="DeviceActions"/>
+	
+	<Action id="turnonIgnore" deviceFilter="com.eps.indigoplugin.homebridge.Homebridge-Alias" uiPath="DeviceActions">
+		<Name>Turn on ignore mode on an Alias device</Name>
+		<CallbackMethod>aliasActions</CallbackMethod>
+	</Action>
+	
+	<Action id="turnoffIgnore" deviceFilter="com.eps.indigoplugin.homebridge.Homebridge-Alias" uiPath="DeviceActions">
+		<Name>Turn off ignore mode on an Alias device</Name>
+		<CallbackMethod>aliasActions</CallbackMethod>
+	</Action>
+	
+	<Action id="toggleIgnore" deviceFilter="com.eps.indigoplugin.homebridge.Homebridge-Alias" uiPath="DeviceActions">
+		<Name>Toggle ignore mode on an Alias device</Name>
+		<CallbackMethod>aliasActions</CallbackMethod>
+	</Action>
+	
 </Actions>

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+export PATH="$DIR:/usr/bin:/bin:/usr/sbin:/sbin"
+
+NAME="$1"
+CDIR="$DIR/$NAME"
+TMPL="$DIR/com.webdeck.homebridge.plist.template"
+PLIST="$CDIR/com.webdeck.homebridge.$NAME.plist"
+
+/bin/mkdir -p "$CDIR" "$CDIR/accessories" "$CDIR/persist"
+/bin/rm -f "$PLIST"
+/usr/bin/sed -e "s|@NAME@|$NAME|" \
+			 -e "s|@DIR@|$DIR|" \
+			 < "$TMPL" > "$PLIST"

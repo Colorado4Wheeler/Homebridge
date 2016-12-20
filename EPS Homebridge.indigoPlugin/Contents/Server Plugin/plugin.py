@@ -27,7 +27,7 @@ import socket # health checking
 import urllib2 # for sending forced updates to HB-Indigo (GET)
 import json # for sending forced updates to HB-Indigo (POST JSON)
 import requests # for sending forced updates to HB-Indigo (POST JSON)
-
+import shutil # shell level utilities for dealing with our local HB server, mostly removing non empty folders
 
 eps = eps(None)
 
@@ -44,6 +44,11 @@ class Plugin(indigo.PluginBase):
 	TVERSION	= "3.2.1"
 	PLUGIN_LIBS = ["cache", "plugcache", "actions", "devices"] #["conditions", "cache", "actions"] #["cache"]
 	UPDATE_URL 	= ""
+	
+	# Plugin specific globals
+	hbNames = ["CC:22:3D:E3:CE:30", "CC:22:3D:E3:CE:32", "CC:22:3D:E3:CE:E0", "CC:22:3D:E3:CE:E2", "CC:22:3D:E3:CE:EA", "CC:22:3D:E3:CE:EB", "CC:22:3D:E3:CE:EC", "CC:22:3D:E3:CE:EE", "CC:22:3D:E3:CE:F0", "CC:22:3D:E3:CE:F2"]
+	hbPorts = ["51826", "51827", "51828", "51829", "51830", "51831", "51832", "51833", "51834", "51835"]
+	plugindir = os.getcwd()
 	
 	#
 	# Init
@@ -95,6 +100,42 @@ class Plugin(indigo.PluginBase):
 					props = dev.pluginProps
 					props["auto_hbuser"] = False
 					dev.replacePluginPropsOnServer (props)
+			
+			# RC6 new fields		
+			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Server"):
+				if ext.valueValid (dev.pluginProps, "hbport", True) == False:
+					self.logger.info ("Adding property to '{0}' configuration for RC6".format(dev.name))
+					props = dev.pluginProps
+					props["hbport"] = self.hbPorts[0]
+					dev.replacePluginPropsOnServer (props)
+					
+			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Server"):
+				if ext.valueValid (dev.pluginProps, "autoStartStop", True) == False:
+					self.logger.info ("Adding property to '{0}' configuration for RC6".format(dev.name))
+					props = dev.pluginProps
+					props["autoStartStop"] = True
+					dev.replacePluginPropsOnServer (props)
+					
+			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Custom"):
+				if ext.valueValid (dev.pluginProps, "autoStartStop", True) == False:
+					self.logger.info ("Adding property to '{0}' configuration for RC6".format(dev.name))
+					props = dev.pluginProps
+					props["autoStartStop"] = True
+					dev.replacePluginPropsOnServer (props)					
+					
+			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Alias"):
+				if ext.valueValid (dev.pluginProps, "invertonoff", True) == False:
+					self.logger.info ("Adding property to '{0}' configuration for RC6".format(dev.name))
+					props = dev.pluginProps
+					props["invertonoff"] = False
+					dev.replacePluginPropsOnServer (props)
+					
+			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Alias"):
+				if ext.valueValid (dev.pluginProps, "ignore", True) == False:
+					self.logger.info ("Adding property to '{0}' configuration for RC6".format(dev.name))
+					props = dev.pluginProps
+					props["ignore"] = False
+					dev.replacePluginPropsOnServer (props)				
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
@@ -127,6 +168,8 @@ class Plugin(indigo.PluginBase):
 						msg += eps.ui.debugLine ("Set the actual Indigo IP address in the plugin configuration.")
 						msg += eps.ui.debugHeaderEx ()
 						break
+						
+			self.homebridgeDiscovery()
 						
 			if msg != "":
 				self.logger.error (msg)
@@ -246,6 +289,10 @@ class Plugin(indigo.PluginBase):
 					self.SERVERS = []
 					for servers in indigo.devices.iter(self.pluginId + ".Homebridge-Server"):
 						if servers.id != dev.id: self.SERVERS.append (server.id)
+						
+				if os.path.exists(self.plugindir + "/bin/hb/homebridge/" + str(dev.id)):
+					self.logger.debug ("Removing the local server folder")
+					shutil.rmtree (self.plugindir + "/bin/hb/homebridge/" + str(dev.id))
 				
 				return # We don't need to do the restart again, the server change will do that for us
 				
@@ -265,13 +312,38 @@ class Plugin(indigo.PluginBase):
 			self.logger.error (ext.getException(e))	
 	
 	#
+	# Device start comm before
+	#
+	def onBefore_deviceStartComm (self, dev):
+		try:
+			if dev.deviceTypeId == "Homebridge-Server": 
+				# See if we have a folder for it
+				if os.path.exists(self.plugindir + "/bin/hb/homebridge/" + str(dev.id)) == False:
+					self.logger.debug ("Unable to find a local configuration for this Homebridge server")
+					
+					if self.homebridgeCreateFolder (dev, self.plugindir) == False:
+						return
+						
+				# If we get to here then we should have a valid folder, now make sure our config is there or build it if not
+				if os.path.isfile(self.plugindir + "/bin/hb/homebridge/" + str(dev.id) + "/config.json"):
+					self.homebridgeAutoStart (dev)
+					pass					
+				else:
+					self.homebridgeSaveConfig (dev, self.buildServerConfig (dev))
+					self.homebridgeAutoStart (dev)
+					pass
+								
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+
+	#
 	# Device start comm
 	#
 	def onAfter_deviceStartComm (self, dev):
 		try:
 			self.checkDeviceAddress (dev)
 			
-			if dev.deviceTypeId == "Homebridge-Server": 
+			if dev.deviceTypeId == "Homebridge-Server" or dev.deviceTypeId == "Homebridge-Custom": 
 				if dev.id in self.SERVERS:
 					pass
 				else:
@@ -302,6 +374,23 @@ class Plugin(indigo.PluginBase):
 					if self.pluginPrefs["restartNewDevice"]: self.setServerRestart (server, dev, "Wrapper or Alias device '{0}' was added to '{1}'".format(dev.name, server.name), 5, 120, 5)
 			
 			if dev.deviceTypeId == "Homebridge-Server":
+				# Since we just created the device we need to create the folder and start the server
+				if os.path.exists(self.plugindir + "/bin/hb/homebridge/" + str(dev.id)) == False:
+					self.logger.debug ("Unable to find a local configuration for this Homebridge server")
+					
+					if self.homebridgeCreateFolder (dev, self.plugindir) == False:
+						return
+						
+				# If we get to here then we should have a valid folder, now make sure our config is there or build it if not
+				if os.path.isfile(self.plugindir + "/bin/hb/homebridge/" + str(dev.id) + "/config.json"):
+					self.homebridgeAutoStart (dev)
+					pass					
+				else:
+					self.homebridgeSaveConfig (dev, self.buildServerConfig (dev))
+					self.homebridgeAutoStart (dev)
+					pass
+			
+			if dev.deviceTypeId == "Homebridge-Server" or dev.deviceTypeId == "Homebridge-Custom":
 				self.checkDeviceAddress (dev)
 					
 				if dev.id in self.SERVERS:
@@ -345,6 +434,11 @@ class Plugin(indigo.PluginBase):
 						server = indigo.devices[int(newDev.pluginProps["serverDevice"])]
 						self.homebridgeSaveConfig (server, self.buildServerConfig (server))
 						if self.pluginPrefs["restartDeviceType"]: self.setServerRestart (server, origDev, "{0}'s device type changed".format(newDev.name))
+
+				if "invertonoff" in changedProps:
+					server = indigo.devices[int(newDev.pluginProps["serverDevice"])]
+					self.homebridgeSaveConfig (server, self.buildServerConfig (server))
+					if self.pluginPrefs["restartDeviceType"]: self.setServerRestart (server, origDev, "{0}'s device on/off inversion changed".format(newDev.name))
 						
 				if "serverDevice" in changedProps:
 					# We need to save and reload BOTH servers (unless one of them is blank from a device delete)
@@ -362,8 +456,8 @@ class Plugin(indigo.PluginBase):
 		
 			if newDev.deviceTypeId == "Homebridge-Alias":
 				if newDev.pluginProps["isSprinkler"] and newDev.pluginProps["sprinklerOptions"] == "controller" and newDev.pluginProps["manageZones"]:
-					self.auditSprinklerZones (newDev, indigo.devices[int(newDev.pluginProps["device"])])
-		
+					self.auditSprinklerZones (newDev, indigo.devices[int(newDev.pluginProps["device"])])	
+				
 			if newDev.deviceTypeId == "Homebridge-Server":
 				needsRestart = False
 			
@@ -572,21 +666,37 @@ class Plugin(indigo.PluginBase):
 				valuesDict["actexclude"] = ["-none-"]
 				
 			if valuesDict["auto_hbuser"]:
-				serverNames = []
-				names = ["CC:22:3D:E3:CE:30", "CC:22:3D:E3:CE:32", "CC:22:3D:E3:CE:E0", "CC:22:3D:E3:CE:E2", "CC:22:3D:E3:CE:EA", "CC:22:3D:E3:CE:EB", "CC:22:3D:E3:CE:EC", "CC:22:3D:E3:CE:EE", "CC:22:3D:E3:CE:F0", "CC:22:3D:E3:CE:F2"]
-				for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Server"):
-					if dev.id != devId: serverNames.append (dev.pluginProps["hbuser"])
-					
-				for name in names:
-					if name in serverNames: continue
-					valuesDict["hbuser"] = name
+				unique = self.homebridgeUniqueServerCheck (devId, valuesDict)
+				
+				if unique["unique"] == False:
+					if unique["user"] != "": valuesDict["hbuser"] = unique["user"]
+					if unique["port"] != "": valuesDict["hbport"] = unique["port"]
 					valuesDict["auto_hbuser"] = False
-					break
 			
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
 			
 		return valuesDict
+		
+	#
+	# Custom server device form field changed
+	#
+	def onAfter_formFieldChanged_CustomServer (self, valuesDict, typeId, devId):
+		try:
+			# Make sure that our port and user are unique
+			if valuesDict["auto_hbuser"] or valuesDict["auto_hbport"]:
+				newvalues = self.incrementHomebridge (devId)
+				
+				valuesDict["hbuser"] = newvalues[0]
+				valuesDict["hbport"] = newvalues[1]
+				valuesDict["auto_hbuser"] = False
+				valuesDict["auto_hbport"] = False
+				
+			
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+		return valuesDict	
 		
 	#
 	# Camera device form field changed
@@ -607,6 +717,9 @@ class Plugin(indigo.PluginBase):
 		try:
 			if typeId == "Homebridge-Server": 
 				return self.onAfter_formFieldChanged_Server (valuesDict, typeId, devId)
+				
+			if typeId == "Homebridge-Custom": 
+				return self.onAfter_formFieldChanged_CustomServer (valuesDict, typeId, devId)	
 				
 			if typeId == "Homebridge-Alias": 
 				return self.onAfter_formFieldChanged_Alias (valuesDict, typeId, devId)	
@@ -752,6 +865,14 @@ class Plugin(indigo.PluginBase):
 					valuesDict = self.onAfter_formFieldChanged (valuesDict, typeId, devId)
 					
 			if typeId == "Homebridge-Server":
+				unique = self.homebridgeUniqueServerCheck (devId, valuesDict)
+				
+				if unique["unique"] == False:
+					if unique["user"] != "": valuesDict["hbuser"] = unique["user"]
+					if unique["port"] != "": valuesDict["hbport"] = unique["port"]
+					valuesDict["auto_hbuser"] = False		
+					
+			if typeId == "Homebridge-Server" or typeId == "Homebridge-Custom":
 				if valuesDict["view"] != "server": 
 					valuesDict["view"] = "server"
 					
@@ -783,21 +904,22 @@ class Plugin(indigo.PluginBase):
 						return (False, valuesDict, errorDict)
 					
 				# Make sure they aren't trying to create a duplicate server
-				for servers in indigo.devices.iter(self.pluginId + ".Homebridge-Server"):
-					if servers.id != devId:
-						isOk = True
+				if typeId == "Homebridge-Custom":
+					for servers in indigo.devices.iter(self.pluginId + ".Homebridge-Custom"):
+						if servers.id != devId:
+							isOk = True
 						
-						if servers.pluginProps["indigoServer"] == valuesDict["indigoServer"]:
-							errorDict["indigoServer"] = "Duplicate Homebridge server device for the Indigo server"
-							isOk = False
+							if servers.pluginProps["indigoServer"] == valuesDict["indigoServer"]:
+								errorDict["indigoServer"] = "Duplicate Homebridge server device for the Indigo server"
+								isOk = False
 							
-						elif servers.pluginProps["computerip"] == valuesDict["computerip"]:
-							errorDict["computerip"] = "Duplicate Homebridge server device on {0}".format(valuesDict["computerip"])
-							isOk = False
+							elif servers.pluginProps["computerip"] == valuesDict["computerip"]:
+								errorDict["computerip"] = "Duplicate Homebridge server device on {0}".format(valuesDict["computerip"])
+								isOk = False
 							
-						if isOk == False:
-							errorDict["showAlertText"] = "You are attempting to create a server device for a Homebridge server that already has an Indigo device."
-							return (False, valuesDict, errorDict)
+							if isOk == False:
+								errorDict["showAlertText"] = "You are attempting to create a server device for a Homebridge server that already has an Indigo device."
+								return (False, valuesDict, errorDict)
 							
 		
 		except Exception as e:
@@ -1029,7 +1151,7 @@ class Plugin(indigo.PluginBase):
 				if dev.pluginProps["methodOn"] == "none":
 					return True
 					
-			elif dev.deviceTypeId == "Homebridge-Server":
+			elif dev.deviceTypeId == "Homebridge-Server" or dev.deviceTypeId == "Homebridge-Custom":
 				self.homebridgeStart (dev)
 				return True
 				
@@ -1065,7 +1187,7 @@ class Plugin(indigo.PluginBase):
 				if dev.pluginProps["methodOff"] == "none":
 					return True	
 					
-			elif dev.deviceTypeId == "Homebridge-Server":
+			elif dev.deviceTypeId == "Homebridge-Server" or dev.deviceTypeId == "Homebridge-Custom":
 				self.homebridgeStop (dev)
 				return True
 				
@@ -1141,6 +1263,237 @@ class Plugin(indigo.PluginBase):
 	################################################################################	
 	# HOMEBRIDGE
 	################################################################################		
+	#
+	# Get unique names and ports if needed
+	#
+	def homebridgeUniqueServerCheck (self, devId, valuesDict):
+		try:
+			serverNames = []
+			serverPorts = []
+			ret = {}
+			ret["unique"] = True
+			ret["user"] = ""
+			ret["port"] = ""
+
+			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Server"):
+				if dev.id != devId: 
+					serverNames.append (dev.pluginProps["hbuser"])
+					serverPorts.append (dev.pluginProps["hbport"])	
+					
+			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Custom"):
+				if dev.id != devId: 
+					serverNames.append (dev.pluginProps["hbuser"])
+					serverPorts.append (dev.pluginProps["hbport"])				
+					
+			for name in self.hbNames:
+				if name in serverNames: continue
+				ret["user"] = name
+				ret["unique"] = False
+				break
+			
+			for name in self.hbPorts:
+				if name in serverPorts: continue
+				ret["port"] = name
+				ret["unique"] = False
+				break				
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+		return ret
+	
+	#
+	# Get next available user and port
+	#
+	def incrementHomebridge (self, devId):
+		try:
+			ret = []
+			
+			serverNames = []
+			serverPorts = []
+			
+			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Server"):
+				if dev.id != devId: 
+					serverNames.append (dev.pluginProps["hbuser"])
+					serverPorts.append (dev.pluginProps["hbport"])
+				
+			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Custom"):
+				if dev.id != devId: 
+					serverNames.append (dev.pluginProps["hbuser"])	
+					serverPorts.append (dev.pluginProps["hbport"])
+				
+			for name in self.hbNames:
+				if name in serverNames: continue
+				ret.append (name)
+				break
+				
+			for port in self.hbPorts:
+				if port in serverPorts: continue
+				ret.append (port)
+				break	
+			
+		except Exception as e:
+			self.logger.error (ext.getException(e))
+			ret.append (self.hbUser[1])
+			ret.append (self.hbPort[1])
+			
+		return ret
+		
+	#
+	# Auto stop Homebridge
+	#
+	def homebridgeAutoStop (self, dev):
+		try:
+			#if self.homebridgeIsRunning (dev) == False: return # It's already stopped, don't try to stop it again	
+				
+			if dev.pluginProps["autoStartStop"]: self.homebridgeStop (dev)
+					
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+	
+	#
+	# Auto start Homebridge
+	#
+	def homebridgeAutoStart (self, dev):
+		try:
+			#if self.homebridgeIsRunning (dev): return # It's already running, don't try to start it again	
+				
+			if dev.pluginProps["autoStartStop"]: self.homebridgeStart (dev)
+					
+		except Exception as e:
+			self.logger.error (ext.getException(e))			
+		
+	#
+	# Discover a manual HB server or set up a HB-Indigo server if there is none
+	#
+	def homebridgeDiscovery (self):
+		try:
+			customserver = False
+			
+			home = expanduser("~") + "/.homebridge"
+			if os.path.exists(home):
+				if os.path.exists(home + "/migrated.hbb") == False: # We have already migrated this server			
+					self.logger.info ("Custom installation of Homebridge found, adding a custom server to Indigo")
+					customserver = True
+			
+					# There is a custom server, try to read in the settings before we create it
+					if os.path.exists(home + "/config.json"):
+						with open(home + "/config.json") as json_file:
+							json_data = json.load(json_file)
+							
+					props = {}
+				
+					props["indigoServer"] = True
+					props["auto_hbuser"] = False
+					props["show_hbuser"] = True
+					props["hbuser"] = unicode(json_data['bridge']['username'])
+					props["hbpin"] = unicode(json_data['bridge']['pin'])
+					props["hbport"] = unicode(json_data['bridge']['port'])
+				
+					indigo.device.create(protocol=indigo.kProtocol.Plugin,
+						address='CUSTOM on Indigo Server',
+						name=unicode(json_data['bridge']['name']) + " Custom Installation", 
+						description='Automatically created by Homebridge Buddy because ~/.homebridge configuration was found', 
+						pluginId='com.eps.indigoplugin.homebridge',
+						deviceTypeId='Homebridge-Custom',
+						props=props)
+						
+					# Now read in the old JSON file and write it back out but without any HB-Indigo configuration, that will be the role of the built in server
+					hasplatform = -1
+					platformloop = 0
+					for platform in json_data['platforms']:
+						if platform["platform"] == "Indigo": 
+							hasplatform = platformloop
+							
+						platformloop = platformloop + 1
+						
+					if hasplatform != -1: del json_data['platforms'][hasplatform]
+					
+					#indigo.server.log(unicode(json_data))
+					#indigo.server.log(unicode(json.dumps(json_data, indent=8, separators=(',',':'))))
+
+					with open(home + "/migrated.hbb", 'w') as file_:
+						file_.write("Homebridge Buddy migrated")	
+					X = 1
+						
+			# Make sure we have a HB-Indigo server
+			servers = 0
+			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Server"):
+				servers = servers + 1
+				
+			if servers == 0:
+				self.logger.info ("Automatically creating and configuring the first Homebridge server")
+				
+				props = {}
+
+				if customserver == False:
+					props["hbpin"] = "031-45-154"
+					props["hbport"] = "51826" 
+					props["hbuser"] = "DD:22:3D:E3:CE:30" # The DD ensures that no matter what this will get picked up, that name was never used before
+				else:
+					props["hbpin"] = "031-45-154"
+					props["hbport"] = "51832"
+					props["hbuser"] = "DD:22:3D:E3:CE:32"
+
+				props["indigoServer"] = True
+				props["accessory"] = ""
+				props["actexclude"] = ["-none-"]
+				props["actinclude"] = ["-none-"]
+				props["autoStartStop"] = True
+				props["auto_hbuser"] = False
+				props["celsius"] = False
+				props["countWrappedItems"] = True
+				props["devexclude"] = ["-none-"]
+				props["devinclude"] = ["-all-"]
+				props["hideWrappedItems"] = True
+				props["name"] = "Indigo"
+				props["password"] = "password"
+				props["password2"] = "password"
+				props["show_hbuser"] = False
+				props["treatasdoor"] = ["-none-"]
+				props["treatasdrapes"] = ["-none-"]
+				props["treatasgarage"] = ["-none-"]
+				props["treataslock"] = ["-none-"]
+				props["treatasswitch"] = ["-none-"]
+				props["treataswindows"] = ["-none-"]
+				props["invertonoff"] = ["-none-"]
+				props["username"] = "Administrator"
+				
+				indigo.device.create(protocol=indigo.kProtocol.Plugin,
+					address='SERVER on Indigo Server',
+					name="Homebridge for Indigo", 
+					description='Automatically created by Homebridge Buddy as first Homebridge server', 
+					pluginId='com.eps.indigoplugin.homebridge',
+					deviceTypeId='Homebridge-Server',
+					props=props)
+			
+		except Exception as e:
+			self.logger.error (ext.getException(e))
+		
+	#
+	# Create Homebridge server folder
+	#
+	def homebridgeCreateFolder (self, dev, curdir):
+		try:
+			if dev.pluginProps["indigoServer"]:
+				# Since we are here, disable the manually installed HB if it is there
+				#self.homebridgeLegacyMigration (dev)
+		
+				os.system('"' + self.plugindir + '/bin/hb/homebridge/createdir" ' + str(dev.id))
+
+				if os.path.exists(curdir + "/bin/hb/homebridge/" + str(dev.id)):
+					self.logger.debug ("Created server folder " + self.plugindir + "/bin/hb/homebridge/" + str(dev.id))
+					return True
+				
+				else:
+					self.logger.error ("Unable to create Homebridge folder " + self.plugindir + "/hbserver/homebridge/" + str(dev.id))
+					return False
+			
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			return False
+			
+		return True	
 	
 	#
 	# Send request to HB-Indigo to force an update of the device (JSON POST)
@@ -1212,61 +1565,119 @@ class Plugin(indigo.PluginBase):
 	#
 	def homebridgeSaveConfig (self, dev, config):
 		try:
-			if dev.pluginProps["indigoServer"]:
-				home = expanduser("~") + "/.homebridge"
+			# New save routine, future use
+			#data = self.buildConfigData (dev)
+			#indigo.server.log(unicode(json.dumps(data, indent=8, separators=(',',':'))))
+			#home = self.plugindir + "/bin/hb/homebridge/" + str(dev.id)
+			#with open(home + "/config2.json", 'w') as file_:
+			#	file_.write(json.dumps(data, indent=8, separators=(',',':')))
+			#return
 			
+			# In this version the config is text, convert it as a JSON encoded string
+			json_data = json.loads(config)
+			
+			# If this is a custom server then we save everything BUT Homebridge-Indigo
+			newplatforms = []
+			
+			# If this is our server we save ONLY Homebridge-Indigo
+			if dev.deviceTypeId == "Homebridge-Server":
+				json_data["accessories"] = [] # We don't support it at the moment
+				
+				# Only include the plugins that we have developed for the built in homebridge
+				for platform in json_data["platforms"]:
+					if platform["platform"] == "Indigo": newplatforms.append (platform)
+				
+				json_data["platforms"] = newplatforms
+				
+				home = self.plugindir + "/bin/hb/homebridge/" + str(dev.id)
+				
 				if os.path.exists(home):
-					if os.path.exists (home + "/config.json"):
-						self.logger.debug ("Found '{0}/config.json', saving the Homebridge configuration".format(home))
+					self.logger.debug ("Saving '{0}/config.json'".format(home))
+				
+					with open(home + "/config.json", 'w') as file_:
+						#file_.write(config)
+						file_.write (json.dumps(json_data, indent=8))
+						#file_.write (json.dumps(json_data))
+				
+			if dev.deviceTypeId == "Homebridge-Custom":
+				# Read in the current config file so we can merge it
+				home = expanduser("~") + "/.homebridge"
+				if os.path.exists(home + "/config.json"):
+					with open(home + "/config.json") as json_file:
+						json_current = json.load(json_file)
+						
+				# Merge the platforms and accessories
+				for pcurrent in json_current["platforms"]:
+					if "name" in pcurrent:
+						if pcurrent["name"] != "Indigo" and pcurrent["name"] != "Camera-ffmpeg":
+							json_data["platforms"].append (pcurrent)
+							
+				json_data["accessories"] = json_current["accessories"]
+				
+				for platform in json_data["platforms"]:
+					if "platform" in platform and platform["platform"] != "Indigo": newplatforms.append (platform)
+									
+				json_data["platforms"] = newplatforms					
+				
+				#indigo.server.log(unicode(json_data))	
 					
-						with open(home + "/config.json", 'w') as file_:
-							file_.write(config)
+				config = json.dumps(json_data, indent=8)
+				
+				if dev.pluginProps["indigoServer"]:
+					home = expanduser("~") + "/.homebridge"
+			
+					if os.path.exists(home):
+						if os.path.exists (home + "/config.json"):
+							self.logger.debug ("Found '{0}/config.json', saving the Homebridge configuration".format(home))
+					
+							with open(home + "/config.json", 'w') as file_:
+								file_.write(config)
+						else:
+							self.logger.error ("Unable to find the config.json file in '{0}', are you sure Homebridge is installed?  Unable to save configuration".format(home))
+							return
 					else:
-						self.logger.error ("Unable to find the config.json file in '{0}', are you sure Homebridge is installed?  Unable to save configuration".format(home))
+						self.logger.error ("Unable to find '{0}', are you sure Homebridge is installed?  Unable to save configuration".format(home))
 						return
+					
 				else:
-					self.logger.error ("Unable to find '{0}', are you sure Homebridge is installed?  Unable to save configuration".format(home))
-					return
-					
-			else:
-				s = pxssh.pxssh()
+					s = pxssh.pxssh()
 				
-				try:
-					s.login (dev.pluginProps["computerip"], dev.pluginProps["username"], dev.pluginProps["password"])
-				except:
-					self.logger.error ("SSH session failed to login to '{0}'.  Check your IP, username and password and make sure you can SSH to that computer from the Indigo server.".format(dev.name))
-					return False
+					try:
+						s.login (dev.pluginProps["computerip"], dev.pluginProps["username"], dev.pluginProps["password"])
+					except:
+						self.logger.error ("SSH session failed to login to '{0}'.  Check your IP, username and password and make sure you can SSH to that computer from the Indigo server.".format(dev.name))
+						return False
 				
-				config = config.replace('\t', '    ')
+					config = config.replace('\t', '    ')
 			
-				thiscfg = config.split("\n")
+					thiscfg = config.split("\n")
 			
-				try:
-					allLines = float(len(thiscfg))
-					curLine = float(2)
+					try:
+						allLines = float(len(thiscfg))
+						curLine = float(2)
 					
-					#s.sendline ("echo '' > /Users/" + dev.pluginProps["username"] + "/.homebridge/config.json")
-					#s.prompt() 
+						#s.sendline ("echo '' > /Users/" + dev.pluginProps["username"] + "/.homebridge/config.json")
+						#s.prompt() 
 					
-					for i in range (0, len(thiscfg)):
-						thiscfg[i] = "echo '" + thiscfg[i] + "' >> /Users/" + dev.pluginProps["username"] + "/.homebridge/config.json"
+						for i in range (0, len(thiscfg)):
+							thiscfg[i] = "echo '" + thiscfg[i] + "' >> /Users/" + dev.pluginProps["username"] + "/.homebridge/config.json"
 					
-					thiscfg.insert (0, "echo '' > /Users/" + dev.pluginProps["username"] + "/.homebridge/config.json")
+						thiscfg.insert (0, "echo '' > /Users/" + dev.pluginProps["username"] + "/.homebridge/config.json")
 						
-					newcfg = ";".join(thiscfg)
-					#indigo.server.log(unicode(newcfg))
-					s.sendline (newcfg)
+						newcfg = ";".join(thiscfg)
+						#indigo.server.log(unicode(newcfg))
+						s.sendline (newcfg)
+						s.prompt() 
+						
+					
+			
+					except Exception as e:
+						self.logger.error (ext.getException(e))	
+			
 					s.prompt() 
-						
-					
-			
-				except Exception as e:
-					self.logger.error (ext.getException(e))	
-			
-				s.prompt() 
-				s.logout()
+					s.logout()
 
-			self.logger.info ("Homebridge configuration for '{0}' saved".format(dev.name))
+				self.logger.info ("Homebridge configuration for '{0}' saved".format(dev.name))
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
@@ -1295,26 +1706,32 @@ class Plugin(indigo.PluginBase):
 		try:
 			self.logger.info ("Starting the Homebridge server '{0}', do not try to use Siri until you get a message that the server has started".format(dev.name))
 			
-			if dev.pluginProps["indigoServer"]:
-				# Python method
-				os.system("launchctl load -w ~/Library/LaunchAgents/com.webdeck.homebridge.plist")
-				
-			else:
-				# pxssh method
-				s = pxssh.pxssh()
+			if dev.deviceTypeId == "Homebridge-Server":
+				curdir = os.getcwd()
+				os.system('"' + curdir + '/bin/hb/homebridge/load" ' + str(dev.id))
+			
+			
+			if dev.deviceTypeId == "Homebridge-Custom":
+				if dev.pluginProps["indigoServer"]:
+					# Python method
+					os.system("launchctl load -w ~/Library/LaunchAgents/com.webdeck.homebridge.plist")
 
-				try:				
-					if not s.login (dev.pluginProps["computerip"], dev.pluginProps["username"], dev.pluginProps["password"]):
+				else:
+					# pxssh method
+					s = pxssh.pxssh()
+
+					try:				
+						if not s.login (dev.pluginProps["computerip"], dev.pluginProps["username"], dev.pluginProps["password"]):
+							self.logger.error ("SSH session failed to login to '{0}'.  Check your IP, username and password and make sure you can SSH to that computer from the Indigo server.".format(dev.name))
+							return False
+						else:
+							self.logger.debug ("SSH session login to '{0}' successful".format(dev.name))
+							s.sendline ("launchctl load -w ~/Library/LaunchAgents/com.webdeck.homebridge.plist")
+							s.prompt() 
+							s.logout()
+					except:
 						self.logger.error ("SSH session failed to login to '{0}'.  Check your IP, username and password and make sure you can SSH to that computer from the Indigo server.".format(dev.name))
 						return False
-					else:
-						self.logger.debug ("SSH session login to '{0}' successful".format(dev.name))
-						s.sendline ("launchctl load -w ~/Library/LaunchAgents/com.webdeck.homebridge.plist")
-						s.prompt() 
-						s.logout()
-				except:
-					self.logger.error ("SSH session failed to login to '{0}'.  Check your IP, username and password and make sure you can SSH to that computer from the Indigo server.".format(dev.name))
-					return False
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
@@ -1329,26 +1746,31 @@ class Plugin(indigo.PluginBase):
 		try:
 			self.logger.warn ("Stopping the Homebridge server '{0}'".format(dev.name))
 			
-			if dev.pluginProps["indigoServer"]:
-				# Python method
-				os.system("launchctl unload -w ~/Library/LaunchAgents/com.webdeck.homebridge.plist")
+			if dev.deviceTypeId == "Homebridge-Server":
+				curdir = os.getcwd()
+				os.system('"' + curdir + '/bin/hb/homebridge/unload" ' + str(dev.id))
+			
+			if dev.deviceTypeId == "Homebridge-Custom":			
+				if dev.pluginProps["indigoServer"]:
+					# Python method
+					os.system("launchctl unload -w ~/Library/LaunchAgents/com.webdeck.homebridge.plist")
 				
-			else:
-				# pxssh method
-				s = pxssh.pxssh()
+				else:
+					# pxssh method
+					s = pxssh.pxssh()
 
-				try:				
-					if not s.login (dev.pluginProps["computerip"], dev.pluginProps["username"], dev.pluginProps["password"]):
+					try:				
+						if not s.login (dev.pluginProps["computerip"], dev.pluginProps["username"], dev.pluginProps["password"]):
+							self.logger.error ("SSH session failed to login to '{0}'.  Check your IP, username and password and make sure you can SSH to that computer from the Indigo server.".format(dev.name))
+							return False
+						else:
+							self.logger.debug ("SSH session login to '{0}' successful".format(dev.name))
+							s.sendline ("launchctl unload -w ~/Library/LaunchAgents/com.webdeck.homebridge.plist")
+							s.prompt() 
+							s.logout()
+					except:
 						self.logger.error ("SSH session failed to login to '{0}'.  Check your IP, username and password and make sure you can SSH to that computer from the Indigo server.".format(dev.name))
 						return False
-					else:
-						self.logger.debug ("SSH session login to '{0}' successful".format(dev.name))
-						s.sendline ("launchctl unload -w ~/Library/LaunchAgents/com.webdeck.homebridge.plist")
-						s.prompt() 
-						s.logout()
-				except:
-					self.logger.error ("SSH session failed to login to '{0}'.  Check your IP, username and password and make sure you can SSH to that computer from the Indigo server.".format(dev.name))
-					return False
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))		
@@ -1372,8 +1794,9 @@ class Plugin(indigo.PluginBase):
 			else:
 				ipaddress = dev.pluginProps["computerip"]
 				
+			port = int(dev.pluginProps["hbport"])
 			sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			result = sock.connect_ex((ipaddress,51826))
+			result = sock.connect_ex((ipaddress,port))
 			if result == 0:
 			   isRunning = True
 
@@ -1510,6 +1933,7 @@ class Plugin(indigo.PluginBase):
 	def aliasTurnOn (self, dev):
 		try:
 			if ext.valueValid (dev.pluginProps, "device", True) == False: return False
+			if dev.pluginProps["ignore"]: return False
 			
 			if dev.pluginProps["treatAs"] == "dimmer":
 				if dev.pluginProps["isSprinkler"] == False:
@@ -1555,6 +1979,7 @@ class Plugin(indigo.PluginBase):
 	def aliasTurnOff (self, dev):
 		try:
 			if ext.valueValid (dev.pluginProps, "device", True) == False: return False
+			if dev.pluginProps["ignore"]: return False
 			
 			if dev.pluginProps["treatAs"] == "dimmer":
 				if dev.pluginProps["isSprinkler"] == False:
@@ -1577,6 +2002,7 @@ class Plugin(indigo.PluginBase):
 	def aliasSetBrightness (self, dev, value):
 		try:
 			if ext.valueValid (dev.pluginProps, "device", True) == False: return False
+			if dev.pluginProps["ignore"]: return False
 			
 			if dev.pluginProps["treatAs"] == "dimmer":
 				if dev.pluginProps["isSprinkler"] == False:
@@ -2122,9 +2548,30 @@ class Plugin(indigo.PluginBase):
 				ret = self.menuSave(valuesDict, dev.deviceTypeId)
 				
 				self.menuReload(valuesDict, dev.deviceTypeId)
-			
+				
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
+			
+	#
+	# Alias commands
+	#
+	def aliasActions (self, action):
+		try:
+			dev = indigo.devices[action.deviceId]
+			props = dev.pluginProps
+			
+			if action.pluginTypeId == "turnonIgnore": props["ignore"] = True
+			if action.pluginTypeId == "turnoffIgnore": props["ignore"] = True
+			if action.pluginTypeId == "toggleIgnore": 
+				if props["ignore"] == False:
+					props["ignore"] = True
+				else:
+					props["ignore"] = False
+				
+			dev.replacePluginPropsOnServer (props)
+			
+		except Exception as e:
+			self.logger.error (ext.getException(e))			
 			
 	################################################################################
 	# MENU ACTIONS
@@ -2647,6 +3094,29 @@ class Plugin(indigo.PluginBase):
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
 			return ret
+			
+	#
+	# List of all included devices
+	#
+	def listHBIncluded (self, args, valuesDict):	
+		ret = [("default", "No data")]
+			
+		try:
+			retList = []
+			
+			if "devinclude" in valuesDict:
+				for devId in valuesDict["devinclude"]:
+					if devId[0:1] == "-": continue
+					if devId == "default": continue
+					
+					retList.append ((str(devId), indigo.devices[int(devId)].name))
+					
+			return retList
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			return ret
+			
 	
 	#
 	# List of HB included items to set as a type
@@ -2929,9 +3399,118 @@ class Plugin(indigo.PluginBase):
 			self.logger.error (ext.getException(e))		
 			
 		return valuesDict
+	
+	#
+	# Build config dictionary (future use)
+	#
+	def buildConfigData (self, server):
+		try:
+			self.logger.info ("Building configuration for '{0}'".format(server.name))
+			
+			config = {}
+			bridge = {}
+			platforms = []
+			accessories = []
+			
+			# Bridge properties
+			bridge["name"] = server.name
+			bridge["username"] = server.pluginProps["hbuser"]
+			bridge["port"] = server.pluginProps["hbport"]
+			bridge["pin"] = server.pluginProps["hbpin"]
+			
+			config["bridge"] = bridge
+			
+			# Description
+			if server.deviceTypeId == "Homebridge-Server":
+				config["description"] = "Homebridge-Indigo configuration configuration generated by EPS Homebridge Buddy on {1} for device {0}".format(server.name, indigo.server.getTime().strftime("%Y-%m-%d %H:%M:%S"))
+
+				# HB-Indigo
+				hbindigo = {}
+				
+				hbindigo["platform"] = self.pluginPrefs["platform"]
+				hbindigo["name"] = server.name
+				hbindigo["protocol"] = self.pluginPrefs["protocol"].lower()
+				
+				if server.pluginProps["indigoServer"]:
+					hbindigo["host"] = "127.0.0.1"
+				else:
+					hbindigo["host"] = self.pluginPrefs["host"]
+				
+				hbindigo["port"] = self.pluginPrefs["port"]
+				hbindigo["path"] = self.pluginPrefs["path"]
+				hbindigo["username"] = self.pluginPrefs["username"]
+				hbindigo["password"] = self.pluginPrefs["password"]
+				
+				includeDev = []
+				excludeDev = []
+				includeAct = []
+				excludeAct = []
+			
+				switches = []
+				locks = []
+				doors = []
+				garages = []
+				windows = []
+				drapes = []
+				inverts = []
+				
+				for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Wrapper"):
+					if dev.pluginProps["serverDevice"] != str(server.id): continue
+					
+					includeDev.append (str(dev.id))
+					
+					if ext.valueValid (dev.pluginProps, "treatAs", True):
+						if dev.pluginProps["treatAs"] == "switch": switches.append (dev.id)
+						if dev.pluginProps["treatAs"] == "lock": locks.append (dev.id)
+						if dev.pluginProps["treatAs"] == "door": doors.append (dev.id)
+						if dev.pluginProps["treatAs"] == "garage": garages.append (dev.id)
+						if dev.pluginProps["treatAs"] == "window": windows.append (dev.id)
+						if dev.pluginProps["treatAs"] == "drape": drapes.append (dev.id)
+						
+					# We only need to exclude wrapped items if they selected that option AND we are including all objects,
+					# otherwise why exclude something that was never included in the first place?
+					if server.propsDict["hideWrappedItems"]:			
+						for i in range (1, self.TOTALDIMMING + 2 + 1): # Dimmers + On + Off + 1 (since we aren't starting at 0)
+							method = "Dim" + str(i)
+							if i == self.TOTALDIMMING + 1: method = "On"
+							if i == self.TOTALDIMMING + 2: method = "Off"
+					
+							if dev.pluginProps["method" + method] == "device" and "-all-" in propsDict["devinclude"]: 
+								if ext.valueValid (dev.pluginProps, "device" + method, True): 
+									objId = int(dev.pluginProps["device" + method])
+									if objId in excludeDev:
+										pass
+									else:
+										excludeDev.append(objId)
+							
+							if dev.pluginProps["method" + method] == "action" "-all-" in propsDict["actinclude"]:
+								if ext.valueValid (dev.pluginProps, "action" + method, True): 
+									objId = int(dev.pluginProps["action" + method])
+									if objId in excludeDev:
+										pass
+									else:
+										excludeDev.append(objId)	
+
+				
+				hbindigo["includeIds"] = includeDev
+
+				platforms.append (hbindigo)
+				
+				
+
+			elif server.deviceTypeId == "Homebridge-Custom":
+				config["description"] = "Homebridge custom server configuration generated by EPS Homebridge Buddy on {1} for device {0}".format(server.name, indigo.server.getTime().strftime("%Y-%m-%d %H:%M:%S"))	
+			
+			# Final compilation
+			config["platforms"] = platforms
+			
+			return config
+			
+		except Exception as e:
+			self.logger.error (ext.getException(e))		
 		
 	#
-	# Build config dictionary
+	# Build config dictionary (Pre-release version)
 	#
 	def buildConfigDict (self, propsDict, serverId):
 		config = indigo.Dict()
@@ -2956,6 +3535,7 @@ class Plugin(indigo.PluginBase):
 			garages = []
 			windows = []
 			drapes = []
+			inverts = []
 			
 			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Camera"):
 				if dev.pluginProps["serverDevice"] != str(serverId): continue
@@ -3016,6 +3596,8 @@ class Plugin(indigo.PluginBase):
 					if dev.pluginProps["treatAs"] == "window": windows.append (dev.id)
 					if dev.pluginProps["treatAs"] == "drape": drapes.append (dev.id)
 					
+				if dev.pluginProps["invertonoff"]: inverts.append (dev.id)
+					
 				if propsDict["hideWrappedItems"]:			
 					if ext.valueValid (dev.pluginProps, "device", True): 
 						objId = int(dev.pluginProps["device"])
@@ -3033,40 +3615,41 @@ class Plugin(indigo.PluginBase):
 			garages = self._addPrefIdToList (propsDict, "treatasgarage", garages)
 			windows = self._addPrefIdToList (propsDict, "treataswindows", windows)
 			drapes = self._addPrefIdToList (propsDict, "treatasdrapes", drapes)
-
+			inverts = self._addPrefIdToList (propsDict, "invertonoff", inverts)
 
 							
-			# See if we are including all devices
-			if "-all-" in propsDict["devinclude"]:	
-				config["devCount"] = 0
-				includeDev = [] # If we are including everything then we don't need to include our wrappers
+			# See if we are including all devices if this is a built in server type (will have devinclude)
+			if "devinclude" in propsDict:
+				if "-all-" in propsDict["devinclude"]:	
+					config["devCount"] = 0
+					includeDev = [] # If we are including everything then we don't need to include our wrappers
 				
-				for dev in indigo.devices:			
-					# Don't include devices that HB can't handle, like custom plugins, IO's, etc and don't include our own devices either
-					if self.canHomeBridgeSupportDevice(dev) and dev.pluginId != self.pluginId and dev.enabled:
-						config["devCount"] = config["devCount"] + 1
+					for dev in indigo.devices:			
+						# Don't include devices that HB can't handle, like custom plugins, IO's, etc and don't include our own devices either
+						if self.canHomeBridgeSupportDevice(dev) and dev.pluginId != self.pluginId and dev.enabled:
+							config["devCount"] = config["devCount"] + 1
 						
-			else:
-				excludeDev = []
-				includeDev = self._addPrefIdToList (propsDict, "devinclude", includeDev)
-				config["devCount"] = config["devCount"] + len(includeDev)
+				else:
+					excludeDev = []
+					includeDev = self._addPrefIdToList (propsDict, "devinclude", includeDev)
+					config["devCount"] = config["devCount"] + len(includeDev)
 			
 			
-			# See if we are including all actions
-			if "-all-" in propsDict["actinclude"]:	
-				config["actCount"] = 0
+				# See if we are including all actions
+				if "-all-" in propsDict["actinclude"]:	
+					config["actCount"] = 0
 				
-				for dev in indigo.actionGroups:			
-					config["actCount"] = config["actCount"] + 1
+					for dev in indigo.actionGroups:			
+						config["actCount"] = config["actCount"] + 1
 						
-			else:
-				excludeAct = []
-				includeAct = self._addPrefIdToList (propsDict, "actinclude", includeAct)
-				config["actCount"] = config["actCount"] + len(includeAct)
+				else:
+					excludeAct = []
+					includeAct = self._addPrefIdToList (propsDict, "actinclude", includeAct)
+					config["actCount"] = config["actCount"] + len(includeAct)
 
-			# Re-tally with excludes
-			config["devCount"] = config["devCount"] - len(excludeDev)
-			config["actCount"] = config["actCount"] - len(excludeAct)
+				# Re-tally with excludes
+				config["devCount"] = config["devCount"] - len(excludeDev)
+				config["actCount"] = config["actCount"] - len(excludeAct)
 				
 														
 			treatAs = indigo.Dict()
@@ -3076,6 +3659,7 @@ class Plugin(indigo.PluginBase):
 			treatAs["garages"] = garages
 			treatAs["windows"] = windows
 			treatAs["drapes"] = drapes
+			treatAs["inverts"] = inverts
 			
 			config["treatAs"] = treatAs
 			config["includeDev"] = includeDev
@@ -3096,23 +3680,24 @@ class Plugin(indigo.PluginBase):
 	#
 	def _addPrefIdToList (self, propsDict, prefName, listValue):
 		try:
-			for id in propsDict[prefName]:
-				if id == "-line-":
-					continue
-				elif id == "-none-":
-					continue
-				elif id == "-all-":
-					continue
-				elif id == "-devices-":
-					continue
-				elif id == "-actions-":
-					continue
-				elif id == "default":
-					continue
-				elif int(id) in listValue:
-					continue
-				else:
-					listValue.append(int(id))
+			if prefName in propsDict:
+				for id in propsDict[prefName]:
+					if id == "-line-":
+						continue
+					elif id == "-none-":
+						continue
+					elif id == "-all-":
+						continue
+					elif id == "-devices-":
+						continue
+					elif id == "-actions-":
+						continue
+					elif id == "default":
+						continue
+					elif int(id) in listValue:
+						continue
+					else:
+						listValue.append(int(id))
 					
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
@@ -3233,6 +3818,8 @@ class Plugin(indigo.PluginBase):
 	################################################################################
 	# HOMEBRIDGE SERVER FILE
 	################################################################################	
+	
+	
 		
 	#
 	# Build server config
@@ -3242,164 +3829,180 @@ class Plugin(indigo.PluginBase):
 		
 		try:
 			self.logger.info ("Building configuration for '{0}'".format(server.name))
+			
+			cfg =	'{\n'
+			cfg += 	'\t"bridge": {\n'
+	
+			cfg +=	'\t\t"name": "{0}",\n'.format(server.name)
+			cfg +=	'\t\t"username": "{0}",\n'.format(server.pluginProps["hbuser"])
+			cfg +=	'\t\t"port": {0},\n'.format(server.pluginProps["hbport"])
+			cfg +=	'\t\t"pin": "{0}"\n'.format(server.pluginProps["hbpin"])
+	
+			cfg +=	'\t},\n\n'
+	
+			if server.deviceTypeId == "Homebridge-Custom":
+				cfg += 	'\t"description": "Homebridge custom server configuration generated by EPS Homebridge Buddy on {1} for device {0}",\n\n'.format(server.name, indigo.server.getTime().strftime("%Y-%m-%d %H:%M:%S"))
+				
+			
+			if server.deviceTypeId == "Homebridge-Server":
+				cfg += 	'\t"description": "Homebridge-Indigo configuration generated by EPS Homebridge Buddy on {1} for device {0}",\n\n'.format(server.name, indigo.server.getTime().strftime("%Y-%m-%d %H:%M:%S"))
+					
 				
 			config = self.buildConfigDict (server.pluginProps, server.id)
-			
+		
 			idCount = config["actCount"] + config["devCount"] + config["addons"]
-			
+		
 			if idCount > 99:
 				msg = eps.ui.debugHeader ("WARNING")
 				msg += eps.ui.debugLine (" ")
 				msg += eps.ui.debugLine ("You have {0} items for Homebridge but it only supports 99, you".format(str(idCount)))
 				msg += eps.ui.debugLine ("will be unable to use some of your items!")
 				msg += eps.ui.debugHeaderEx ()		
-			
+		
 				self.logger.error (msg)
-				
+			
 			idTotal = len(indigo.devices)
 			if config["actCount"] > 0: idTotal = idTotal + len(indigo.actionGroups)
-				
+			
 			# Do a pre-save summary
 			msg = eps.ui.debugHeader ("SUMMARY")
 			msg += eps.ui.debugLine (" ")
 			msg += eps.ui.debugLine ("Devices for Homebridge to parse          : {0}".format(str(idTotal)))
 			msg += eps.ui.debugLine ("Included devices that Homebridge can use : {0}".format(str(idCount)))
-	
+
 			if idCount >= 99:
 				msg += eps.ui.debugLine ("Devices over 99 that won't work          : {0}".format(str(idCount - 99)))
 			else:
 				msg += eps.ui.debugLine ("Devices over 99 that won't work          : 0")
-	
+
 			msg += eps.ui.debugLine (" ")
 			msg += eps.ui.debugHeaderEx ()
 			self.logger.info (msg)
-			
+		
 			# This is only for the BETA since this field didn't exist in pre beta 8
-			if ext.valueValid (server.pluginProps, "hbuser", True) == False:
-				server.pluginProps["hbuser"] = "CC:22:3D:E3:CE:30"
-			
-			cfg =	'{\n'
-			cfg += 	'\t"bridge": {\n'
-		
-			cfg +=	'\t\t"name": "{0}",\n'.format(server.name)
-			cfg +=	'\t\t"username": "{0}",\n'.format(server.pluginProps["hbuser"])
-			cfg +=	'\t\t"port": 51826,\n'
-			cfg +=	'\t\t"pin": "{0}"\n'.format(server.pluginProps["hbpin"])
-		
-			cfg +=	'\t},\n\n'
-		
-			cfg += 	'\t"description": "Homebridge-Indigo configuration generated by EPS Homebridge Companion on {1} for device {0}",\n\n'.format(server.name, indigo.server.getTime().strftime("%Y-%m-%d %H:%M:%S"))
+			#if ext.valueValid (server.pluginProps, "hbuser", True) == False:
+			#	server.pluginProps["hbuser"] = "CC:22:3D:E3:CE:30"
 		
 			cfg += 	'\t"platforms": [\n'
 			cfg +=	'\t\t{\n'
-		
+	
 			cfg +=	'\t\t\t"platform": "{0}",\n'.format(self.pluginPrefs["platform"])
 			cfg +=	'\t\t\t"name": "{0}",\n'.format(server.name)
 			cfg +=	'\t\t\t"protocol": "{0}",\n'.format(self.pluginPrefs["protocol"].lower())
-			
+		
 			if server.pluginProps["indigoServer"]:
 				cfg +=	'\t\t\t"host": "127.0.0.1",\n'
 			else:
 				cfg +=	'\t\t\t"host": "{0}",\n'.format(self.pluginPrefs["host"])
-			
+		
 			cfg +=	'\t\t\t"port": "{0}",\n'.format(self.pluginPrefs["port"])
 			cfg +=	'\t\t\t"path": "{0}",\n'.format(self.pluginPrefs["path"])
 			cfg +=	'\t\t\t"username": "{0}",\n'.format(self.pluginPrefs["username"])
 			cfg +=	'\t\t\t"password": "{0}",\n'.format(self.pluginPrefs["password"])
-			
+		
 			if config["actCount"] > 0:
 				cfg +=	'\t\t\t"includeActions": true,\n'
 			else:
 				cfg +=	'\t\t\t"includeActions": false,\n'
-				
+			
 			# Incorporate included devices
 			if len(config["includes"]) > 0:
 				cfg +=	'\t\t\t"includeIds": {0},\n'.format(self._addItemListToConfig (config["includes"]))
-			
+		
 			# Incorporate excluded devices
 			if len(config["excludes"]) > 0:
 				cfg +=	'\t\t\t"excludeIds": {0},\n'.format(self._addItemListToConfig (config["excludes"]))
-			
+		
 			# Incorporate switches
 			if len(config["treatAs"]["switches"]) > 0:
 				cfg +=	'\t\t\t"treatAsSwitchIds": {0},\n'.format(self._addItemListToConfig (config["treatAs"]["switches"]))
-			
+		
 			# Incorporate locks
 			if len(config["treatAs"]["locks"]) > 0:
 				cfg +=	'\t\t\t"treatAsLockIds": {0},\n'.format(self._addItemListToConfig (config["treatAs"]["locks"]))
-			
+		
 			# Incorporate doors
 			if len(config["treatAs"]["doors"]) > 0:
 				cfg +=	'\t\t\t"treatAsDoorIds": {0},\n'.format(self._addItemListToConfig (config["treatAs"]["doors"]))
-			
+		
 			# Incorporate garages
 			if len(config["treatAs"]["garages"]) > 0:
 				cfg +=	'\t\t\t"treatAsGarageDoorIds": {0},\n'.format(self._addItemListToConfig (config["treatAs"]["garages"]))
-			
+		
 			# Incorporate windows
 			if len(config["treatAs"]["windows"]) > 0:
 				cfg +=	'\t\t\t"treatAsWindowIds": {0},\n'.format(self._addItemListToConfig (config["treatAs"]["windows"]))
-			
+		
 			# Incorporate drapes
 			if len(config["treatAs"]["drapes"]) > 0:
 				cfg +=	'\t\t\t"treatAsWindowCoveringIds": {0},\n'.format(self._addItemListToConfig (config["treatAs"]["drapes"]))
 			
-			cfg +=	'\t\t\t"thermostatsInCelsius": {0},\n'.format(unicode(server.pluginProps["celsius"]).lower())
+			# Incorporate inversions
+			if len(config["treatAs"]["inverts"]) > 0:
+				cfg +=	'\t\t\t"invertOnOffIds": {0},\n'.format(self._addItemListToConfig (config["treatAs"]["inverts"]))	
+		
+			if "celsius" in server.pluginProps: cfg +=	'\t\t\t"thermostatsInCelsius": {0},\n'.format(unicode(server.pluginProps["celsius"]).lower())
 
-			cfg +=	'\t\t\t"accessoryNamePrefix": "{0}"\n'.format(server.pluginProps["accessory"])			
+			if "accessory" in server.pluginProps: 
+				cfg +=	'\t\t\t"accessoryNamePrefix": "{0}"\n'.format(server.pluginProps["accessory"])			
+			else:
+				# If we don't have this key then it's a custom server so this next line is just so we properly close up the JSON structure, 
+				# otherwise we'll get an error when parsing it - this is totally a kluge, not something we want around later on
+				cfg += '\t\t\t"customServer": true' # Meaningless setting to simply close the JSON statement
+				
 			#cfg +=	'\t\t}\n'
-			
+		
 			# 0.13 - If we are defining plugin devices they get added here
-			
+		
 			if config["addons"] == 0:
 				cfg +=	'\t\t}\n'
 			else:
 				cfg +=	'\t\t},\n'
-				
+			
 			# Homebridge-Camera-FFMPEG
 			if config["camera"] > 0:
 				cfg +=	'\t\t{\n'		
 				cfg +=	'\t\t\t"platform": "{0}",\n'.format('Camera-ffmpeg')
 				cfg +=	'\t\t\t"cameras": [\n'
-				
+			
 				for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Camera"):
 					if dev.pluginProps["serverDevice"] != str(server.id): continue
-					
+				
 					cfg +=	'\t\t\t\t{\n'
-					
+				
 					cfg +=	'\t\t\t\t\t"name": "{0}",\n'.format(dev.pluginProps["name"])
-					
+				
 					cfg +=	'\t\t\t\t\t"videoConfig": {\n'
-					
+				
 					cfg +=	'\t\t\t\t\t\t"source": "{0}",\n'.format(dev.pluginProps["videoSource"])
 					cfg +=	'\t\t\t\t\t\t"stillImageSource": "{0}",\n'.format(dev.pluginProps["stillSource"])
 					cfg +=	'\t\t\t\t\t\t"maxStreams": {0},\n'.format(dev.pluginProps["maxStreams"])
 					cfg +=	'\t\t\t\t\t\t"maxWidth": {0},\n'.format(dev.pluginProps["maxWidth"])
 					cfg +=	'\t\t\t\t\t\t"maxHeight": {0},\n'.format(dev.pluginProps["maxHeight"])
 					cfg +=	'\t\t\t\t\t\t"maxFPS": {0}\n'.format(dev.pluginProps["maxFPS"])
-					
+				
 					cfg +=	'\t\t\t\t\t}\n'
-					
+				
 					config["addons"] = config["addons"] - 1
 					config["camera"] = config["camera"] - 1
-					
+				
 					if config["camera"] == 0:
 						cfg +=	'\t\t\t\t}\n'
 					else:
 						cfg +=	'\t\t\t\t},\n'
-					
-					
-				cfg +=	'\t\t\t]\n'
 				
+				
+				cfg +=	'\t\t\t]\n'
+			
 				cfg +=	'\t\t}\n'
 			
 			cfg += 	'\t],\n\n'
-		
+	
 			cfg += 	'\t"accessories": [\n'
 			cfg += 	'\t]\n'
-		
+	
 			cfg += 	'}'
-			
+		
 			self.logger.debug (cfg)			
 	
 		except Exception as e:

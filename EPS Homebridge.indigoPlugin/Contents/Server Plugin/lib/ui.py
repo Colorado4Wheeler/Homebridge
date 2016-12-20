@@ -236,7 +236,9 @@ class ui:
 			self.listcache[targetId] = rec
 		
 		except Exception as e:
+			#self.logger.error ("index: {0}, targetId: {1}, args: {2}".format(unicode(index), unicode(targetId), unicode(args)))
 			self.logger.error (ext.getException(e))	
+			
 			
 	#
 	# See if a custom list call matches the cache and return the cache results if so

@@ -3,6 +3,26 @@ Release Notes
 
 This latest version is Release Candidate status, barring any significant issues this will represent version 1.0 of the plugin.  Make sure you keep a backup copy of your existing config.json file just in case something doesn't work as planned.
 
+Version 0.14 (Version 1.0 RC6)
+---------------
+
+* IMPORTANT CHANGE: Installing this version will utilize the new built-in version of HB and HB-Indigo and will effectively wipe out your current HomeKit database!  It is advised that before you re-add your Homebridge to HomeKit that you remove ALL of your current accessories tied to HomeBridge from your preferred HomeKit app so that you are starting with a clean slate.
+* NOTE: Since Homebridge-Indigo won't be run on the hand-installed version of Homebridge any longer you may want to run "sudo npm uninstall -g homebridge-indigo"
+* Added complete Homebridge and Homebridge-Indigo builds to the plugin pre-compiled and ready to run, as of this version you will no longer need to manually install Homebridge or Homebridge Indigo unless you want to incorporate non-Indigo Homebridge plugins
+* Added new device called Homebridge Custom Server which will use the manually installed ~/.homebridge configuration and will NOT be used for Indigo devices.  This is for advanced users that want to use a custom 3rd party Homebridge plugin.  This is more or less the direct device replacement for RC5 and earlier installations.
+* Changed the device Homebridge Server to become Homebridge Indigo Server as it's only purpose will be to serve Indigo devices to HomeKit and is 100% managed by the plugin.  It's just easier to let the plugin manage everything about the Indigo experience, but if you want to use Homebridge-Indigo on your custom server you can simply create an Indigo Server that never starts so you can copy and paste your ID's manually to your custom server.
+* Added option to add to new HB-Indigo feature for inverting on and off commands in server configuration
+* Added checkbox to Alias devices to invert the on and off commands for the device to utilize new HB-Indigo feature.  This was not added to Wrappers since they are hand configured anyway.
+* Added Alias action to enable or disable the device commands
+* Added migration routine that, upon starting RC6 for the first time, will automatically split your Homebridge servers up into Custom and Indigo server devices so you don't have to manually split your old configuration
+* Changed Camera-FFMPEG device to only allow the user to select a custom server, not the built-in server
+* Added ability for the plugin to merge accessories and platforms from the current ~/.homebridge/config.json file so long as they don't include Homebridge-Indigo or Homebridge-Camera-FFMPEG platforms - this effectively allows you to allow HBB to write your config file while also keeping your own custom platforms and accessories intact
+* Changed the advanced settings of a Server device to only show the HB user as a field that can be manually changed since the plugin now handles all aspects of HB-Indigo
+* Added tool tip warnings to the "Show Advanced Options" warning the user about changing those fields
+* Added routine that will automatically assign a unique username and port to any Server device created
+* Added new routine that automatically creates a new HB instance in the built-in build for the server that is currently starting in the plugin
+* Added option in the Server device to start and stop Homebridge automatically upon loading and unloading the plugin.  If enabled then HB will stop itself when you unload the plugin and restart when you load the plugin, if you want to keep HB running regardless of if the plugin is running or not then disable this option and HB will continue to run even if you shut down HBB and/or Indigo.
+
 Version 0.13 (Version 1.0 RC5)
 ---------------
 
@@ -185,6 +205,14 @@ Known Issues As Of The Most Current Release
 * Plugin configuration options for how to treat Sprinkler Alias brightness currently only controls when a brightness level is set but should also control what is displayed in the Indigo list
 * When selecting an irrigation controller as a Wrapper device it does not default to the correct "default" action
 
+User Requested 3rd Party Integrations
+---------------
+
+* iTunes
+* Netatmo Weather Station
+* Foscam
+* Envisalink
+
 Wish List
 ---------------
 
@@ -204,3 +232,4 @@ Wish List
 * Add field to all devices to let the user select the icon values they want to use
 * For menu options if they have just one server then default to that server instead of presenting a list 
 * Automatically back up 3 generations of the config.json file whenever overwriting it - this also helps new users that already had HB running
+* Add failsafe to Homebridge migration routine to check for a duplicate server name and loop through possible iterations until successful

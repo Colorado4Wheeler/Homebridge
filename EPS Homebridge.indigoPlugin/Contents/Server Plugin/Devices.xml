@@ -2039,6 +2039,16 @@
 				</List>
 			</Field>
 			
+			<Field type="checkbox" id="invertonoff" defaultValue="false" >
+				<Label> </Label>
+				<Description>Invert the on and off commands</Description>
+			</Field>
+			
+			<Field type="checkbox" id="ignore" defaultValue="false" tooltip="When checked all commands sent to this alias will be ignored, this is so it will still show up in Homebridge but can be disabled based on triggers or schedules if you want to make sure a particular device can't be actived by a Siri request - i.e., disabling a lock when you are more than 3 miles away.">
+				<Label> </Label>
+				<Description>Ignore commands sent to this Alias</Description>
+			</Field>
+			
 			<Field id="sep_devices" type="separator" />
 
 			<Field type="label" id="lbl_dimmer" visibleBindingId="treatAs" visibleBindingValue="dimmer" alwaysUseInDialogHeightCalc="true">
@@ -2118,7 +2128,7 @@ This device type is currently experimental, use at your own risk.</Label>
 			
 			<Field id="serverDevice" type="menu" >
 				<Label>Homebridge server:</Label>
-				<List class="indigo.devices" filter="com.eps.indigoplugin.homebridge.Homebridge-Server"/>
+				<List class="indigo.devices" filter="com.eps.indigoplugin.homebridge.Homebridge-Custom"/>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
 			
@@ -2198,9 +2208,9 @@ This device type is currently experimental, use at your own risk.</Label>
 		<UiDisplayStateId>statedisplay</UiDisplayStateId>
 	</Device>
 	
-	<!-- =========== SERVER =========== -->
+	<!-- =========== INDIGO SERVER =========== -->
 	<Device type="relay" id="Homebridge-Server">
-		<Name>Homebridge Server</Name>
+		<Name>Homebridge Indigo Server</Name>
 		<ConfigUI>
 
 			<Field type="textfield" id="wrappercount" defaultValue="0" readonly="true">
@@ -2246,6 +2256,7 @@ This device type is currently experimental, use at your own risk.</Label>
 					<Option value="treatasgarage">Treat As Garage Doors</Option>
 					<Option value="treataswindows">Treat As Windows</Option>
 					<Option value="treatasdrapes">Treat As Window Coverings</Option>
+					<Option value="invertonoff">Invert On and Off Commands</Option>
 				</List>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
@@ -2259,7 +2270,7 @@ This device type is currently experimental, use at your own risk.</Label>
 				<Description>Homebridge is on the Indigo server</Description>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
-	
+			
 			<Field type="textfield" id="computerip" defaultValue="192.168.1.1" visibleBindingId="indigoServer" visibleBindingValue="false">
 				<Label>Remote Mac IP Address:</Label>
 			</Field>
@@ -2283,19 +2294,24 @@ This device type is currently experimental, use at your own risk.</Label>
 				<Description>When true the callback will generate a unique hbuser</Description>
 			</Field>
 	
-			<Field type="checkbox" id="show_hbuser" defaultValue="false" visibleBindingId="view" visibleBindingValue="config">
+			<Field type="checkbox" id="show_hbuser" defaultValue="false" hidden="false" visibleBindingId="view" visibleBindingValue="config">
 				<Label> </Label>
 				<Description>Edit Homebridge user (Advanced only)</Description>
 			</Field>
 	
 			<!-- This changes automatically each time a server device is added, the first server is always the default value -->
-			<Field type="textfield" id="hbuser" defaultValue="CC:22:3D:E3:CE:30" visibleBindingId="show_hbuser" visibleBindingValue="true" readonly="false" >
+			<Field type="textfield" id="hbuser" hidden="false" defaultValue="CC:22:3D:E3:CE:30" visibleBindingId="show_hbuser" visibleBindingValue="true" readonly="false" tooltip="The user that Homekit will access Homebridge as.  If you change this then you WILL have to reconigure Homekit as the user name change causes Homekit to think that your old Homekit server was removed.  This is generally managed by the plugin and already takes into account multiple servers, only change this if you understand the ramifications!">
 				<Label>Homebridge User:</Label>
 			</Field>
 			
-			<Field type="textfield" id="hbpin" defaultValue="031-45-154" visibleBindingId="view" visibleBindingValue="config" readonly="false" >
+			<Field type="textfield" id="hbpin" hidden="true" defaultValue="031-45-154" visibleBindingId="show_hbuser" visibleBindingValue="true" readonly="false" tooltip="The key you will have to enter to access this Homebridge server in Homekit.  There is no need to change this as each Homekit server can have the same password.">
 				<Label>Homebridge PIN:</Label>
 			</Field>
+			
+			<Field type="textfield" id="hbport" hidden="true" defaultValue="51826" visibleBindingId="show_hbuser" visibleBindingValue="true" readonly="false" tooltip="The port that Homebridge listens on.  This is generally managed by the plugin and already takes into account multiple servers, only change this if you understand the ramifications!">
+				<Label>Homebridge Port:</Label>
+			</Field>
+
 			
 			<!-- Only here for future proofing, the name is the same as the Indigo device name to make sure things stay unique -->
 			<Field type="textfield" id="name" defaultValue="My Indigo Server" hidden="true">
@@ -2309,6 +2325,11 @@ This device type is currently experimental, use at your own risk.</Label>
 			<Field type="checkbox" id="celsius" defaultValue="false" visibleBindingId="view" visibleBindingValue="config">
 				<Label> </Label>
 				<Description>Show thermostats in Celsius</Description>
+			</Field>
+			
+			<Field type="checkbox" id="autoStartStop" defaultValue="true" visibleBindingId="view" visibleBindingValue="config">
+				<Label> </Label>
+				<Description>Automatically start and stop Homebridge with plugin</Description>
 			</Field>
 	
 			<!-- *********** INCLUDE *********** -->
@@ -2457,6 +2478,20 @@ This device type is currently experimental, use at your own risk.</Label>
 				<List class="self" filter="#plugin#[list=treatasdrapes, nocache=true, callback=listHBTreatAs]" method="getCustomList" dynamicReload="true"/>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
+			
+			<!-- *********** INVERT ON/OFF *********** -->
+	
+			<Field type="label" id="lbl_invertonoff" visibleBindingId="view" visibleBindingValue="invertonoff">
+				<Label>Included devices that you want to have their on and off commands reversed where on and off are inverted in meaning (e.g. if a lock, on = unlocked and off = locked)
+		
+		</Label>
+			</Field>
+	
+			<Field id="invertonoff" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="invertonoff">
+				<Label>Items:</Label>
+				<List class="self" filter="#plugin#[list=invertonoff, nocache=true, callback=listHBIncluded]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
 
 		</ConfigUI>
 		
@@ -2498,6 +2533,112 @@ This device type is currently experimental, use at your own risk.</Label>
 		<UiDisplayStateId>statedisplay</UiDisplayStateId>		
 	</Device>
 
+	<!-- =========== CUSTOM SERVER =========== -->
+	<Device type="relay" id="Homebridge-Custom">
+		<Name>Homebridge Custom Server</Name>
+		<ConfigUI>
+			<Field type="label" id="lbl_intro" >
+				<Label>Use this device type only if you have manually installed Homebridge and want to use non-Indigo 3rd party Homebridge plugins with HomeKit.</Label>
+			</Field>
+		
+			<Field id="sep_intro" type="separator" />
+		
+			<!-- *********** SERVER *********** -->
+			
+			<Field type="checkbox" id="autoStartStop" defaultValue="true">
+				<Label> </Label>
+				<Description>Automatically start and stop Homebridge with plugin</Description>
+			</Field>
+	
+			<Field type="checkbox" id="indigoServer" defaultValue="true" hidden="false" >
+				<Label> </Label>
+				<Description>Homebridge is on the Indigo server</Description>
+				
+			</Field>
+			
+			<Field type="textfield" id="computerip" defaultValue="192.168.1.1" visibleBindingId="indigoServer" visibleBindingValue="false" alwaysUseInDialogHeightCalc="true">
+				<Label>Remote Mac IP Address:</Label>
+			</Field>
+			
+			<Field type="textfield" id="username" defaultValue="administrator" visibleBindingId="indigoServer" visibleBindingValue="false" alwaysUseInDialogHeightCalc="true" >
+				<Label>User Name:</Label>
+			</Field>
+			
+			<Field type="textfield" id="password" defaultValue="password" secure="true" visibleBindingId="indigoServer" visibleBindingValue="false" alwaysUseInDialogHeightCalc="true" >
+				<Label>Password:</Label>
+			</Field>
+			
+			<Field type="textfield" id="password2" defaultValue="password" secure="true" visibleBindingId="indigoServer" visibleBindingValue="false" alwaysUseInDialogHeightCalc="true" >
+				<Label>Re-type password:</Label>
+			</Field>
+			
+			<Field id="sep_server" type="separator" visibleBindingId="indigoServer" visibleBindingValue="false"/>
+			
+			<!-- *********** CONFIG *********** -->
+	
+			<Field type="checkbox" id="auto_hbuser" defaultValue="true" hidden="true" alwaysUseInDialogHeightCalc="true">
+				<Label> </Label>
+				<Description>When true the callback will generate a unique hbuser</Description>
+			</Field>
+	
+			<Field type="checkbox" id="show_hbuser" defaultValue="false" >
+				<Label> </Label>
+				<Description>Edit Homebridge user (Advanced only)</Description>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+	
+			<!-- This changes automatically each time a server device is added, the first server is always the default value -->
+			<Field type="textfield" id="hbuser" defaultValue="CC:22:3D:E3:CE:30" visibleBindingId="show_hbuser" visibleBindingValue="true" readonly="false" alwaysUseInDialogHeightCalc="true" tooltip="The user that Homekit will access Homebridge as.  If you change this then you WILL have to reconigure Homekit as the user name change causes Homekit to think that your old Homekit server was removed.  This is generally managed by the plugin and already takes into account multiple servers, only change this if you understand the ramifications!">
+				<Label>Homebridge User:</Label>
+			</Field>
+			
+			<Field type="textfield" id="hbpin" defaultValue="031-45-154" visibleBindingId="show_hbuser" visibleBindingValue="true" readonly="false" alwaysUseInDialogHeightCalc="true" tooltip="The key you will have to enter to access this Homebridge server in Homekit.  There is no need to change this as each Homekit server can have the same password.">
+				<Label>Homebridge PIN:</Label>
+			</Field>
+			
+			<Field type="textfield" id="hbport" defaultValue="51826" visibleBindingId="show_hbuser" visibleBindingValue="true" readonly="false" alwaysUseInDialogHeightCalc="true" tooltip="The port that Homebridge listens on.  This is generally managed by the plugin and already takes into account multiple servers, only change this if you understand the ramifications!">
+				<Label>Homebridge Port:</Label>
+			</Field>
+			
+		</ConfigUI>
+		
+		<States>
+			<!-- All EPS plugins have this state and use it for the Indigo lists -->
+			<State id="statedisplay">
+				<ValueType>String</ValueType>
+				<TriggerLabel>Current device state</TriggerLabel>
+				<ControlPageLabel>Current device state</ControlPageLabel>
+			</State>
+			
+			<State id="sep1">
+				<ValueType>Separator</ValueType>
+			</State>
+			
+			<State id="lastHealthCheck">
+				<ValueType>String</ValueType>
+				<TriggerLabel>Date and time of the last Homebridge process health check</TriggerLabel>
+				<ControlPageLabel>Date and time of the last Homebridge process health check</ControlPageLabel>
+			</State>
+			
+			<State id="sep2">
+				<ValueType>Separator</ValueType>
+			</State>
+			
+			<State id="restartPending">
+				<ValueType>Boolean</ValueType>
+				<TriggerLabel>A Homebridge process restart is pending</TriggerLabel>
+				<ControlPageLabel>A Homebridge process restart is pending</ControlPageLabel>
+			</State>
+			
+			<State id="restartTime">
+				<ValueType>String</ValueType>
+				<TriggerLabel>Date and time when Homebridge will automatically restart</TriggerLabel>
+				<ControlPageLabel>Date and time when Homebridge will automatically restart</ControlPageLabel>
+			</State>
+			
+		</States>
+		<UiDisplayStateId>statedisplay</UiDisplayStateId>		
+	</Device>
 	
 	
 
