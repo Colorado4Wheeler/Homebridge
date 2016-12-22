@@ -872,7 +872,7 @@ class Plugin(indigo.PluginBase):
 					if unique["port"] != "": valuesDict["hbport"] = unique["port"]
 					valuesDict["auto_hbuser"] = False		
 					
-			if typeId == "Homebridge-Server" or typeId == "Homebridge-Custom":
+			if typeId == "Homebridge-Server":
 				if valuesDict["view"] != "server": 
 					valuesDict["view"] = "server"
 					
@@ -1381,22 +1381,22 @@ class Plugin(indigo.PluginBase):
 						with open(home + "/config.json") as json_file:
 							json_data = json.load(json_file)
 							
-					props = {}
+						props = {}
 				
-					props["indigoServer"] = True
-					props["auto_hbuser"] = False
-					props["show_hbuser"] = True
-					props["hbuser"] = unicode(json_data['bridge']['username'])
-					props["hbpin"] = unicode(json_data['bridge']['pin'])
-					props["hbport"] = unicode(json_data['bridge']['port'])
+						props["indigoServer"] = True
+						props["auto_hbuser"] = False
+						props["show_hbuser"] = True
+						props["hbuser"] = unicode(json_data['bridge']['username'])
+						props["hbpin"] = unicode(json_data['bridge']['pin'])
+						props["hbport"] = unicode(json_data['bridge']['port'])
 				
-					indigo.device.create(protocol=indigo.kProtocol.Plugin,
-						address='CUSTOM on Indigo Server',
-						name=unicode(json_data['bridge']['name']) + " Custom Installation", 
-						description='Automatically created by Homebridge Buddy because ~/.homebridge configuration was found', 
-						pluginId='com.eps.indigoplugin.homebridge',
-						deviceTypeId='Homebridge-Custom',
-						props=props)
+						indigo.device.create(protocol=indigo.kProtocol.Plugin,
+							address='CUSTOM on Indigo Server',
+							name=unicode(json_data['bridge']['name']) + " Custom Installation", 
+							description='Automatically created by Homebridge Buddy because ~/.homebridge configuration was found', 
+							pluginId='com.eps.indigoplugin.homebridge',
+							deviceTypeId='Homebridge-Custom',
+							props=props)
 						
 					# Now read in the old JSON file and write it back out but without any HB-Indigo configuration, that will be the role of the built in server
 					hasplatform = -1
@@ -1602,6 +1602,10 @@ class Plugin(indigo.PluginBase):
 			if dev.deviceTypeId == "Homebridge-Custom":
 				# Read in the current config file so we can merge it
 				home = expanduser("~") + "/.homebridge"
+				json_current = {}
+				json_current["platforms"] = []
+				json_current["accessories"] = []
+				
 				if os.path.exists(home + "/config.json"):
 					with open(home + "/config.json") as json_file:
 						json_current = json.load(json_file)

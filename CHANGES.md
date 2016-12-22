@@ -3,6 +3,13 @@ Release Notes
 
 This latest version is Release Candidate status, barring any significant issues this will represent version 1.0 of the plugin.  Make sure you keep a backup copy of your existing config.json file just in case something doesn't work as planned.
 
+Version 0.15 (Version 1.0 RC6a)
+---------------
+
+* Bug squashed where HBB would try to reference a config.json on a custom server even if none existed
+* Bug squashed where the configuration validation would look for a key field that doesn't exist on a custom server
+
+
 Version 0.14 (Version 1.0 RC6)
 ---------------
 
