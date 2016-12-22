@@ -3,6 +3,11 @@ Release Notes
 
 This latest version is Release Candidate status, barring any significant issues this will represent version 1.0 of the plugin.  Make sure you keep a backup copy of your existing config.json file just in case something doesn't work as planned.
 
+Version 0.17 (Version 1.0 RC6c)
+---------------
+
+* Fixed bug where changing the HB user name would not take and instead the name would be generated automatically when saving the server config
+
 Version 0.16 (Version 1.0 RC6b)
 ---------------
 

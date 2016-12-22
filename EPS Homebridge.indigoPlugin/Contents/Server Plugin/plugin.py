@@ -1272,8 +1272,8 @@ class Plugin(indigo.PluginBase):
 			serverPorts = []
 			ret = {}
 			ret["unique"] = True
-			ret["user"] = ""
-			ret["port"] = ""
+			ret["user"] = valuesDict["hbuser"]
+			ret["port"] = valuesDict["hbport"]
 
 			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Server"):
 				if dev.id != devId: 
@@ -1284,6 +1284,16 @@ class Plugin(indigo.PluginBase):
 				if dev.id != devId: 
 					serverNames.append (dev.pluginProps["hbuser"])
 					serverPorts.append (dev.pluginProps["hbport"])				
+					
+			nameUsed = False		
+			for name in serverNames:
+				if name == valuesDict["hbuser"]: nameUsed = True
+				
+			portUsed = False
+			for port in serverPorts:
+				if port == valuesDict["hbport"]: portUsed = True
+					
+			if nameUsed == False and portUsed == False: return ret
 					
 			for name in self.hbNames:
 				if name in serverNames: continue
