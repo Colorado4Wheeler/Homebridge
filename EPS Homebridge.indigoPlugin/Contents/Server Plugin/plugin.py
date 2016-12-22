@@ -2769,6 +2769,66 @@ class Plugin(indigo.PluginBase):
 			self.logger.error (ext.getException(e))	
 			
 		return True
+		
+	#
+	# Output the built in server log
+	#
+	def menuLog (self, valuesDict, typeId):	
+		errorsDict = indigo.Dict()
+		success = True
+		
+		try:
+			if valuesDict["server"] == "" or valuesDict["server"] == "-line-":
+				errorsDict["server"] = "Please select a server"
+				errorsDict["showAlertText"] = "This job will be much easier if you select a server you want to get the log for!"
+				success = False
+		
+			else:		
+				dev = indigo.devices[int(valuesDict["server"])]
+				
+				home = self.plugindir + "/bin/hb/homebridge/" + str(dev.id)
+				
+				if os.path.exists(home + "/homebridge.log"):
+					file = open(home + "/homebridge.log", 'r')
+					logdetails = file.read()
+					
+					self.logger.info (logdetails)
+				
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+	
+		return (success, valuesDict, errorsDict)
+		
+	#
+	# Output the built in server config
+	#
+	def menuConfig (self, valuesDict, typeId):	
+		errorsDict = indigo.Dict()
+		success = True
+		
+		try:
+			if valuesDict["server"] == "" or valuesDict["server"] == "-line-":
+				errorsDict["server"] = "Please select a server"
+				errorsDict["showAlertText"] = "This job will be much easier if you select a server you want to get the config for!"
+				success = False
+		
+			else:		
+				dev = indigo.devices[int(valuesDict["server"])]
+				
+				home = self.plugindir + "/bin/hb/homebridge/" + str(dev.id)
+				
+				if os.path.exists(home + "/config.json"):
+					file = open(home + "/config.json", 'r')
+					logdetails = file.read()
+					
+					self.logger.info (logdetails)
+				
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+	
+		return (success, valuesDict, errorsDict)	
 	
 	#
 	# Build and save the configuration
@@ -3008,6 +3068,26 @@ class Plugin(indigo.PluginBase):
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
 			return ret
+			
+	#
+	# List of HB servers
+	#
+	def listServersEx (self, args, valuesDict):
+		ret = [("default", "No servers found")]
+		
+		try:
+			retList = []
+			if len(self.SERVERS) == 0: return ret
+			
+			for devId in self.SERVERS:
+				if indigo.devices[int(devId)].deviceTypeId == "Homebridge-Server":
+					retList.append ((str(devId), indigo.devices[int(devId)].name))
+				
+			return retList
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			return ret		
 	
 	#
 	# List of HB friendly devices

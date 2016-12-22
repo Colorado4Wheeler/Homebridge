@@ -3,6 +3,12 @@ Release Notes
 
 This latest version is Release Candidate status, barring any significant issues this will represent version 1.0 of the plugin.  Make sure you keep a backup copy of your existing config.json file just in case something doesn't work as planned.
 
+Version 0.16 (Version 1.0 RC6b)
+---------------
+
+* Added menu option to output the log file for the built-in server selected
+* Added menu option to output the config file for the built-in server selected
+
 Version 0.15 (Version 1.0 RC6a)
 ---------------
 

@@ -93,6 +93,32 @@
     
     <MenuItem id="sep_hb3"/>
     
+    <MenuItem id="logHB">
+    	<Name>Show Homebridge Log</Name>
+    	<CallbackMethod>menuLog</CallbackMethod>
+    	<ButtonTitle>Show</ButtonTitle>
+        <ConfigUI>
+        	<Field type="menu" id="server" defaultValue="-all-">
+				<Label>Homebridge Server:</Label>
+				<List class="self" filter="#plugin#[index=server, callback=listServersEx]" method="getCustomList" dynamicReload="true"/>
+			</Field>
+        </ConfigUI>
+    </MenuItem>
+    
+    <MenuItem id="configHB">
+    	<Name>Show Homebridge Configuration</Name>
+    	<CallbackMethod>menuConfig</CallbackMethod>
+    	<ButtonTitle>Show</ButtonTitle>
+        <ConfigUI>
+        	<Field type="menu" id="server" defaultValue="-all-">
+				<Label>Homebridge Server:</Label>
+				<List class="self" filter="#plugin#[index=server, callback=listServersEx]" method="getCustomList" dynamicReload="true"/>
+			</Field>
+        </ConfigUI>
+    </MenuItem>
+    
+    <MenuItem id="sep_hb4"/>
+    
 	<MenuItem id="performanceOptions">
         <Name>Performance Options</Name>
         <ButtonTitle>Save</ButtonTitle>
