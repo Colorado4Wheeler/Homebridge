@@ -3,6 +3,11 @@ Release Notes
 
 This latest version is Release Candidate status, barring any significant issues this will represent version 1.0 of the plugin.  Make sure you keep a backup copy of your existing config.json file just in case something doesn't work as planned.
 
+Version 0.19 (Version 1.0 RC7a)
+---------------
+
+* Changed plugin caching routine to add a bit more debugging and to not "raise" it's exception when it encounters one - this to specifically address Durosity's and one other users issue when starting HBB
+
 Version 0.18 (Version 1.0 RC7)
 ---------------
 
@@ -258,4 +263,4 @@ Wish List
 * Add field to all devices to let the user select the icon values they want to use
 * For menu options if they have just one server then default to that server instead of presenting a list 
 * Automatically back up 3 generations of the config.json file whenever overwriting it - this also helps new users that already had HB running
-* Add failsafe to Homebridge migration routine to check for a duplicate server name and loop through possible iterations until successful                                                                                                                                                                                                                                                              
+* Add failsafe to Homebridge migration routine to check for a duplicate server name and loop through possible iterations until successful
