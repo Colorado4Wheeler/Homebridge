@@ -2640,6 +2640,110 @@ This device type is currently experimental, use at your own risk.</Label>
 		<UiDisplayStateId>statedisplay</UiDisplayStateId>		
 	</Device>
 	
+	<!-- =========== GUEST SERVER =========== -->
+	<Device type="relay" id="Homebridge-Guest">
+		<Name>Homebridge Guest Server</Name>
+		<ConfigUI>
+			<Field type="label" id="lbl_intro" >
+				<Label>This is to use for guests or roommates that you want to give access to but may want to limit it more than HomeKit permits.</Label>
+			</Field>
+		
+			<Field id="sep_intro" type="separator" />
+		
+			<!-- *********** SERVER *********** -->
+			
+			<Field type="checkbox" id="autoStartStop" defaultValue="true">
+				<Label> </Label>
+				<Description>Automatically start and stop Homebridge with plugin</Description>
+			</Field>
 	
+			<Field type="checkbox" id="indigoServer" defaultValue="true" hidden="true" >
+				<Label> </Label>
+				<Description>Homebridge is on the Indigo server</Description>
+				
+			</Field>
+					
+			<Field id="sep_server" type="separator" visibleBindingId="indigoServer" visibleBindingValue="false"/>
+			
+			<!-- *********** CONFIG *********** -->
+	
+			<Field type="checkbox" id="auto_hbuser" defaultValue="true" hidden="true" alwaysUseInDialogHeightCalc="true">
+				<Label> </Label>
+				<Description>When true the callback will generate a unique hbuser</Description>
+			</Field>
+	
+			<Field type="checkbox" id="show_hbuser" defaultValue="false" >
+				<Label> </Label>
+				<Description>Edit Homebridge user (Advanced only)</Description>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+	
+			<!-- This changes automatically each time a server device is added, the first server is always the default value -->
+			<Field type="textfield" id="hbuser" defaultValue="CC:22:3D:E3:CE:30" visibleBindingId="show_hbuser" visibleBindingValue="true" readonly="false" alwaysUseInDialogHeightCalc="true" tooltip="The user that Homekit will access Homebridge as.  If you change this then you WILL have to reconigure Homekit as the user name change causes Homekit to think that your old Homekit server was removed.  This is generally managed by the plugin and already takes into account multiple servers, only change this if you understand the ramifications!">
+				<Label>Homebridge User:</Label>
+			</Field>
+			
+			<Field type="textfield" id="hbpin" defaultValue="031-45-154" visibleBindingId="show_hbuser" visibleBindingValue="true" readonly="false" alwaysUseInDialogHeightCalc="true" tooltip="The key you will have to enter to access this Homebridge server in Homekit.  There is no need to change this as each Homekit server can have the same password.">
+				<Label>Homebridge PIN:</Label>
+			</Field>
+			
+			<Field type="textfield" id="hbport" defaultValue="51826" visibleBindingId="show_hbuser" visibleBindingValue="true" readonly="false" alwaysUseInDialogHeightCalc="true" tooltip="The port that Homebridge listens on.  This is generally managed by the plugin and already takes into account multiple servers, only change this if you understand the ramifications!">
+				<Label>Homebridge Port:</Label>
+			</Field>
+			
+			<Field id="sep_devices" type="separator" />
+						
+			<Field id="servers" type="menu" >
+				<Label>Use devices from:</Label>
+				<List class="indigo.devices" filter="com.eps.indigoplugin.homebridge.Homebridge-Server"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<Field id="exclude" type="list" rows="12">
+				<Label>Exclude:</Label>
+				<List class="self" filter="#plugin#[list=treatasdrapes, nocache=true, callback=listHBGuestDevices]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			
+		</ConfigUI>
+		
+		<States>
+			<!-- All EPS plugins have this state and use it for the Indigo lists -->
+			<State id="statedisplay">
+				<ValueType>String</ValueType>
+				<TriggerLabel>Current device state</TriggerLabel>
+				<ControlPageLabel>Current device state</ControlPageLabel>
+			</State>
+			
+			<State id="sep1">
+				<ValueType>Separator</ValueType>
+			</State>
+			
+			<State id="lastHealthCheck">
+				<ValueType>String</ValueType>
+				<TriggerLabel>Date and time of the last Homebridge process health check</TriggerLabel>
+				<ControlPageLabel>Date and time of the last Homebridge process health check</ControlPageLabel>
+			</State>
+			
+			<State id="sep2">
+				<ValueType>Separator</ValueType>
+			</State>
+			
+			<State id="restartPending">
+				<ValueType>Boolean</ValueType>
+				<TriggerLabel>A Homebridge process restart is pending</TriggerLabel>
+				<ControlPageLabel>A Homebridge process restart is pending</ControlPageLabel>
+			</State>
+			
+			<State id="restartTime">
+				<ValueType>String</ValueType>
+				<TriggerLabel>Date and time when Homebridge will automatically restart</TriggerLabel>
+				<ControlPageLabel>Date and time when Homebridge will automatically restart</ControlPageLabel>
+			</State>
+			
+		</States>
+		<UiDisplayStateId>statedisplay</UiDisplayStateId>		
+	</Device>	
 
 </Devices>

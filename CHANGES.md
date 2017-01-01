@@ -3,6 +3,13 @@ Release Notes
 
 This latest version is Release Candidate status, barring any significant issues this will represent version 1.0 of the plugin.  Make sure you keep a backup copy of your existing config.json file just in case something doesn't work as planned.
 
+Version 0.18 (Version 1.0 RC7)
+---------------
+
+* Fixed bug where saving a custom configuration was not retaining any customization done outside of the plugin
+* Added new Guest Server device that will allow you to mirror a given server and exclude items you may want to share with a guest or roommate (or spouse) to make it simpler or more secure without sacrificing your preferred HomeKit configuration.  The concept of this is that you essentially duplicate one of your other servers that you can exclude items from and run it as a new HB instance that they can either add on their own to HomeKit or your can share to them.
+
+
 Version 0.17 (Version 1.0 RC6c)
 ---------------
 
@@ -221,6 +228,7 @@ Known Issues As Of The Most Current Release
 * Not all Alias types are enabled yet, currently the Alias only supports Dimmer, Relay and Sprinkler devices (the rest are coming, just not yet ready)
 * Plugin configuration options for how to treat Sprinkler Alias brightness currently only controls when a brightness level is set but should also control what is displayed in the Indigo list
 * When selecting an irrigation controller as a Wrapper device it does not default to the correct "default" action
+* Guest Server device currently does not support using a server that specified ALL in devices or actions, use of this device is currently dependent upon having hand-selected your devices and actions and/or using wrappers and alias devices
 
 User Requested 3rd Party Integrations
 ---------------
@@ -249,4 +257,4 @@ Wish List
 * Add field to all devices to let the user select the icon values they want to use
 * For menu options if they have just one server then default to that server instead of presenting a list 
 * Automatically back up 3 generations of the config.json file whenever overwriting it - this also helps new users that already had HB running
-* Add failsafe to Homebridge migration routine to check for a duplicate server name and loop through possible iterations until successful
+* Add failsafe to Homebridge migration routine to check for a duplicate server name and loop through possible iterations until successful                                                                                                                        
