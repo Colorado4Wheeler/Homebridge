@@ -229,6 +229,7 @@ Known Issues As Of The Most Current Release
 * Plugin configuration options for how to treat Sprinkler Alias brightness currently only controls when a brightness level is set but should also control what is displayed in the Indigo list
 * When selecting an irrigation controller as a Wrapper device it does not default to the correct "default" action
 * Guest Server device currently does not support using a server that specified ALL in devices or actions, use of this device is currently dependent upon having hand-selected your devices and actions and/or using wrappers and alias devices
+* Need to add work around for users using Better Email to compensate for the malformed XML in that plugin's Devices.xml
 
 User Requested 3rd Party Integrations
 ---------------
@@ -257,4 +258,4 @@ Wish List
 * Add field to all devices to let the user select the icon values they want to use
 * For menu options if they have just one server then default to that server instead of presenting a list 
 * Automatically back up 3 generations of the config.json file whenever overwriting it - this also helps new users that already had HB running
-* Add failsafe to Homebridge migration routine to check for a duplicate server name and loop through possible iterations until successful                                                                                                                        
+* Add failsafe to Homebridge migration routine to check for a duplicate server name and loop through possible iterations until successful                                                                                                                                                                                                                                                              

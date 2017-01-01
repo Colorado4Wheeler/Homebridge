@@ -15,7 +15,7 @@ from support import support
 
 
 class eps:
-	VERSION = "2.9"
+	VERSION = "2.10"
 	
 	#
 	# Initialize the  class
