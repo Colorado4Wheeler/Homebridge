@@ -32,11 +32,12 @@
 					<Option value="garage">Garage Door</Option>
 					<Option value="window">Window</Option>
 					<Option value="drape">Window Covering (Curtain, Blind, etc)</Option>
+					<Option value="sensor">Motion Sensor</Option>
 				</List>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
 			
-			<Field type="menu" id="settingSelect" defaultValue="On" visibleBindingId="treatAs" visibleBindingValue="dimmer,switch,lock,door,garage,window,drape" >
+			<Field type="menu" id="settingSelect" defaultValue="On" visibleBindingId="treatAs" visibleBindingValue="dimmer,switch,lock,door,garage,window,drape,sensor" >
 				<Label>Command to modify:</Label>
 				<List class="self" filter="" method="listSettingSelect" dynamicReload="true"/>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
@@ -2036,6 +2037,7 @@
 					<Option value="door">Door</Option>
 					<Option value="garage">Garage Door</Option>
 					<Option value="window">Window</Option>
+					<Option value="sensor">Motion Sensor</Option>
 				</List>
 			</Field>
 			
@@ -2073,6 +2075,10 @@
 			
 			<Field type="label" id="lbl_window" visibleBindingId="treatAs" visibleBindingValue="window">
 				<Label>Off when binary input 1 is closed, on when binary input 1 is open</Label>
+			</Field>
+			
+			<Field type="label" id="lbl_sensor" visibleBindingId="treatAs" visibleBindingValue="sensor">
+				<Label>On when triggered</Label>
 			</Field>
 			
 			<Field type="label" id="lbl_sprinkler" visibleBindingId="isSprinkler" visibleBindingValue="true" alwaysUseInDialogHeightCalc="true">
@@ -2256,6 +2262,7 @@ This device type is currently experimental, use at your own risk.</Label>
 					<Option value="treatasgarage">Treat As Garage Doors</Option>
 					<Option value="treataswindows">Treat As Windows</Option>
 					<Option value="treatasdrapes">Treat As Window Coverings</Option>
+					<Option value="treatassensors">Treat As Motion Sensors</Option>
 					<Option value="invertonoff">Invert On and Off Commands</Option>
 				</List>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
@@ -2476,6 +2483,20 @@ This device type is currently experimental, use at your own risk.</Label>
 			<Field id="treatasdrapes" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="treatasdrapes">
 				<Label>Items:</Label>
 				<List class="self" filter="#plugin#[list=treatasdrapes, nocache=true, callback=listHBTreatAs]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- *********** MOTION SENSORS *********** -->
+	
+			<Field type="label" id="lbl_treatassensors" visibleBindingId="view" visibleBindingValue="treatassensors">
+				<Label>Included devices that you want to be treated as a motion sensor.  If you used a device or action in another "Treat As" it will not be shown in this list.
+		
+		</Label>
+			</Field>
+	
+			<Field id="treatassensors" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="treatassensors">
+				<Label>Items:</Label>
+				<List class="self" filter="#plugin#[list=treatassensors, nocache=true, callback=listHBTreatAs]" method="getCustomList" dynamicReload="true"/>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
 			

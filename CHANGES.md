@@ -3,10 +3,17 @@ Release Notes
 
 This latest version is Release Candidate status, barring any significant issues this will represent version 1.0 of the plugin.  Make sure you keep a backup copy of your existing config.json file just in case something doesn't work as planned.
 
+Version 0.20 (Version 1.0 RC8)
+---------------
+
+* Added support for motion sensors (as per HB-Indigo issue 15) to aliases, wrappers and the server configuration
+* Released with latest HB-Indigo build to incorporate motion sensors
+* Fixed bug with aliases where dimmers were properly turning on and off but switches were not
+
 Version 0.19 (Version 1.0 RC7a)
 ---------------
 
-* Changed plugin caching routine to add a bit more debugging and to not "raise" it's exception when it encounters one - this to specifically address Durosity's and one other users issue when starting HBB
+* Changed plugin caching routine to add a bit more debugging and to not "raise" it's exception when it encounters one - this to specifically address Durosity's and one other users issue when starting HBB and getting XML errors for other plugins
 
 Version 0.18 (Version 1.0 RC7)
 ---------------
@@ -234,7 +241,8 @@ Known Issues As Of The Most Current Release
 * Plugin configuration options for how to treat Sprinkler Alias brightness currently only controls when a brightness level is set but should also control what is displayed in the Indigo list
 * When selecting an irrigation controller as a Wrapper device it does not default to the correct "default" action
 * Guest Server device currently does not support using a server that specified ALL in devices or actions, use of this device is currently dependent upon having hand-selected your devices and actions and/or using wrappers and alias devices
-* Need to add work around for users using Better Email to compensate for the malformed XML in that plugin's Devices.xml
+* Need to check alias device on/off commands, only dimmers were specifically accounted for and this caused problems with switches, need to check all remaining alias types to see if any others have problems
+* When added to wrapper devices, motion sensors don't show any actions, they should show on and off commands
 
 User Requested 3rd Party Integrations
 ---------------

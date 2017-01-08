@@ -626,7 +626,8 @@ class Plugin(indigo.PluginBase):
 					valuesDict["treatAs"] = "dimmer"
 					
 				elif type(child) is indigo.SensorDevice:
-					valuesDict["treatAs"] = "switch"
+					valuesDict["treatAs"] = "sensor"
+					valuesDict["lock_treatAs"] = False # Let them change it to be a switch if they want
 					
 				elif type(child) is indigo.SprinklerDevice:
 					valuesDict["treatAs"] = "dimmer"		
@@ -1178,7 +1179,7 @@ class Plugin(indigo.PluginBase):
 				return True
 				
 			elif dev.deviceTypeId == "Homebridge-Alias":
-				if dev.states["onOffState"]: return True # It's already on
+				#if dev.states["onOffState"]: return True # It's already on
 				return self.aliasTurnOn (dev)
 				
 				
@@ -1214,7 +1215,7 @@ class Plugin(indigo.PluginBase):
 				return True
 				
 			elif dev.deviceTypeId == "Homebridge-Alias":
-				if dev.states["onOffState"] == False: return True # It's already off
+				#if dev.states["onOffState"] == False: return True # It's already off
 				return self.aliasTurnOff (dev)	
 		
 		except Exception as e:
@@ -2012,7 +2013,10 @@ class Plugin(indigo.PluginBase):
 			if ext.valueValid (dev.pluginProps, "device", True) == False: return False
 			if dev.pluginProps["ignore"]: return False
 			
-			if dev.pluginProps["treatAs"] == "dimmer":
+			if dev.pluginProps["treatAs"] == "switch":
+				indigo.device.turnOn (int(dev.pluginProps["device"]))
+				
+			elif dev.pluginProps["treatAs"] == "dimmer":
 				if dev.pluginProps["isSprinkler"] == False:
 					indigo.device.turnOn (int(dev.pluginProps["device"]))
 					
@@ -2058,7 +2062,10 @@ class Plugin(indigo.PluginBase):
 			if ext.valueValid (dev.pluginProps, "device", True) == False: return False
 			if dev.pluginProps["ignore"]: return False
 			
-			if dev.pluginProps["treatAs"] == "dimmer":
+			if dev.pluginProps["treatAs"] == "switch":
+				indigo.device.turnOff (int(dev.pluginProps["device"]))
+				
+			elif dev.pluginProps["treatAs"] == "dimmer":
 				if dev.pluginProps["isSprinkler"] == False:
 					indigo.device.turnOff (int(dev.pluginProps["device"]))
 					
@@ -3730,6 +3737,7 @@ class Plugin(indigo.PluginBase):
 			garages = []
 			windows = []
 			drapes = []
+			sensors = []
 			inverts = []
 			
 			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Camera"):
@@ -3752,6 +3760,7 @@ class Plugin(indigo.PluginBase):
 					if dev.pluginProps["treatAs"] == "garage": garages.append (dev.id)
 					if dev.pluginProps["treatAs"] == "window": windows.append (dev.id)
 					if dev.pluginProps["treatAs"] == "drape": drapes.append (dev.id)
+					if dev.pluginProps["treatAs"] == "sensor": sensors.append (dev.id)
 					
 				# We only need to exclude wrapped items if they selected that option AND we are including all objects,
 				# otherwise why exclude something that was never included in the first place?
@@ -3790,6 +3799,7 @@ class Plugin(indigo.PluginBase):
 					if dev.pluginProps["treatAs"] == "garage": garages.append (dev.id)
 					if dev.pluginProps["treatAs"] == "window": windows.append (dev.id)
 					if dev.pluginProps["treatAs"] == "drape": drapes.append (dev.id)
+					if dev.pluginProps["treatAs"] == "sensor": sensors.append (dev.id)
 					
 				if dev.pluginProps["invertonoff"]: inverts.append (dev.id)
 					
@@ -3810,6 +3820,7 @@ class Plugin(indigo.PluginBase):
 			garages = self._addPrefIdToList (propsDict, "treatasgarage", garages)
 			windows = self._addPrefIdToList (propsDict, "treataswindows", windows)
 			drapes = self._addPrefIdToList (propsDict, "treatasdrapes", drapes)
+			sensors = self._addPrefIdToList (propsDict, "treatassensors", sensors)
 			inverts = self._addPrefIdToList (propsDict, "invertonoff", inverts)
 
 							
@@ -3855,6 +3866,7 @@ class Plugin(indigo.PluginBase):
 			treatAs["windows"] = windows
 			treatAs["drapes"] = drapes
 			treatAs["inverts"] = inverts
+			treatAs["sensors"] = sensors
 			
 			config["treatAs"] = treatAs
 			config["includeDev"] = includeDev
@@ -4134,6 +4146,10 @@ class Plugin(indigo.PluginBase):
 			# Incorporate drapes
 			if len(config["treatAs"]["drapes"]) > 0:
 				cfg +=	'\t\t\t"treatAsWindowCoveringIds": {0},\n'.format(self._addItemListToConfig (config["treatAs"]["drapes"]))
+				
+			# Incorporate sensors
+			if len(config["treatAs"]["sensors"]) > 0:
+				cfg +=	'\t\t\t"treatAsMotionSensorIds": {0},\n'.format(self._addItemListToConfig (config["treatAs"]["sensors"]))	
 			
 			# Incorporate inversions
 			if len(config["treatAs"]["inverts"]) > 0:
