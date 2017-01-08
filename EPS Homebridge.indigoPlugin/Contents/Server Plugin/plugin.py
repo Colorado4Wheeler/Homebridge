@@ -1042,7 +1042,7 @@ class Plugin(indigo.PluginBase):
 						if "brightnessLevel" in child.states: states.append("brightnessLevel")	
 						if "activeZone" in child.states: states.append("activeZone")	
 						
-					elif dev.pluginProps["treatAs"] == "switch":
+					elif dev.pluginProps["treatAs"] == "switch" or dev.pluginProps["treatAs"] == "sensor":
 						if "onOffState" in child.states: states.append("onOffState")
 					
 					ret[child.id] = states
@@ -2280,6 +2280,10 @@ class Plugin(indigo.PluginBase):
 			if dev.pluginProps["treatAs"] == "drape": 
 				if dev.states["brightnessLevel"] == 0: img = indigo.kStateImageSel.LightSensor
 				if dev.states["brightnessLevel"] != 0: img = indigo.kStateImageSel.LightSensorOn
+				
+			if dev.pluginProps["treatAs"] == "sensor": 
+				if dev.states["brightnessLevel"] == 0: img = indigo.kStateImageSel.MotionSensor
+				if dev.states["brightnessLevel"] != 0: img = indigo.kStateImageSel.MotionSensorTripped	
 		
 			if img: dev.updateStateImageOnServer(img)
 			
@@ -2293,7 +2297,43 @@ class Plugin(indigo.PluginBase):
 	def checkDeviceAddress (self, dev):
 		try:
 			# If it doesn't have an address for some reason then give it one
-			if (dev.deviceTypeId == "Homebridge-Wrapper" or dev.deviceTypeId == "Homebridge-Alias") and ext.valueValid (dev.pluginProps, "treatAs", True):
+			if (dev.deviceTypeId == "Homebridge-Alias"):
+				childDev = indigo.devices[int(dev.pluginProps["device"])]
+				
+				props = dev.pluginProps
+				props["address"] = childDev.name
+				
+				dev.replacePluginPropsOnServer (props)
+				self._setDeviceIcon (dev)
+				
+			elif (dev.deviceTypeId == "Homebridge-Wrapper"):
+				props = dev.pluginProps
+				
+				if dev.pluginProps["methodOn"] == "device":
+					childDev = indigo.devices[int(dev.pluginProps["deviceOn"])]
+					props["address"] = childDev.name
+
+				elif dev.pluginProps["methodOn"] == "action":
+					childDev = indigo.actionGroups[int(dev.pluginProps["actionOn"])]	
+					props["address"] = childDev.name + " (Action)"
+					
+				
+				dev.replacePluginPropsOnServer (props)
+				self._setDeviceIcon (dev)	
+				
+			elif (dev.deviceTypeId == "Homebridge-Camera"):
+				props = dev.pluginProps
+				
+				#props["address"] = props["videoSource"]					
+				props["address"] = props["name"]					
+				
+				dev.replacePluginPropsOnServer (props)
+				self._setDeviceIcon (dev)		
+				
+			elif (dev.deviceTypeId == "Homebridge-Wrapper" or dev.deviceTypeId == "Homebridge-Alias") and ext.valueValid (dev.pluginProps, "treatAs", True):
+				
+				
+				
 				if dev.pluginProps["treatAs"] != "none":
 					address = "Unknown Device"
 					
@@ -2323,7 +2363,13 @@ class Plugin(indigo.PluginBase):
 					dev.replacePluginPropsOnServer (props)
 					self._setDeviceIcon (dev)
 					
-			elif dev.deviceTypeId == "Homebridge-Server" and (dev.address != "SERVER @ Indigo Server" or dev.address != "SERVER @ " + dev.pluginProps["computerip"]):
+			elif dev.deviceTypeId == "Homebridge-Server" or dev.deviceTypeId == "Homebridge-Guest" or dev.deviceTypeId == "Homebridge-Custom":
+				props = dev.pluginProps
+				props["address"] = props["hbpin"] + " @ " + props["hbport"]
+				dev.replacePluginPropsOnServer (props)
+				
+					
+			elif dev.deviceTypeId == "Homebridge-Custom" and (dev.address != "SERVER @ Indigo Server" or dev.address != "SERVER @ " + dev.pluginProps["computerip"]):
 				props = dev.pluginProps
 				
 				if props["indigoServer"]:
@@ -2408,7 +2454,7 @@ class Plugin(indigo.PluginBase):
 			elif parent.pluginProps["treatAs"] == "dimmer" and type(child) == indigo.SprinklerDevice:	
 				return # we are handling this with our raised events
 				
-			elif parent.pluginProps["treatAs"] == "switch":
+			elif parent.pluginProps["treatAs"] == "switch" or parent.pluginProps["treatAs"] == "sensor":
 				if "onOffState" in child.states: states = iutil.updateState ("onOffState", child.states["onOffState"], states)
 					
 			if len(states) > 0:

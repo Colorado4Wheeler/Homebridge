@@ -8,6 +8,10 @@ Version 0.20 (Version 1.0 RC8)
 
 * Added support for motion sensors (as per HB-Indigo issue 15) to aliases, wrappers and the server configuration
 * Released with latest HB-Indigo build to incorporate motion sensors
+* Added Alias and wrapper devices defined as motion sensors will display the motion sensor and motion sensor tripped icons in the device list
+* Changed addresses for Alias and Wrapper devices to show the device, action or variable they are referring to instead of how they are treated.  In the case of wrappers it will use the value for whichever device, action or variable is used for the On action.
+* Changed addresses for servers to represent their PIN and port rather than location
+* Changed addresses for cameras to represent their HomeKit name
 * Fixed bug with aliases where dimmers were properly turning on and off but switches were not
 
 Version 0.19 (Version 1.0 RC7a)
