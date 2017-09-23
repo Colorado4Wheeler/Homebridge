@@ -33,11 +33,12 @@
 					<Option value="window">Window</Option>
 					<Option value="drape">Window Covering (Curtain, Blind, etc)</Option>
 					<Option value="sensor">Motion Sensor</Option>
+					<Option value="fan">Fan</Option>
 				</List>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
 			
-			<Field type="menu" id="settingSelect" defaultValue="On" visibleBindingId="treatAs" visibleBindingValue="dimmer,switch,lock,door,garage,window,drape,sensor" >
+			<Field type="menu" id="settingSelect" defaultValue="On" visibleBindingId="treatAs" visibleBindingValue="dimmer,switch,lock,door,garage,window,drape,sensor,fan" >
 				<Label>Command to modify:</Label>
 				<List class="self" filter="" method="listSettingSelect" dynamicReload="true"/>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
@@ -2038,6 +2039,7 @@
 					<Option value="garage">Garage Door</Option>
 					<Option value="window">Window</Option>
 					<Option value="sensor">Motion Sensor</Option>
+					<Option value="fan">Fan</Option>
 				</List>
 			</Field>
 			
@@ -2236,7 +2238,7 @@ This device type is currently experimental, use at your own risk.</Label>
 				<Title>Refresh </Title>
 				<CallbackMethod>btnRefreshDeviceCount</CallbackMethod>
 			</Field>
-			
+						
 			<Field id="sep_prehbselection" type="separator" />
 
 			<Field type="label" id="lbl_intro" >
@@ -2263,6 +2265,7 @@ This device type is currently experimental, use at your own risk.</Label>
 					<Option value="treataswindows">Treat As Windows</Option>
 					<Option value="treatasdrapes">Treat As Window Coverings</Option>
 					<Option value="treatassensors">Treat As Motion Sensors</Option>
+					<Option value="treatasfans">Treat As Fans</Option>
 					<Option value="invertonoff">Invert On and Off Commands</Option>
 				</List>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
@@ -2295,6 +2298,11 @@ This device type is currently experimental, use at your own risk.</Label>
 			</Field>
 			
 			<!-- *********** CONFIG *********** -->
+			
+			<Field type="checkbox" id="itunes_control" defaultValue="false" hidden="false" visibleBindingId="view" visibleBindingValue="config">
+				<Label> </Label>
+				<Description>Enable iTunes HomeKit control for this server</Description>
+			</Field>
 	
 			<Field type="checkbox" id="auto_hbuser" defaultValue="true" hidden="true" visibleBindingId="view" visibleBindingValue="config">
 				<Label> </Label>
@@ -2342,7 +2350,7 @@ This device type is currently experimental, use at your own risk.</Label>
 			<!-- *********** INCLUDE *********** -->
 	
 			<Field type="label" id="lbl_devinclude" visibleBindingId="view" visibleBindingValue="devinclude" alwaysUseInDialogHeightCalc="true">
-				<Label>Devices you want included in Homebridge.  This list impacts other lists, if you include a device here you cannot exclude it (unless you select All) and if you don't include it here you cannot select it in any of the device type lists.
+				<Label>Devices accessible through HomeKit.  If you do not include it here then you won't be able to select it as a specific type (i.e. a lock) and it will not be available to you in HomeKit.  You can also select ALL instead and then simply use the Exclude list if you wish to include the majority of your devices and only exclude a handful.
 		
 		</Label>
 			</Field>
@@ -2497,6 +2505,20 @@ This device type is currently experimental, use at your own risk.</Label>
 			<Field id="treatassensors" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="treatassensors">
 				<Label>Items:</Label>
 				<List class="self" filter="#plugin#[list=treatassensors, nocache=true, callback=listHBTreatAs]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
+			<!-- *********** FANS *********** -->
+	
+			<Field type="label" id="lbl_treatasfans" visibleBindingId="view" visibleBindingValue="treatasfans">
+				<Label>Included devices that you want to be treated as a fan.  If you used a device or action in another "Treat As" it will not be shown in this list.
+		
+		</Label>
+			</Field>
+	
+			<Field id="treatasfans" type="list" rows="12" defaultValue="-none-" visibleBindingId="view" visibleBindingValue="treatasfans">
+				<Label>Items:</Label>
+				<List class="self" filter="#plugin#[list=treatasfans, nocache=true, callback=listHBTreatAs]" method="getCustomList" dynamicReload="true"/>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
 			
@@ -2710,6 +2732,13 @@ This device type is currently experimental, use at your own risk.</Label>
 			
 			<Field type="textfield" id="hbport" defaultValue="51826" visibleBindingId="show_hbuser" visibleBindingValue="true" readonly="false" alwaysUseInDialogHeightCalc="true" tooltip="The port that Homebridge listens on.  This is generally managed by the plugin and already takes into account multiple servers, only change this if you understand the ramifications!">
 				<Label>Homebridge Port:</Label>
+			</Field>
+			
+			<Field id="sep_addons" type="separator" />
+			
+			<Field type="checkbox" id="itunes_control" defaultValue="false" >
+				<Label> </Label>
+				<Description>Enable iTunes HomeKit control for this server</Description>
 			</Field>
 			
 			<Field id="sep_devices" type="separator" />

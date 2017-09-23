@@ -1,6 +1,6 @@
 # lib.eps - The factory that starts everything
 #
-# Copyright (c) 2016 ColoradoFourWheeler / EPS
+# Copyright (c) 2017 ColoradoFourWheeler / EPS
 #
 
 import indigo
@@ -15,7 +15,7 @@ from support import support
 
 
 class eps:
-	VERSION = "2.10"
+	VERSION = "2.11"
 	
 	#
 	# Initialize the  class

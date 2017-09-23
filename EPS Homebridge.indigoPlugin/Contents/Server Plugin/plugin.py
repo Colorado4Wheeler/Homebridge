@@ -44,11 +44,14 @@ class Plugin(indigo.PluginBase):
 	TVERSION	= "3.2.1"
 	PLUGIN_LIBS = ["cache", "plugcache", "actions", "devices"] #["conditions", "cache", "actions"] #["cache"]
 	UPDATE_URL 	= ""
-	
+		
 	# Plugin specific globals
 	hbNames = ["CC:22:3D:E3:CE:30", "CC:22:3D:E3:CE:32", "CC:22:3D:E3:CE:E0", "CC:22:3D:E3:CE:E2", "CC:22:3D:E3:CE:EA", "CC:22:3D:E3:CE:EB", "CC:22:3D:E3:CE:EC", "CC:22:3D:E3:CE:EE", "CC:22:3D:E3:CE:F0", "CC:22:3D:E3:CE:F2"]
 	hbPorts = ["51826", "51827", "51828", "51829", "51830", "51831", "51832", "51833", "51834", "51835"]
 	plugindir = os.getcwd()
+	configdir = plugindir + "/bin/hb/homebridge"
+	bindir = plugindir + "/bin/hb/homebridge"
+	#configdir = expanduser("~") + "/.hbb"
 	
 	#
 	# Init
@@ -135,7 +138,15 @@ class Plugin(indigo.PluginBase):
 					self.logger.info ("Adding property to '{0}' configuration for RC6".format(dev.name))
 					props = dev.pluginProps
 					props["ignore"] = False
-					dev.replacePluginPropsOnServer (props)				
+					dev.replacePluginPropsOnServer (props)		
+					
+			# Release 1.0.0 adding iTunes library
+			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Server"):
+				if ext.valueValid (dev.pluginProps, "itunes", True) == False:
+					self.logger.info ("Adding property to '{0}' configuration for release 1.0.0".format(dev.name))
+					props = dev.pluginProps
+					props["itunes"] = 0
+					dev.replacePluginPropsOnServer (props)		
 		
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
@@ -290,9 +301,9 @@ class Plugin(indigo.PluginBase):
 					for servers in indigo.devices.iter(self.pluginId + ".Homebridge-Server"):
 						if servers.id != dev.id: self.SERVERS.append (server.id)
 						
-				if os.path.exists(self.plugindir + "/bin/hb/homebridge/" + str(dev.id)):
+				if os.path.exists(self.configdir + "/" + str(dev.id)):
 					self.logger.debug ("Removing the local server folder")
-					shutil.rmtree (self.plugindir + "/bin/hb/homebridge/" + str(dev.id))
+					shutil.rmtree (self.configdir + "/" + str(dev.id))
 				
 				return # We don't need to do the restart again, the server change will do that for us
 				
@@ -318,14 +329,14 @@ class Plugin(indigo.PluginBase):
 		try:
 			if dev.deviceTypeId == "Homebridge-Server" or dev.deviceTypeId == "Homebridge-Guest": 
 				# See if we have a folder for it
-				if os.path.exists(self.plugindir + "/bin/hb/homebridge/" + str(dev.id)) == False:
+				if os.path.exists(self.configdir + "/" + str(dev.id)) == False:
 					self.logger.debug ("Unable to find a local configuration for this Homebridge server")
 					
 					if self.homebridgeCreateFolder (dev, self.plugindir) == False:
 						return
 						
 				# If we get to here then we should have a valid folder, now make sure our config is there or build it if not
-				if os.path.isfile(self.plugindir + "/bin/hb/homebridge/" + str(dev.id) + "/config.json"):
+				if os.path.isfile(self.configdir + "/" + str(dev.id) + "/config.json"):
 					self.homebridgeAutoStart (dev)
 					pass					
 				else:
@@ -375,14 +386,14 @@ class Plugin(indigo.PluginBase):
 			
 			if dev.deviceTypeId == "Homebridge-Server":
 				# Since we just created the device we need to create the folder and start the server
-				if os.path.exists(self.plugindir + "/bin/hb/homebridge/" + str(dev.id)) == False:
+				if os.path.exists(self.configdir + "/" + str(dev.id)) == False:
 					self.logger.debug ("Unable to find a local configuration for this Homebridge server")
 					
 					if self.homebridgeCreateFolder (dev, self.plugindir) == False:
 						return
 						
 				# If we get to here then we should have a valid folder, now make sure our config is there or build it if not
-				if os.path.isfile(self.plugindir + "/bin/hb/homebridge/" + str(dev.id) + "/config.json"):
+				if os.path.isfile(self.configdir + "/" + str(dev.id) + "/config.json"):
 					self.homebridgeAutoStart (dev)
 					pass					
 				else:
@@ -1512,14 +1523,14 @@ class Plugin(indigo.PluginBase):
 				# Since we are here, disable the manually installed HB if it is there
 				#self.homebridgeLegacyMigration (dev)
 		
-				os.system('"' + self.plugindir + '/bin/hb/homebridge/createdir" ' + str(dev.id))
+				os.system('"' + self.bindir + '/createdir" ' + self.configdir + "/" + str(dev.id))
 
-				if os.path.exists(curdir + "/bin/hb/homebridge/" + str(dev.id)):
-					self.logger.debug ("Created server folder " + self.plugindir + "/bin/hb/homebridge/" + str(dev.id))
+				if os.path.exists(self.configdir + "/" + str(dev.id)):
+					self.logger.debug ("Created server folder " + self.configdir + "/" + str(dev.id))
 					return True
 				
 				else:
-					self.logger.error ("Unable to create Homebridge folder " + self.plugindir + "/hbserver/homebridge/" + str(dev.id))
+					self.logger.error ("Unable to create Homebridge folder " + self.configdir + "/" + str(dev.id))
 					return False
 			
 		except Exception as e:
@@ -1601,7 +1612,7 @@ class Plugin(indigo.PluginBase):
 			# New save routine, future use
 			#data = self.buildConfigData (dev)
 			#indigo.server.log(unicode(json.dumps(data, indent=8, separators=(',',':'))))
-			#home = self.plugindir + "/bin/hb/homebridge/" + str(dev.id)
+			#home = self.configdir + "/" + str(dev.id)
 			#with open(home + "/config2.json", 'w') as file_:
 			#	file_.write(json.dumps(data, indent=8, separators=(',',':')))
 			#return
@@ -1619,10 +1630,11 @@ class Plugin(indigo.PluginBase):
 				# Only include the plugins that we have developed for the built in homebridge
 				for platform in json_data["platforms"]:
 					if platform["platform"] == "Indigo": newplatforms.append (platform)
+					if platform["platform"] == "iTunes": newplatforms.append (platform) # Experimental support for Homebridge-iTunes
 				
 				json_data["platforms"] = newplatforms
 				
-				home = self.plugindir + "/bin/hb/homebridge/" + str(dev.id)
+				home = self.configdir + "/" + str(dev.id)
 				
 				if os.path.exists(home):
 					self.logger.debug ("Saving '{0}/config.json'".format(home))
@@ -1656,10 +1668,12 @@ class Plugin(indigo.PluginBase):
 							
 						platform["excludeIds"] = excludes
 						newplatforms.append (platform)
+						
+					if platform["platform"] == "iTunes": newplatforms.append (platform) # Experimental support for Homebridge-iTunes	
 				
 				json_data["platforms"] = newplatforms
 				
-				home = self.plugindir + "/bin/hb/homebridge/" + str(dev.id)
+				home = self.configdir + "/" + str(dev.id)
 				
 				if os.path.exists(home):
 					self.logger.debug ("Saving '{0}/config.json'".format(home))
@@ -1786,7 +1800,8 @@ class Plugin(indigo.PluginBase):
 			
 			if dev.deviceTypeId == "Homebridge-Server" or dev.deviceTypeId == "Homebridge-Guest":
 				curdir = os.getcwd()
-				os.system('"' + curdir + '/bin/hb/homebridge/load" ' + str(dev.id))
+				os.system('"' + self.bindir + '/load" ' + str(dev.id))
+				#os.system('"' + self.bindir + '/load" ' + self.configdir + "/" + str(dev.id))
 			
 			
 			if dev.deviceTypeId == "Homebridge-Custom":
@@ -1826,7 +1841,8 @@ class Plugin(indigo.PluginBase):
 			
 			if dev.deviceTypeId == "Homebridge-Server" or dev.deviceTypeId == "Homebridge-Guest":
 				curdir = os.getcwd()
-				os.system('"' + curdir + '/bin/hb/homebridge/unload" ' + str(dev.id))
+				os.system('"' + self.bindir + '/unload" ' + str(dev.id))
+				#os.system('"' + self.bindir + '/unload" ' + self.configdir + "/" + str(dev.id))
 			
 			if dev.deviceTypeId == "Homebridge-Custom":			
 				if dev.pluginProps["indigoServer"]:
@@ -2912,7 +2928,7 @@ class Plugin(indigo.PluginBase):
 			else:		
 				dev = indigo.devices[int(valuesDict["server"])]
 				
-				home = self.plugindir + "/bin/hb/homebridge/" + str(dev.id)
+				home = self.configdir + "/" + str(dev.id)
 				
 				if os.path.exists(home + "/homebridge.log"):
 					file = open(home + "/homebridge.log", 'r')
@@ -2942,7 +2958,7 @@ class Plugin(indigo.PluginBase):
 			else:		
 				dev = indigo.devices[int(valuesDict["server"])]
 				
-				home = self.plugindir + "/bin/hb/homebridge/" + str(dev.id)
+				home = self.configdir + "/" + str(dev.id)
 				
 				if os.path.exists(home + "/config.json"):
 					file = open(home + "/config.json", 'r')
@@ -3791,8 +3807,7 @@ class Plugin(indigo.PluginBase):
 				
 				config["addons"] = config["addons"] + 1
 				config["camera"] = config["camera"] + 1
-				
-			
+					
 			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Wrapper"):
 				if dev.pluginProps["serverDevice"] != str(serverId): continue
 				
@@ -4213,11 +4228,21 @@ class Plugin(indigo.PluginBase):
 			#cfg +=	'\t\t}\n'
 		
 			# 0.13 - If we are defining plugin devices they get added here
-		
+			
+			# Homebridge-iTunes
+			if server.pluginProps["itunes_control"]:
+				config["addons"] = config["addons"] + 1
+			
 			if config["addons"] == 0:
 				cfg +=	'\t\t}\n'
 			else:
 				cfg +=	'\t\t},\n'
+				
+			# Homebridge-iTunes
+			if server.pluginProps["itunes_control"]:
+				cfg +=	'\t\t{\n'		
+				cfg +=	'\t\t\t"platform": "{0}"\n'.format('iTunes')
+				cfg +=	'\t\t}\n'
 			
 			# Homebridge-Camera-FFMPEG
 			if config["camera"] > 0:

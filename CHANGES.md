@@ -1,7 +1,27 @@
 Release Notes
 ==========
 
-This latest version is Release Candidate status, barring any significant issues this will represent version 1.0 of the plugin.  Make sure you keep a backup copy of your existing config.json file just in case something doesn't work as planned.
+Since many users have been running the release candidate version for some time with no issues, this release officially is the 1.0.0 release.
+
+Version 1.0.0
+---------------
+
+* IMPORTANT NOTE: Always back up your plugin before upgrading.  The plugin file itself stores your HBB configuration but HBB has been designed to automatically re-create the configuration from the values saved in Indigo so there SHOULD be no loss of data, however you should back up to be safe.
+* Integrated Homebridge and Homebridge-Indigo updated to support IOS 11 and uses Node.JS 8.4.0
+* Added framework to allow for future storage of configuration files to a fixed location outside of the plugin structure (requires some updates from HB-Indigo before final implementation)
+* Added Homebridge-iTunes plugin to the core package (experimental, this may be removed in future versions if it proves unstable) 
+* Added option to enable or disable the iTunes plugin on all HBB servers (Homebridge-Server and Homebridge-GuestServer) in the Homebridge configuration drop down of the server
+
+Core Package Changes:
+
+* Added ignore list to exclude any installed plugins that are causing problems
+* Added Prowl to the plugin ignore list
+
+
+Version 0.21 (Version 1.0 RC9)
+---------------
+
+* Add treatAsContactSensorIds supprt
 
 Version 0.20 (Version 1.0 RC8)
 ---------------
@@ -247,11 +267,12 @@ Known Issues As Of The Most Current Release
 * Guest Server device currently does not support using a server that specified ALL in devices or actions, use of this device is currently dependent upon having hand-selected your devices and actions and/or using wrappers and alias devices
 * Need to check alias device on/off commands, only dimmers were specifically accounted for and this caused problems with switches, need to check all remaining alias types to see if any others have problems
 * When added to wrapper devices, motion sensors don't show any actions, they should show on and off commands
+* Core Package will error out when trying to parse the Prowl plugin.  Until resolved this plugin is hard coded to be ignored.
 
 User Requested 3rd Party Integrations
 ---------------
 
-* iTunes
+* iTunes (Completed in v1.0.0)
 * Netatmo Weather Station
 * Foscam
 * Envisalink
@@ -276,3 +297,4 @@ Wish List
 * For menu options if they have just one server then default to that server instead of presenting a list 
 * Automatically back up 3 generations of the config.json file whenever overwriting it - this also helps new users that already had HB running
 * Add failsafe to Homebridge migration routine to check for a duplicate server name and loop through possible iterations until successful
+* Possible integrations: HB-Weather, HB-Config-UI, HB-Script2, HB-Applescript-Status, HB-App-Switch, HB-Tado-Ac, HB-Bandwidth-Meter, HB-Camera-FFMPEG, HB-Xbox1-lirc, HB-Xbox-one, HB-iftt, HB-Camera-Isignt, HB-Ambientlight

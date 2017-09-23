@@ -1,6 +1,6 @@
 # lib.plugcache - Reads plugin information into a re-usable cache
 #
-# Copyright (c) 2016 ColoradoFourWheeler / ext
+# Copyright (c) 2017 ColoradoFourWheeler / ext
 #
 
 import indigo
@@ -516,9 +516,15 @@ class plugcache:
 		
 			base = indigo.server.getInstallFolderPath() + "/Plugins"
 			plugins = glob.glob(base + "/*.indigoPlugin")	
+			plugInfo = ''
 			
 			for plugin in plugins:
 				try:
+					# IGNORE LIST - some of these cause problems, ignore until a resolution can be determined
+					if plugin == base + "/Prowl.indigoPlugin":
+						self.logger.info ("Ingoring the {0} plugin because it generates errors when we access it".format("Prowl"))
+						continue
+				
 					plugInfo = self._parsePlist (plugin)
 					#if plugInfo["id"] != "com.eps.indigoplugin.dev-template": continue
 
@@ -542,17 +548,17 @@ class plugcache:
 				
 					if os.path.isfile(plugin + "/Contents/Server Plugin/Devices.xml"):
 						pluginXML["devices"] = self._parseDevicesXML(plugin + "/Contents/Server Plugin/Devices.xml")
-					
+											
 					if os.path.isfile(plugin + "/Contents/Server Plugin/Actions.xml"):
 						pluginXML["actions"] = self._parseActionsXML(plugin + "/Contents/Server Plugin/Actions.xml")
 					
-	
 					plugInfo["xml"] = pluginXML
 	
 					self.pluginCache[plugInfo["id"]] = plugInfo
 					
 				except Exception as e:
-					self.logger.error ("Exception encountered with " + unicode(plugin))
+					self.logger.error ("Exception encountered with " + unicode(plugin) + " (this error is NOT critical)")
+					#self.logger.debug ("Plugin Information: " + unicode(plugInfo))
 					self.logger.error (ext.getException(e))	
 					
 	
