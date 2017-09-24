@@ -142,10 +142,10 @@ class Plugin(indigo.PluginBase):
 					
 			# Release 1.0.0 adding iTunes library
 			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Server"):
-				if ext.valueValid (dev.pluginProps, "itunes", True) == False:
+				if ext.valueValid (dev.pluginProps, "itunes_control", True) == False:
 					self.logger.info ("Adding property to '{0}' configuration for release 1.0.0".format(dev.name))
 					props = dev.pluginProps
-					props["itunes"] = 0
+					props["itunes_control"] = 0
 					dev.replacePluginPropsOnServer (props)		
 		
 		except Exception as e:
@@ -1523,7 +1523,8 @@ class Plugin(indigo.PluginBase):
 				# Since we are here, disable the manually installed HB if it is there
 				#self.homebridgeLegacyMigration (dev)
 		
-				os.system('"' + self.bindir + '/createdir" ' + self.configdir + "/" + str(dev.id))
+				self.logger.debug ('"' + self.bindir + '/createdir" "' + self.configdir + "/" + str(dev.id) + '"')
+				os.system('"' + self.bindir + '/createdir" "' + self.configdir + "/" + str(dev.id) + '"')
 
 				if os.path.exists(self.configdir + "/" + str(dev.id)):
 					self.logger.debug ("Created server folder " + self.configdir + "/" + str(dev.id))
@@ -4230,7 +4231,7 @@ class Plugin(indigo.PluginBase):
 			# 0.13 - If we are defining plugin devices they get added here
 			
 			# Homebridge-iTunes
-			if server.pluginProps["itunes_control"]:
+			if server.pluginProps["itunes_control"] == 1:
 				config["addons"] = config["addons"] + 1
 			
 			if config["addons"] == 0:

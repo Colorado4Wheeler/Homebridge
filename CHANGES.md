@@ -3,6 +3,13 @@ Release Notes
 
 Since many users have been running the release candidate version for some time with no issues, this release officially is the 1.0.0 release.
 
+Version 1.0.1
+---------------
+
+* Fixed typo that prevented the plugin from creating it's config folder
+* Fixed typo that would try to load the iTunes plugin when it was not configured to be loaded
+* Removed erroneous folders from the plugin structure that was causing user confusion
+
 Version 1.0.0
 ---------------
 
