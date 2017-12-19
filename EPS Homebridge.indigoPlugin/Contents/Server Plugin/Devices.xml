@@ -2216,6 +2216,168 @@ This device type is currently experimental, use at your own risk.</Label>
 		<UiDisplayStateId>statedisplay</UiDisplayStateId>
 	</Device>
 	
+	<!-- =========== SONOS ZONEPLAYER =========== -->
+	<Device type="relay" id="Homebridge-SonosZP">
+		<Name>Homebridge Sonos ZonePlayer</Name>
+		<ConfigUI>
+			<Field type="label" id="lbl_plugin" >
+				<Label>This device type is currently experimental, use at your own risk.  Please refer to the NPM page for HomeBridge-ZP for details.</Label>
+			</Field>
+			
+			<Field id="sep_plugin" type="separator" />
+			
+			<Field id="serverDevice" type="menu" >
+				<Label>Homebridge server:</Label>
+				<List class="indigo.devices" filter="com.eps.indigoplugin.homebridge.Homebridge-Server"/>
+			</Field>
+			
+			<Field id="sep_server" type="separator" />
+			
+			<Field type="textfield" id="name" defaultValue="Sonos ZP" >
+				<Label>Sonos name:</Label>
+			</Field>
+			
+			<Field id="sep_name" type="separator" />
+			
+			<Field type="checkbox" id="speakers" defaultValue="false">
+				<Label> </Label>
+				<Description>Enable multi-zone speakers</Description>
+			</Field>
+			
+			<Field type="menu" id="service" defaultValue="switch">
+				<Label>Speaker service type:</Label>
+				<List>
+					<Option value="switch">Switch and Volume</Option>
+					<Option value="speaker">Speaker and Volume</Option>
+					<Option value="light">Lightbulb and Brightness</Option>
+					<Option value="fan">Fan and Rotation Speed</Option>
+				</List>
+			</Field>
+			
+			<Field type="checkbox" id="brightness" defaultValue="false">
+				<Label> </Label>
+				<Description>Enable volume as brightness</Description>
+			</Field>
+			
+			<Field id="sep_brightness" type="separator" />
+			
+			<Field type="checkbox" id="changehost" defaultValue="false">
+				<Label> </Label>
+				<Description>Manually provide Sonos host values</Description>
+			</Field>			
+			
+			<Field type="textfield" id="host" defaultValue="192.168.1.10" visibleBindingId="changehost" visibleBindingValue="true" alwaysUseInDialogHeightCalc="true">
+				<Label>Host IP:</Label>
+			</Field>
+			
+			<Field type="textfield" id="port" defaultValue="0" visibleBindingId="changehost" visibleBindingValue="true" alwaysUseInDialogHeightCalc="true">
+				<Label>Port (0 for random):</Label>
+			</Field>
+			
+			<Field type="textfield" id="searchTimeout" defaultValue="2" visibleBindingId="changehost" visibleBindingValue="true" alwaysUseInDialogHeightCalc="true" >
+				<Label>Search timeout:</Label>
+			</Field>
+			
+			<Field type="textfield" id="subscriptionTimeout" defaultValue="30" visibleBindingId="changehost" visibleBindingValue="true" alwaysUseInDialogHeightCalc="true" >
+				<Label>Subscription timeout:</Label>
+			</Field>
+			
+
+			
+		</ConfigUI>
+		
+		<States>
+			<!-- All EPS plugins have this state and use it for the Indigo lists -->
+			<State id="status">
+				<ValueType>String</ValueType>
+				<TriggerLabel>Statys</TriggerLabel>
+				<ControlPageLabel>Status</ControlPageLabel>
+			</State>
+		</States>
+		<UiDisplayStateId>statedisplay</UiDisplayStateId>
+	</Device>	
+	
+	<!-- =========== WEATHER UNDERGROUND =========== -->
+	<Device type="relay" id="Homebridge-WUnderground">
+		<Name>Homebridge Weather Underground</Name>
+		<ConfigUI>
+			<Field type="label" id="lbl_plugin" >
+				<Label>This device type is currently experimental, use at your own risk.  Please refer to the NPM page for HomeBridge-Wunderground for details.</Label>
+			</Field>
+			
+			<Field id="sep_plugin" type="separator" />
+			
+			<Field id="serverDevice" type="menu" >
+				<Label>Homebridge server:</Label>
+				<List class="indigo.devices" filter="com.eps.indigoplugin.homebridge.Homebridge-Server"/>
+			</Field>
+			
+			<Field id="sep_server" type="separator" />
+			
+			<Field type="textfield" id="name" defaultValue="Weather Underground" >
+				<Label>HomeKit name:</Label>
+			</Field>
+			
+			<Field id="sep_name" type="separator" />
+			
+			<Field type="checkbox" id="speakers" defaultValue="false">
+				<Label> </Label>
+				<Description>Enable multi-zone speakers</Description>
+			</Field>
+			
+			<Field type="menu" id="service" defaultValue="switch">
+				<Label>Speaker service type:</Label>
+				<List>
+					<Option value="switch">Switch and Volume</Option>
+					<Option value="speaker">Speaker and Volume</Option>
+					<Option value="light">Lightbulb and Brightness</Option>
+					<Option value="fan">Fan and Rotation Speed</Option>
+				</List>
+			</Field>
+			
+			<Field type="checkbox" id="brightness" defaultValue="false">
+				<Label> </Label>
+				<Description>Enable volume as brightness</Description>
+			</Field>
+			
+			<Field id="sep_brightness" type="separator" />
+			
+			<Field type="checkbox" id="changehost" defaultValue="false">
+				<Label> </Label>
+				<Description>Manually provide Sonos host values</Description>
+			</Field>			
+			
+			<Field type="textfield" id="host" defaultValue="192.168.1.10" visibleBindingId="changehost" visibleBindingValue="true" alwaysUseInDialogHeightCalc="true">
+				<Label>Host IP:</Label>
+			</Field>
+			
+			<Field type="textfield" id="port" defaultValue="0" visibleBindingId="changehost" visibleBindingValue="true" alwaysUseInDialogHeightCalc="true">
+				<Label>Port (0 for random):</Label>
+			</Field>
+			
+			<Field type="textfield" id="searchTimeout" defaultValue="2" visibleBindingId="changehost" visibleBindingValue="true" alwaysUseInDialogHeightCalc="true" >
+				<Label>Search timeout:</Label>
+			</Field>
+			
+			<Field type="textfield" id="subscriptionTimeout" defaultValue="30" visibleBindingId="changehost" visibleBindingValue="true" alwaysUseInDialogHeightCalc="true" >
+				<Label>Subscription timeout:</Label>
+			</Field>
+			
+
+			
+		</ConfigUI>
+		
+		<States>
+			<!-- All EPS plugins have this state and use it for the Indigo lists -->
+			<State id="status">
+				<ValueType>String</ValueType>
+				<TriggerLabel>Statys</TriggerLabel>
+				<ControlPageLabel>Status</ControlPageLabel>
+			</State>
+		</States>
+		<UiDisplayStateId>statedisplay</UiDisplayStateId>
+	</Device>	
+	
 	<!-- =========== INDIGO SERVER =========== -->
 	<Device type="relay" id="Homebridge-Server">
 		<Name>Homebridge Indigo Server</Name>

@@ -1185,7 +1185,7 @@ class Plugin(indigo.PluginBase):
 				if dev.pluginProps["methodOn"] == "none":
 					return True
 					
-			elif dev.deviceTypeId == "Homebridge-Server" or dev.deviceTypeId == "Homebridge-Custom":
+			elif dev.deviceTypeId == "Homebridge-Server" or dev.deviceTypeId == "Homebridge-Custom" or dev.deviceTypeId == "Homebridge-Guest":
 				self.homebridgeStart (dev)
 				return True
 				
@@ -1221,7 +1221,7 @@ class Plugin(indigo.PluginBase):
 				if dev.pluginProps["methodOff"] == "none":
 					return True	
 					
-			elif dev.deviceTypeId == "Homebridge-Server" or dev.deviceTypeId == "Homebridge-Custom":
+			elif dev.deviceTypeId == "Homebridge-Server" or dev.deviceTypeId == "Homebridge-Custom" or dev.deviceTypeId == "Homebridge-Guest":
 				self.homebridgeStop (dev)
 				return True
 				
@@ -3788,6 +3788,7 @@ class Plugin(indigo.PluginBase):
 			# Count up add-ons
 			config["addons"] = 0
 			config["camera"] = 0
+			config["sonos"] = 0
 			
 			includeDev = []
 			excludeDev = []
@@ -3808,6 +3809,12 @@ class Plugin(indigo.PluginBase):
 				
 				config["addons"] = config["addons"] + 1
 				config["camera"] = config["camera"] + 1
+				
+			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Camera"):
+				if dev.pluginProps["serverDevice"] != str(serverId): continue
+				
+				config["addons"] = config["addons"] + 1
+				config["sonos"] = config["sonos"] + 1	
 					
 			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Wrapper"):
 				if dev.pluginProps["serverDevice"] != str(serverId): continue
@@ -4244,6 +4251,15 @@ class Plugin(indigo.PluginBase):
 				cfg +=	'\t\t{\n'		
 				cfg +=	'\t\t\t"platform": "{0}"\n'.format('iTunes')
 				cfg +=	'\t\t}\n'
+				
+			# Homebridge-SonosZP
+			if config["sonos"] > 1000:
+				cfg +=	'\t\t{\n'		
+				cfg +=	'\t\t\t"platform": "{0}"\n'.format('ZP')
+				
+				cfg +=	'\t\t\t"name": "{0}"\n'.format('ZP')
+				
+				cfg +=	'\t\t}\n'	
 			
 			# Homebridge-Camera-FFMPEG
 			if config["camera"] > 0:

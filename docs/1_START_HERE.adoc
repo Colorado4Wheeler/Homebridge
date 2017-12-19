@@ -18,7 +18,13 @@ image:/docs/images/product.png[]
 Along with the basic management for {hb}, {plugin} also expands the functionality of {hb} by allowing you to create wrappers and aliases for your Indigo devices where you can either simply rename a devices more suitable for Siri commands or wrap unsupported devices in a way that you can use Siri to control them.
 
 === System Requirements
-{plugin} has been written and optimized for Indigo version 7, earlier versions of Indigo cannot be used for this plugin.  Before you try to use this plugin you should have already installed {hb} according to their instructions.  In future versions we hope to automate the installation of {hb} with the plugin but for now you must have that installed FIRST.
+{plugin} has been written and optimized for Indigo version 7, earlier versions of Indigo cannot be used for this plugin. 
+
+=== Built In Homebridge Server
+{plugin} comes with a specially compiled version of Homebridge and does not require any additional installations or plugins to operate.  If you already have {hb} installed then refer to the next section for information about that.
+
+=== Using with {hb}
+If you have already installed {hb} and are using it for your home automation then {plugin} will work with your existing installation.  In fact, {plugin} was first designed as a way to manage {hb} before it evolved into having it's own version of Homebridge included.
 
 === Support
 All support for {plugin} is provided via the {forum} on Indigo's web site.  Please note that this is a companion to Homebridge Indigo, if you have questions about Homebridge or Homebridge Indigo you should post on the http://forums.indigodomo.com/viewforum.php?f=191&sid=2e9e87b22649331c6ff69819cca5519f[Homebridge Indigo Forum] instead.
@@ -36,3 +42,13 @@ There are two components to {hb}, an interface to Homebridge and an interface to
 * link:ServerDevices.adoc[Native Indigo Devices and Action Groups]
 * link:AliasDevice.adoc[Plugin Alias]
 * link:ServerDevices.adoc[Plugin Wrapper]
+
+== Additional {hb} Plugins and Services
+At the root of the plugin, {plugin} is meant to only take your Indigo devices and pass them into HomeKit for you to use, however as interesting Homebridge add-ons become available that users request that provide some functionality above and beyond that which Indigo offers via HomeKit then those integrations may make themselves into {plugin} as configurable options.  If any add-in is listed as experimental then it is USE AT YOUR OWN RISK and may be removed in a future version of the plugin if it becomes problematic in any way.
+
+Currently the following additional plugins are available:
+
+* iTunes (experimental)
+* link:CameraDevice.adoc[Camera (experimental)]
+* Sonos ZonePlayer (experimental)
+* Weather Underground (experimental)

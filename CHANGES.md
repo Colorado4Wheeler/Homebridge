@@ -1,7 +1,16 @@
 Release Notes
 ==========
 
-Since many users have been running the release candidate version for some time with no issues, this release officially is the 1.0.0 release.
+Version 1.0.2
+---------------
+
+* Integrated Sonos Zoneplayer plugin into embedded Homebridge (Homebridge-ZP) (experimental, this may be removed in future versions if it proves unstable) 
+* Integrated Weather Underground plugin into embedded Homebridge (Homebridge-Wunderground) (experimental, this may be removed in future versions if it proves unstable) 
+* Added Sonos Zoneplayer enable/disable to server configuration
+* Added Weather Underground API key to plugin configuration (required for device to work)
+* Added Weather Underground device, this will allow you to auto-configure if you use the WUnderground plugin as well
+* Fixed issue where a Guest server would not toggle on and off via the Indigo home UI
+
 
 Version 1.0.1
 ---------------
