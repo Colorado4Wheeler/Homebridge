@@ -1,7 +1,7 @@
 Homebridge Buddy
 ==========
 
-A plugin for the [Indigo](http://indigodomo.com) home automation system ()
+A plugin for the [Indigo](http://indigodomo.com) home automation system.
 
 As the name implies, it's a companion plugin to the Homebridge-Indigo system as well as a fully integrated and self contained version of Homebridge on its own.  This will fully manage the Homebridge-Indigo configuration file as well as dynamically reload Homebridge as needed when Indigo device changes require it.
 

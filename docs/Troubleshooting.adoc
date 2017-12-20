@@ -1,0 +1,241 @@
+:plugin: Homebridge Buddy
+:forum: http://forums.indigodomo.com/viewforum.php?f=192[Support Forum]
+:hb: Homebridge Indigo
+
+link:1_START_HERE.adoc[<< Return To Main Documentation]
+
+== Troubleshooting {plugin}
+
+As we find issues that you can correct yourself we'll keep this document updated.  Many issues we encounter are one-off and unique to the individual, environment or computer but those that we encounter more regularly will be added here both so you can try to resolve your issues but also as a reference for us to see if there is any way to automatically resolve these issues in the future via the code.
+
+=== General Troubleshooting
+
+While some fixes require very specific instructions, there are a few things that are common among most, if not all, troubleshooting steps.  You should be familiar with these diagnostic tools to help you nail down issues that aren't covered here.
+
+==== Your Indigo Console Window
+
+You may not be familiar with the Indigo event log because it may not have ever been opened, but most of our diagnostic information will log to that window and if you don't open it up you won't see important diagnostic information.  To view the window simply select Window -> Event Log in Indigo, or press Command-8:
+
+image:/docs/images/TroubleshootingEventLog.png[]
+
+image:/docs/images/TroubleshootingEventWindow.png[]
+
+
+==== Plugin Menu Output
+
+When you select the plugin menu option in Indigo and navigate to EPS {plugin} you are given a wide range of options:
+
+image:/docs/images/TroubleshootingPluginMenu.png[]
+
+===== Reload Homebridge
+
+Troubleshoots: Devices not showing in HomeKit, Devices not responding in HomeKit
+
+Selecting this option will prompt you to select which {plugin} server you want to reload or, if you have {hb} installed, your {hb} installation.  Sometimes restarting Homebridge can resolve your issues.
+
+===== Save Homebridge Config and Reload
+
+Troubleshoots: Devices not showing in HomeKit, Devices not responding in HomeKit, {plugin} server not staying started
+
+This option will force the configuration file to be rebuilt and the server to restart.  If you have problems with {plugin} not starting then it may be that your configuration has become corrupted and needs to be reloaded.  This is also handy if you are missing a device because it failed to save the configuration when you last modified it.
+
+===== Show Homebridge Log
+
+Troubleshoots: Any problem with {plugin} or {hb}
+
+This is your single most powerful diagnostic tool because it shows the native Homebridge log file for each server that you are running.  If you have any problem at all then this file will likely reveal what the cause of the problem is and even if you cannot figure it out yourself then posting this log to the forum will likely result in helpful tips from other users.  This will output the entire log to your event window so make sure that you open that to copy and paste the contents.
+
+image:/docs/images/TroubleshootingHBLog.png[]
+
+```
+[2017-12-19 08:54:03] Loaded plugin: homebridge-indigo
+[2017-12-19 08:54:03] Registering platform 'homebridge-indigo.Indigo'
+[2017-12-19 08:54:03] ---
+[2017-12-19 08:54:03] Loaded plugin: homebridge-itunes
+[2017-12-19 08:54:03] Registering platform 'homebridge-itunes.iTunes'
+[2017-12-19 08:54:03] ---
+[2017-12-19 08:54:04] Loaded plugin: homebridge-zp
+[2017-12-19 08:54:04] Registering platform 'homebridge-zp.ZP'
+[2017-12-19 08:54:04] ---
+[2017-12-19 08:54:04] Loaded config.json with 0 accessories and 2 platforms.
+[2017-12-19 08:54:04] ---
+[2017-12-19 08:54:04] Loading 2 platforms...
+[2017-12-19 08:54:04] [Homebridge Server] Initializing Indigo platform...
+[2017-12-19 08:54:04] [Homebridge Server] Indigo base URL is http://127.0.0.1:8176
+[2017-12-19 08:54:04] Initializing iTunes platform...
+[2017-12-19 08:54:04] Loading 0 accessories...
+[2017-12-19 08:54:04] [Homebridge Server] Indigo request: http://127.0.0.1:8176/devices.json/
+[2017-12-19 08:54:07] [Homebridge Server] Indigo request: http://127.0.0.1:8176/devices/Acme%20CP.json
+[2017-12-19 08:54:07] [Homebridge Server] Discovered Acme CP (ID 1333633804): Acme CP
+[2017-12-19 08:54:07] [Homebridge Server] Ignoring excluded ID 1333633804
+[2017-12-19 08:54:07] [Homebridge Server] Indigo request: http://127.0.0.1:8176/devices/Airfoil%20Server.json
+[2017-12-19 08:54:07] [Homebridge Server] Discovered Airfoil Instance (ID 979952624): Airfoil Server
+[2017-12-19 08:54:07] [Homebridge Server] Ignoring excluded ID 979952624
+[2017-12-19 08:54:07] [Homebridge Server] Indigo request: http://127.0.0.1:8176/devices/Alarm%20Clock%20-%20Guest%20Suite.json
+[2017-12-19 08:54:07] [Homebridge Server] Discovered Alarm Clock Control (ID 1090026902): Alarm Clock - Guest Suite
+[2017-12-19 08:54:07] [Homebridge Server] Ignoring excluded ID 1090026902
+[2017-12-19 08:54:07] [Homebridge Server] Indigo request: http://127.0.0.1:8176/devices/Alexa%20Hub%20%28Admin%29.json
+[2017-12-19 08:54:07] [Homebridge Server] Discovered Emulated Hue Bridge (ID 1563798651): Alexa Hub (Admin)
+[2017-12-19 08:54:07] [Homebridge Server] Ignoring excluded ID 1563798651
+[2017-12-19 08:54:07] [Homebridge Server] Indigo request: http://127.0.0.1:8176/devices/Alexa%20Hub%20%28Basement%29.json
+[2017-12-19 08:54:07] [Homebridge Server] Discovered Emulated Hue Bridge (ID 576834313): Alexa Hub (Basement)
+[2017-12-19 08:54:07] [Homebridge Server] Ignoring excluded ID 576834313
+[2017-12-19 08:54:07] [Homebridge Server] Indigo request: http://127.0.0.1:8176/devices/Alexa%20Hub%20%28Rooms%29.json
+[2017-12-19 08:54:07] [Homebridge Server] Discovered Emulated Hue Bridge (ID 1968790243): Alexa Hub (Rooms)
+[2017-12-19 08:54:07] [Homebridge Server] Ignoring excluded ID 1968790243
+[2017-12-19 08:54:07] [Homebridge Server] Indigo request: http://127.0.0.1:8176/devices/Alexa%20Hub%20%28Upstairs%29.json
+[2017-12-19 08:54:07] [Homebridge Server] Discovered Emulated Hue Bridge (ID 72046834): Alexa Hub (Upstairs)
+[2017-12-19 08:54:07] [Homebridge Server] Ignoring excluded ID 72046834
+[2017-12-19 08:54:07] [Homebridge Server] Indigo request: http://127.0.0.1:8176/devices/Apple%20TV%20%28HOUSE%20speaker%29.json
+[2017-12-19 08:54:07] [Homebridge Server] Discovered Speaker (ID 1072628145): Apple TV (HOUSE speaker)
+[2017-12-19 08:54:07] [Homebridge Server] Ignoring excluded ID 1072628145
+[2017-12-19 08:54:07] [Homebridge Server] Indigo request: http://127.0.0.1:8176/devices/Apple%20TV%201%20%28HOUSE%20speaker%29.json
+[2017-12-19 08:54:07] [Homebridge Server] Discovered Speaker (ID 1127513231): Apple TV 1 (HOUSE speaker)
+[2017-12-19 08:54:07] [Homebridge Server] Ignoring excluded ID 1127513231
+[2017-12-19 08:54:07] [Homebridge Server] Indigo request: http://127.0.0.1:8176/devices/Armoir.json
+[2017-12-19 08:54:07] [Homebridge Server] Discovered Homebridge Wrapper (ID 609933801): Armoir
+
+...
+
+[2017-12-19 08:54:12] [Homebridge Server] Initializing platform accessory 'TV'...
+[2017-12-19 08:54:12] [Homebridge Server] Initializing platform accessory 'Theater Lamp'...
+[2017-12-19 08:54:12] [Homebridge Server] Initializing platform accessory 'Torchiere'...
+[2017-12-19 08:54:12] [Homebridge Server] Initializing platform accessory 'Vanity'...
+[2017-12-19 08:54:12] [Homebridge Server] Initializing platform accessory 'Washroom'...
+[2017-12-19 08:54:12] [Homebridge Server] Initializing platform accessory 'Wolf Light'...
+[2017-12-19 08:54:12] [Homebridge Server] Initializing platform accessory 'Wolf Switch'...
+[2017-12-19 08:54:12] [Homebridge Server] Initializing platform accessory 'Zone 1'...
+[2017-12-19 08:54:12] [Homebridge Server] Initializing platform accessory 'Zone 2'...
+[2017-12-19 08:54:12] [Homebridge Server] Initializing platform accessory 'Zone 3'...
+[2017-12-19 08:54:12] [Homebridge Server] Initializing platform accessory 'Zone 4'...
+[2017-12-19 08:54:12] [Homebridge Server] Initializing platform accessory 'Zone 5'...
+[2017-12-19 08:54:12] [Homebridge Server] Initializing platform accessory 'Zone 6'...
+[2017-12-19 08:54:12] [Homebridge Server] Initializing platform accessory 'Zone 7'...
+[2017-12-19 08:54:12] [Homebridge Server] Initializing platform accessory 'Zone 8'...
+Scan this code with your HomeKit App on your iOS device to pair with Homebridge:
+                       
+    ┌────────────┐     
+    │ 031-45-154 │     
+    └────────────┘     
+                       
+[2017-12-19 08:54:12] Homebridge is running on port 51826.
+```
+
+===== Show Homebridge Configuration
+
+Troubleshoots: Any problem with {plugin} or {hb}
+
+Sometimes it's important to verify that there is nothing strange in your {plugin} configuration, and that is where this diagnostic tool comes in handy.  Again, this will output to your event log window.
+
+
+```
+   EPS - Homebridge Buddy          {
+        "accessories": [], 
+        "bridge": {
+                "username": "CC:22:3D:E3:CE:30", 
+                "name": "Homebridge XYZ", 
+                "pin": "031-45-154", 
+                "port": "51828"
+        }, 
+        "description": "Homebridge-Indigo configuration generated by EPS Homebridge Buddy on 2017-09-26 10:56:59 for device Homebridge Server", 
+        "platforms": [
+                {
+                        "username": "", 
+                        "includeIds": [
+                                "609933801", 
+                                "1848934248", 
+                                "853670142", 
+                                "228365860" 
+                        ], 
+                        "treatAsGarageDoorIds": [
+                                "239040041"
+                        ], 
+                        "protocol": "http", 
+                        "name": "Homebridge Kat", 
+                        "includeActions": false, 
+                        "treatAsMotionSensorIds": [
+                                "32019595", 
+                                "122385429", 
+                                "1460874196"                                
+                        ], 
+                        "treatAsSwitchIds": [
+                                "506465639", 
+                                "374453874", 
+                                "1126841205", 
+                                "1075049540", 
+                                "840587606", 
+                                "96740477", 
+                                "1506273063", 
+                                "170811618"
+                        ], 
+                        "excludeIds": [
+                                "506465639", 
+                                "1418968733", 
+                                "1126841205", 
+                                "1075049540", 
+                                "840587606"
+                        ], 
+                        "treatAsWindowCoveringIds": [
+                                "1848934248", 
+                                "228365860", 
+                                "1418968733", 
+                                "969031306"
+                        ], 
+                        "platform": "Indigo", 
+                        "host": "127.0.0.1", 
+                        "thermostatsInCelsius": false, 
+                        "treatAsLockIds": [
+                                "1517070290"
+                        ], 
+                        "path": "", 
+                        "password": "", 
+                        "accessoryNamePrefix": "", 
+                        "port": "8176"
+                }, 
+                {
+                        "platform": "iTunes"
+                }
+        ]
+}
+```
+
+===== Show Support Information
+
+Troubleshoots: Any problem with {plugin} or {hb}
+
+This should be a screenshot or copy-and-paste that you add to any request for support as it will let us know what version of the plugin and libraries you are running, it may be as simple as requesting that you update your installation to a newer version.
+
+image:/docs/images/TroubleshootingEventWindow.png[]
+
+
+===== Support Data Dump
+
+Troubleshoots: Device specific issues where a device either doesn't appear or it doesn't do what you expect it to do when you use it with HomeKit
+
+There won't be as much need for this unless you have device specific issues as this is a full data dump of all devices currently being used with {plugin} and all of their relevant parameters.  For ease of reading you should clear your log window BEFORE you do this dump so you can copy and paste the entire contents of the window as it will be a significant amount of data.
+
+===== Support Comprehensive Data Dump
+
+Troubleshoots: Device specific issues where a device either doesn't appear or it doesn't do what you expect it to do when you use it with HomeKit or when there is an issue that we are simply unable to find any resolution to
+
+There won't be as much need for this unless you have device specific issues as this is a full data dump of all devices currently being used with {plugin} and all of their relevant parameters as well as every saved state and plugin preference.  For ease of reading you should clear your log window BEFORE you do this dump so you can copy and paste the entire contents of the window as it will be a significant amount of data.
+
+
+==== Terminal Diagnostics
+
+These processes are significantly more technical and require that you maneuver around the terminal shell to do some digging.
+
+This area is still under construction.
+
+===== Checking The Running {hb} or {plugin} Servers
+
+Executing a simple 'ps ax' will let us know how many Homebridge servers are running and what their PID is, this is handy if we know that Indigo is configured for, say, two servers but only one process shows up here.
+
+image:/docs/images/TroubleshootingPSAX.png[]
+
+
+=== RELATED LINKS
+* link:HomebridgeConfiguration.adoc[Homebridge Server Device Configuration]
+
+link:1_START_HERE.adoc[<< Return To Main Documentation]
+
