@@ -1,6 +1,6 @@
 # eps.update - Check for updates to the plugin and/or libraries
 #
-# Copyright (c) 2016 ColoradoFourWheeler / EPS
+# Copyright (c) 2018 ColoradoFourWheeler / EPS
 #
 
 import indigo

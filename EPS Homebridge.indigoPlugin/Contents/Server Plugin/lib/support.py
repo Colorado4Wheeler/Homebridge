@@ -1,6 +1,6 @@
 # eps.support - Various support functions
 #
-# Copyright (c) 2016 ColoradoFourWheeler / EPS
+# Copyright (c) 2018 ColoradoFourWheeler / EPS
 #
 
 import indigo
@@ -42,7 +42,7 @@ class support:
 			ret += self.factory.ui.debugLine ("All support inquiries, questions or comments go to:")
 			ret += self.factory.ui.debugLine ("   http://forums.indigodomo.com/viewforum.php?f=192")
 			ret += self.factory.ui.debugLine (" ")
-			ret += self.factory.ui.debugLine ("Copyright (c) 2017 - Colorado4Wheeler & EPS")
+			ret += self.factory.ui.debugLine ("Copyright (c) 2018 - Colorado4Wheeler & EPS")
 			ret += self.factory.ui.debugLine (" ")
 			ret += self.factory.ui.debugHeaderEx ()
 			

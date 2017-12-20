@@ -233,6 +233,59 @@ Executing a simple 'ps ax' will let us know how many Homebridge servers are runn
 
 image:/docs/images/TroubleshootingPSAX.png[]
 
+===== Getting To The {plugin} Homebridge Configuration and Log Folder
+
+To start you need to first change to the following path, using quotes as indicated:
+
+```cd "/Library/Application Support/Perceptive Automation/Indigo 7/Plugins/EPS Homebridge.indigoPlugin/Contents/Server Plugin/bin/hb/homebridge"```
+
+You can see from here that you are in the heart of the Homebridge distribution for {plugin}:
+
+```
+HOUSE:homebridge administrator$ ls -l
+total 96
+drwxrwxrwx+ 14 administrator  staff  476 Dec 19 08:54 1953136859
+drwxrwxrwx+ 14 administrator  staff  476 Dec 17 14:20 416640932
+-rw-rw-rw-+  1 administrator  staff  488 Sep 23 08:13 com.webdeck.homebridge.plist.template
+-rwxrwxrwx+  1 administrator  staff  579 Sep 23 08:13 createdir
+lrwxrwxrwx+  1 administrator  staff   22 Nov 10  2016 homebridge -> ../node/bin/homebridge
+-rwxrwxrwx+  1 administrator  staff  236 Sep 23 08:13 installhomebridge
+-rwxrwxrwx+  1 administrator  staff  335 Sep 23 08:13 load
+lrwxrwxrwx+  1 administrator  staff   16 Nov 10  2016 node -> ../node/bin/node
+lrwxrwxrwx+  1 administrator  staff   15 Nov 10  2016 npm -> ../node/bin/npm
+-rwxrwxrwx+  1 administrator  staff  742 Sep 23 08:13 runhomebridge
+-rwxrwxrwx+  1 administrator  staff  337 Sep 23 08:13 unload
+-rwxrwxrwx+  1 administrator  staff  236 Sep 23 08:13 updatehomebridge
+```
+
+You are in dangerous territory, any changes made here or scripts executed can have serious consequences on your HomeKit.  You'll notice one or more folders that are numbered, these numbers correspond to the Indigo device ID of each server that you have added and inside of each folder are the particulars for that server, including the log file, configuration file and plugin links.
+
+```
+HOUSE:homebridge administrator$ cd 1953136859
+HOUSE:1953136859 administrator$ ls -l
+total 179472
+drwxr-xr-x  3 administrator  staff       102 Sep 26 11:30 accessories
+-rw-r--r--  1 administrator  staff       707 Sep 26 11:29 com.webdeck.homebridge.1953136859.plist
+-rw-rw-rw-+ 1 administrator  staff      6422 Dec 19 08:53 config.json
+-rw-r--r--  1 administrator  staff    110233 Dec 19 10:17 homebridge.log
+-rw-r--r--  1 administrator  staff    103979 Dec 19 08:53 homebridge.log.1
+-rw-r--r--  1 administrator  staff    208924 Dec 18 10:46 homebridge.log.2
+-rw-r--r--  1 administrator  staff    105960 Dec 17 16:40 homebridge.log.3
+-rw-r--r--  1 administrator  staff         0 Dec 17 14:15 homebridge.log.4
+-rw-r--r--  1 administrator  staff    630511 Dec 17 14:00 homebridge.log.5
+-rw-r--r--  1 administrator  staff  90255423 Dec  8 16:17 homebridge.log.6
+-rw-r--r--  1 administrator  staff    449365 Nov 25 09:50 homebridge.log.7
+drwxrwxrwx+ 4 administrator  staff       136 Sep 26 11:30 persist
+```
+
+Notice that you have many generations of logs inside your server folders, so you can go back fairly far to see the history of what's been happening.
+
+There are a few things to know about this folder as far as troubleshooting goes:
+
+* No Log Files: {plugin} servers have never started, it could be a corrupt installation of {plugin} and you should probably delete the plugin, download the latest version and reinstall it
+* No Config Files: {plugin} was unable to write to your folder, perhaps because of security on your Mac, you should probably delete the plugin, download the latest version and reinstall it
+* You are missing the com.webdeck.homebridge.XXXX.plist file: This is the file required to start and stop your server, if it's not present then you may have a corrupt installation
+
 
 === RELATED LINKS
 * link:HomebridgeConfiguration.adoc[Homebridge Server Device Configuration]

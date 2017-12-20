@@ -1,6 +1,6 @@
 # lib.iutil - Some useful miscellaneous utilities
 #
-# Copyright (c) 2016 ColoradoFourWheeler / EPS
+# Copyright (c) 2018 ColoradoFourWheeler / EPS
 #
 
 import indigo

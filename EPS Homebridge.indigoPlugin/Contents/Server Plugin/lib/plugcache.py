@@ -1,6 +1,6 @@
 # lib.plugcache - Reads plugin information into a re-usable cache
 #
-# Copyright (c) 2017 ColoradoFourWheeler / ext
+# Copyright (c) 2018 ColoradoFourWheeler / ext
 #
 
 import indigo

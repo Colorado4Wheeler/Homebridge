@@ -1,6 +1,6 @@
 # eps.plug - Mirrors definitions from Indigo API and passes them to other routines if/when needed
 #
-# Copyright (c) 2016 ColoradoFourWheeler / EPS
+# Copyright (c) 2018 ColoradoFourWheeler / EPS
 #
 
 import indigo

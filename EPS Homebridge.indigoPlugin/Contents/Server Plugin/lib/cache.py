@@ -1,6 +1,6 @@
 # lib.cache - Caches devices and items from Indigo for lookup
 #
-# Copyright (c) 2016 ColoradoFourWheeler / EPS
+# Copyright (c) 2018 ColoradoFourWheeler / EPS
 #
 
 import indigo
