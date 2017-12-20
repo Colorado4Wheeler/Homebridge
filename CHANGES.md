@@ -1,6 +1,12 @@
 Release Notes
 ==========
 
+Version 1.0.3
+---------------
+
+* Added better recovery when encountering an XML header problem (such as with Prowl or Network Devices) so that the plugin doesn't stop starting the HBB server
+* Added special exception for Network Devices to automatically skip the plugin until the XML header issue is resolved
+
 Version 1.0.2
 ---------------
 

@@ -43,7 +43,7 @@ class Plugin(indigo.PluginBase):
 	# Define the plugin-specific things our engine needs to know
 	TVERSION	= "3.2.1"
 	PLUGIN_LIBS = ["cache", "plugcache", "actions", "devices"] #["conditions", "cache", "actions"] #["cache"]
-	UPDATE_URL 	= ""
+	UPDATE_URL 	= "" # No longer needed, will be removed in future versions (commenting this out causes a startup error)
 		
 	# Plugin specific globals
 	hbNames = ["CC:22:3D:E3:CE:30", "CC:22:3D:E3:CE:32", "CC:22:3D:E3:CE:E0", "CC:22:3D:E3:CE:E2", "CC:22:3D:E3:CE:EA", "CC:22:3D:E3:CE:EB", "CC:22:3D:E3:CE:EC", "CC:22:3D:E3:CE:EE", "CC:22:3D:E3:CE:F0", "CC:22:3D:E3:CE:F2"]

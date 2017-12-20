@@ -1,0 +1,93 @@
+:plugin: Homebridge Buddy
+:forum: http://forums.indigodomo.com/viewforum.php?f=192[Support Forum]
+:hb: Homebridge Indigo
+
+link:1_START_HERE.adoc[<< Return To Main Documentation]
+
+[NOTE]
+====
+This device and integration is currently EXPERIMENTAL and may be removed or changed extensively depending on the results of user testing.
+====
+
+=== Overview
+
+This add-in for {plugin} allows you to trigger If-This-Then-That (IFTTT) actions from HomeKit as if they were a switch device.
+
+=== Creating Your IFTTT Applet
+
+Before you start you should have https://ifttt.com/maker_webhooks[set up your IFTTT applet] (previously called recipe) and Webhook (previously called Maker Channel).  Once done you will have the Webhook key required for this plugin.
+
+==== Step 1: Obtain an IFTTT Key
+
+Go to IFTTT website, sign up for an account. At the top click on ‘Search’ and find ‘Maker’ (Update: this is now named 'Webhook'), and then click the ‘Connect’ button to create a Maker (Webhook) channel. Click on the gears icon (Settings) on the top-right of the Maker (Webhook) channel to view your key. Copy this key to OpenSprinkler’s IFTTT key setting.
+
+image:/docs/images/ifttt_tutorial1.png[]
+image:/docs/images/ifttt_tutorial2.png[]
+image:/docs/images/ifttt_tutorial3.png[]
+
+**Warning:** *clicking on ‘Edit connection’ will cause the key to be replaced. Once replaced, the previous key will be invalid and cannot be recovered!*
+
+==== Step 2: Create an IFTTT Applet
+
+The idea of IFTTT is that you can connect a trigger (this) with an action (that). For example, if the Maker (Webhook) channel receives a message from OpenSprinkler, then send a text message to my phone. These are formally called recipes, and are now called Applets.
+
+At the time of this writing, IFTTT did not allow creating applets using the web interface, and instead required using the mobile app. Since then they have allowed using the web interface to create applets. So the examples below are captured in the IFTTT mobile app, but you can do so the same way in a web browser by logging in to their website.
+
+Install the IFTTT mobile app on your smartphone, log in, and go to the My Applets tab, click on the + icon at the top-right to create a new Applet.
+
+* For trigger service (this), search and select ‘Maker’ (Update: this is now named Webhook). Set sprinkler as the ‘Event Name’ of the web request.
+* For action (that), search and select a desired notification method, such as ‘SMS’, or ‘email’. You can shorten the message body suitably, but keep Value1 in the content as the firmware uses this variable to pass notification content. You can modify the message body later to suit your need.
+
+image:/docs/images/ifttt_app1.png[]
+image:/docs/images/ifttt_app2.png[]
+image:/docs/images/ifttt_app3.png[]
+image:/docs/images/ifttt_app4.png[]
+image:/docs/images/ifttt_app5.png[]
+image:/docs/images/ifttt_app6.png[]
+image:/docs/images/ifttt_app7.png[]
+
+==== Step 3: Select Events:
+Go back to the OpenSprinkler app / UI, Edit Options -> Integration -> ‘Configure Events’. The following events are supported:
+
+* Program Start: triggered when a program is scheduled.
+* Rain Sensor Update: triggered when rain sensor is enabled and the status changes (or rain delay status changes).
+* Flow Sensor Update: triggered when flow sensor is enabled and upon the completion of a program.
+* Weather Update: triggered when there is weather update (i.e. water level has changed) or external IP changes.
+* Controller Reboot: triggered when the controller is rebooted.
+* Station Run: triggered when a station finishes running. (NOTE: this is likely to generate a large number of notifications, so enable this at your own discretion).
+
+**Note:** notifications that are sent too close in time may be dropped. For example, if multiple notifications were sent within a couple of seconds, it’s likely that only the last one will appear while the other messages will be dropped.
+
+=== Setting Up The IFTTT Key In {plugin}
+
+
+
+=== Setting Up The Device
+
+Start by adding a device in Indigo as you normally would, selecting EPS - Homebridge Buddy as the type and Homebridge IFTTT as the model.
+
+
+
+
+==== Setting up the device
+Start by adding a device in Indigo as you normally would, selecting EPS - Homebridge Buddy as the type and Homebridge Camera as the model.
+
+image:/docs/images/CameraDeviceStep1.png[]
+
+Now click Edit Device Settings to configure your parameters.
+
+image:/docs/images/CameraDeviceStep2.png[]
+
+When you select which Homebridge server will be hosting this camera you will notice that the only choices you have are for any {hb} servers you have configured and not any {plugin} built-in servers, this is by design as you can only add cameras to {hb} servers because of the requirement of ffmpeg and Homebridge-Camera.  Select your server and give your camera a meaningful name.
+
+image:/docs/images/CameraDeviceStep3.png[]
+
+From this point you will need to do some poking around on Google to find the parameters you need for your camera, such as the video URL and still URL.  When editing the video and still sources, only change the camera IP address and optional filename, for now you will need to leave the -re -i rtsp:// and the -i http:// portions of these lines to ensure the encoding happens properly.  In future releases these may be incorporated but for now they are left to your preferences.
+
+Save your device and give it a meaningful name.  Once you save your device you should notice a console log message indicating that the configuration has been saved and that {hb} is restarting, if not you can do this manually via the menu.
+
+=== RELATED LINKS
+* link:HomebridgeConfiguration.adoc[Homebridge Server Device Configuration]
+
+link:1_START_HERE.adoc[<< Return To Main Documentation]
+

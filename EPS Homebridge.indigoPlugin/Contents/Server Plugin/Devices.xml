@@ -2297,12 +2297,12 @@ This device type is currently experimental, use at your own risk.</Label>
 		<UiDisplayStateId>statedisplay</UiDisplayStateId>
 	</Device>	
 	
-	<!-- =========== WEATHER UNDERGROUND =========== -->
-	<Device type="relay" id="Homebridge-WUnderground">
-		<Name>Homebridge Weather Underground</Name>
+	<!-- =========== IFTTT =========== -->
+	<Device type="relay" id="Homebridge-Weatherunderground">
+		<Name>If-This-Then-That</Name>
 		<ConfigUI>
 			<Field type="label" id="lbl_plugin" >
-				<Label>This device type is currently experimental, use at your own risk.  Please refer to the NPM page for HomeBridge-Wunderground for details.</Label>
+				<Label>This device type is currently experimental, use at your own risk.  Please refer to the NPM page for HomeBridge-ifttt for details.</Label>
 			</Field>
 			
 			<Field id="sep_plugin" type="separator" />
@@ -2314,11 +2314,16 @@ This device type is currently experimental, use at your own risk.</Label>
 			
 			<Field id="sep_server" type="separator" />
 			
-			<Field type="textfield" id="name" defaultValue="Weather Underground" >
+			<Field type="textfield" id="name" defaultValue="IFTTT" >
 				<Label>HomeKit name:</Label>
 			</Field>
 			
 			<Field id="sep_name" type="separator" />
+			
+			<Field type="textfield" id="buttonname" defaultValue="" >
+				<Label>Acessory name:</Label>
+			</Field>
+			
 			
 			<Field type="checkbox" id="speakers" defaultValue="false">
 				<Label> </Label>

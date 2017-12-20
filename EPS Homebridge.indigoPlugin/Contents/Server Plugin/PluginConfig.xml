@@ -94,11 +94,11 @@
 	
 	<!-- *********** ADDINS CONFIG *********** -->
 	
-	<Field type="textfield" id="wunderground_api_key" defaultValue=""  >
-		<Label>Weather Underground API Key:</Label>
+	<Field type="textfield" id="ifttt_key" defaultValue=""  >
+		<Label>IFTTT Webhooks Key:</Label>
 	</Field>
 	
-	<Field id="sep_wunderground" type="separator" />
+	<Field id="sep_ifttt" type="separator" />
 	
 	<!-- *********** HOMEBRIDGE *********** -->
 	

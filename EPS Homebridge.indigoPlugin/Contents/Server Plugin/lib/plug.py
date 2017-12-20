@@ -228,8 +228,9 @@ class plug:
 			while True:
 				self._callBack (BEFORE, [])
 				
-				if "update" in dir(self.factory):
-					self.factory.update.check (False, False)
+				# Removed any update checking as of 2.2.1 because the Indigo Plugin Store renders is obsolete
+				#if "update" in dir(self.factory):
+				#	self.factory.update.check (False, False)
 					
 				if "devices" in dir(self.factory):
 					self.factory.devices.runConcurrentThread()

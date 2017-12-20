@@ -11,18 +11,31 @@
 
 const http = require('http');
 const os = require('os');
+const semver = require('semver');
 const SonosModule = require('sonos');
 const util = require('util');
 const xml2js = require('xml2js');
 
 const ZPAccessoryModule = require('./ZPAccessory');
+const ZPAlarmModule = require('./ZPAlarm');
 const ZPAccessory = ZPAccessoryModule.ZPAccessory;
-const packageConfig = require('../package.json');
+const packageJson = require('../package.json');
 
 module.exports = {
   ZPPlatform: ZPPlatform,
   setHomebridge: setHomebridge
 };
+
+function minVersion(range) {
+  let s = range.split(' ')[0];
+  while (s) {
+    if (semver.valid(s)) {
+      break;
+    }
+    s = s.substring(1);
+  }
+  return s ? s : undefined;
+}
 
 // =======================================================================================
 //
@@ -36,6 +49,7 @@ let homebridgeVersion;
 function setHomebridge(homebridge) {
   // Link accessory modules to Homebridge.
   ZPAccessoryModule.setHomebridge(homebridge);
+  ZPAlarmModule.setHomebridge(homebridge);
 
   Accessory = homebridge.platformAccessory;
   Service = homebridge.hap.Service;
@@ -142,6 +156,28 @@ function setHomebridge(homebridge) {
   util.inherits(Characteristic.Track, Characteristic);
   Characteristic.Track.UUID = '00000047-0000-1000-8000-656261617577';
 
+  // Custom homekit characteristic for enabled.
+  // Source: homebride-hue.
+  Characteristic.Enabled = function() {
+    Characteristic.call(this, 'Enabled', Characteristic.Enabled.UUID);
+    this.setProps({
+      format: Characteristic.Formats.BOOL,
+      perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY,
+      	      Characteristic.Perms.WRITE]
+    });
+    this.value = this.getDefaultValue();
+  };
+  util.inherits(Characteristic.Enabled, Characteristic);
+  Characteristic.Enabled.UUID = '00000022-0000-1000-8000-656261617577';
+
+  // Custom homekit service for alarm.
+  Service.Alarm = function(displayName, subtype) {
+      Service.call(this, displayName, Service.Alarm.UUID, subtype);
+      this.addCharacteristic(Characteristic.Enabled);
+    };
+    util.inherits(Service.Alarm, Service);
+    Service.Alarm.UUID = '00000048-0000-1000-8000-656261617577';
+
 }
 
 // =======================================================================================
@@ -152,6 +188,7 @@ function ZPPlatform(log, config) {
   this.name = config.name || 'ZP';
   this.host = config.host || this.address();
   this.port = config.port || 0;
+  this.packageJson = packageJson;
   switch (config.service) {
     case undefined:
       /* Falls through */
@@ -188,11 +225,24 @@ function ZPPlatform(log, config) {
   this.zpAccessories = {};
 
   var msg = util.format.apply(msg, [
-    '%s v%s, node %s, homebridge v%s', packageConfig.name,
-    packageConfig.version, process.version, homebridgeVersion
+    '%s v%s, node %s, homebridge v%s', packageJson.name,
+    packageJson.version, process.version, homebridgeVersion
   ]);
   this.infoMessage = msg;
   this.log.info(this.infoMessage);
+  if (semver.clean(process.version) !== minVersion(packageJson.engines.node)) {
+    this.log.warn(
+      'warning: not using recommended node version v%s LTS',
+      minVersion(packageJson.engines.node)
+    );
+  }
+  if (homebridgeVersion !== minVersion(packageJson.engines.homebridge)) {
+    this.log.warn(
+      'warning: not using recommended homebridge version v%s',
+      minVersion(packageJson.engines.homebridge)
+    );
+  }
+  this.log.debug('config.json: %j', config);
 
   this.parser = new xml2js.Parser();
 
@@ -245,13 +295,13 @@ ZPPlatform.prototype.listen = function(callback) {
         response.writeHead(200, {'Content-Type': 'text/plain'});
         response.write(this.infoMessage);
       } else if (request.method === 'NOTIFY') {
-	      const array = request.url.split('/');
+        const array = request.url.split('/');
         const accessory = this.zpAccessories[array[2]];
-	      const service = array[3];
-	      if (array[1] === 'notify' && accessory !== null && service !== null) {
-	        this.parser.parseString(request.body.toString(), function(error, json) {
-	          const properties = json['e:propertyset']['e:property'];
-	          let obj = {};
+        const service = array[3];
+        if (array[1] === 'notify' && accessory !== null && service !== null) {
+          this.parser.parseString(request.body.toString(), function(error, json) {
+            const properties = json['e:propertyset']['e:property'];
+            let obj = {};
             for (const prop of properties) {
               for (const key in prop) {
                 obj[key] = prop[key][0];
@@ -276,34 +326,59 @@ ZPPlatform.prototype.findPlayers = function() {
   SonosModule.search({timeout: this.searchTimeout}, function(zp, model) {
     const deviceProperties = new SonosModule.Services.DeviceProperties(zp.host, zp.port);
     const zoneGroupTopology = new SonosModule.Services.ZoneGroupTopology(zp.host, zp.port);
+    const alarmClock = new SonosModule.Services.AlarmClock(zp.host, zp.port);
     zp.model = model;
     deviceProperties.GetZoneAttributes({}, function(err, attrs) {
       if (err) {
         this.log.error('%s:%s: error %s', zp.host, zp.port, err);
       } else {
         zp.zone = attrs.CurrentZoneName;
-	      // this.log.debug('%s: zone attrs %j', zp.zone, attrs);
-	      deviceProperties.GetZoneInfo({}, function(err, info) {
+        // this.log.debug('%s: zone attrs %j', zp.zone, attrs);
+        deviceProperties.GetZoneInfo({}, function(err, info) {
           if (err) {
             this.log.error('%s: error %s', zp.zone, err);
           } else {
             // this.log.debug('%s: info %j', zp.zone, info);
             zp.id = 'RINCON_' + info.MACAddress.replace(/:/g, '') +
-	    		          ('00000' + zp.port).substr(-5, 5);
-	          zoneGroupTopology.GetZoneGroupAttributes({}, function (err, attrs) {
-	            if (err) {
+                    ('00000' + zp.port).substr(-5, 5);
+            zp.version = info.DisplaySoftwareVersion;
+            zoneGroupTopology.GetZoneGroupAttributes({}, function (err, attrs) {
+              if (err) {
                 this.log.error('%s: error %s', zp.zone, err);
-	            } else {
-	              // this.log.debug('%s: zone group attrs %j', zp.zone, attrs);
-		            if (attrs.CurrentZoneGroupID === '') {
-		              this.log.debug('%s: ignore slave %s player %s at %s:%s',
-				                         zp.zone, zp.model, zp.id, zp.host, zp.port);
-		            } else {
-		              this.log.debug('%s: setup %s player %s at %s:%s',
-				                         zp.zone, zp.model, zp.id, zp.host, zp.port);
-		              this.players.push(zp);
-		            }
-	            }
+              } else {
+                // this.log.debug('%s: zone group attrs %j', zp.zone, attrs);
+                if (attrs.CurrentZoneGroupID === '') {
+                  this.log.debug(
+                    '%s: ignore slave %s v%s player %s at %s:%s',
+                    zp.zone, zp.model, zp.version, zp.id, zp.host, zp.port
+                  );
+                } else {
+                  this.log.debug(
+                    '%s: setup %s v%s player %s at %s:%s',
+                    zp.zone, zp.model, zp.version, zp.id, zp.host, zp.port
+                  );
+                  zp.alarms = {};
+                  alarmClock.ListAlarms({}, function(err, alarms) {
+                    if (err) {
+                      this.log.error('%s: error %s', zp.zone, err);
+                    } else {
+                      this.parser.parseString(alarms.CurrentAlarmList, function(err, json) {
+                        if (err) {
+                          this.log.error('%s: error %s', zp.zone, err);
+                        } else {
+                          for (let id in json.Alarms.Alarm) {
+                            const alarm = json.Alarms.Alarm[id].$;
+                            if (alarm && alarm.RoomUUID === zp.id) {
+                              zp.alarms[alarm.ID] = alarm;
+                            }
+                          }
+                        }
+                        this.players.push(zp);
+                      }.bind(this));
+                    }
+                  }.bind(this));
+                }
+              }
             }.bind(this));
           }
         }.bind(this));

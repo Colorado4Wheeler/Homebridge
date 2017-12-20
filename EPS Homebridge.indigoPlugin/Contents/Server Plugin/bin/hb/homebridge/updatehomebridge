@@ -7,3 +7,5 @@ export NODE_PATH="$( "$DIR/npm" -g root )"
 
 "$DIR/npm" upgrade -g homebridge
 "$DIR/npm" upgrade -g homebridge-indigo
+"$DIR/npm" upgrade -g homebridge-itunes
+"$DIR/npm" upgrade -g homebridge-zp

@@ -55,6 +55,7 @@ Currently the following additional plugins are available:
 * iTunes (experimental)
 * link:CameraDevice.adoc[Camera (experimental)]
 * Sonos ZonePlayer (experimental)
+* link:IFTTTDevice.adoc[If-This-Then-That (experimental)]
 
 == Attempted {plugin} Integrations 
 
