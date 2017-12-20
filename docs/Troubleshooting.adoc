@@ -237,9 +237,7 @@ image:/docs/images/TroubleshootingPSAX.png[]
 
 To start you need to first change to the following path, using quotes as indicated:
 
-```
 cd "/Library/Application Support/Perceptive Automation/Indigo 7/Plugins/EPS Homebridge.indigoPlugin/Contents/Server Plugin/bin/hb/homebridge"
-```
 
 You can see from here that you are in the heart of the Homebridge distribution for {plugin}:
 
