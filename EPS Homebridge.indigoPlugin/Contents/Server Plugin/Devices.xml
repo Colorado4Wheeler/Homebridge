@@ -2298,7 +2298,7 @@ This device type is currently experimental, use at your own risk.</Label>
 	</Device>	
 	
 	<!-- =========== IFTTT =========== -->
-	<Device type="relay" id="Homebridge-IFTTT">
+	<Device type="custom" id="Homebridge-IFTTT">
 		<Name>Homebridge IFTTT Accessory</Name>
 		<ConfigUI>
 			<Field type="label" id="lbl_plugin" >

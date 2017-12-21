@@ -1,6 +1,12 @@
 Release Notes
 ==========
 
+Version 1.0.5
+---------------
+
+* Changed device type of IFTTT device to be custom so the Indigo UI won't show on/off buttons that may confuse an end user
+
+
 Version 1.0.4
 ---------------
 
