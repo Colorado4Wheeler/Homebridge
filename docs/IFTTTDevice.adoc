@@ -60,31 +60,35 @@ Go back to the OpenSprinkler app / UI, Edit Options -> Integration -> ‘Configu
 
 === Setting Up The IFTTT Key In {plugin}
 
+Click on the Plugins Menu -> EPS Homebridge Buddy -> Configure and enter your key into the field labeled "IFTTT Webhooks Key", save when complete.
 
+image:/docs/images/IFTTTDeviceStep1.png[]
 
-=== Setting Up The Device
+=== Setting Up The Trigger Device
 
 Start by adding a device in Indigo as you normally would, selecting EPS - Homebridge Buddy as the type and Homebridge IFTTT as the model.
 
+image:/docs/images/IFTTTDeviceStep2.png[]
 
+Once you create your IFTTT device the rest is fairly simple.  Provide the accessory a name, this is the accessory that will appear in HomeKit (in our example under IFTTTT) and each button you create will be grouped under this accessory, each button with its own name, these will be the devices in HomeKit that you switch on or off.
 
+You can have as many buttons as you like for EACH IFTTT accessory device and you can create as many IFTTT accessory devices as you like, so feel free to organize however you like.
 
-==== Setting up the device
-Start by adding a device in Indigo as you normally would, selecting EPS - Homebridge Buddy as the type and Homebridge Camera as the model.
+There are several ways you can configure the IFTTT hooks.  One is to give nothing more than a button name and either an off or an on trigger.  If you provide only one (on OR off, not both) then it's a momentary switch that you tap to execute the webhook and it will instantly turn itself off after execution.  This is handy if you have a quick command you want to issue.
 
-image:/docs/images/CameraDeviceStep1.png[]
+image:/docs/images/IFTTTDeviceStep3.png[]
 
-Now click Edit Device Settings to configure your parameters.
+You can also provide an action for off as well as on, they can be different actions like our example here where we turn the system on to quit mail and off to start it back up again.  How did we do this?  We use automator and Dropbox in our webhook (and also geofencing so this is our backup in case geofencing fails) so that our mail rules stop processing while we are gone and ALL of our email shows up as unread in our iPhone mail app.
 
-image:/docs/images/CameraDeviceStep2.png[]
+image:/docs/images/IFTTTDeviceStep4.png[]
 
-When you select which Homebridge server will be hosting this camera you will notice that the only choices you have are for any {hb} servers you have configured and not any {plugin} built-in servers, this is by design as you can only add cameras to {hb} servers because of the requirement of ffmpeg and Homebridge-Camera.  Select your server and give your camera a meaningful name.
+You can provide delays for each on and off command as well if you need them.  If you leave these fields blank or make them 0 (zero) then there will be no delay and it won't reflect in the configuration for Homebridge.
 
-image:/docs/images/CameraDeviceStep3.png[]
+image:/docs/images/IFTTTDeviceStep5.png[]
 
-From this point you will need to do some poking around on Google to find the parameters you need for your camera, such as the video URL and still URL.  When editing the video and still sources, only change the camera IP address and optional filename, for now you will need to leave the -re -i rtsp:// and the -i http:// portions of these lines to ensure the encoding happens properly.  In future releases these may be incorporated but for now they are left to your preferences.
+You can edit any of your buttons by highlighting it and clicking the "Edit" button below, this will edit the button and remove it from the list so you can make your changes and re-add it (the order does not matter).  You can also remove one or more buttons by highlighting them (or shift-clicking them for multiples) and clicking the delete button.
 
-Save your device and give it a meaningful name.  Once you save your device you should notice a console log message indicating that the configuration has been saved and that {hb} is restarting, if not you can do this manually via the menu.
+As a final note, there is currently no way to indicate if your IFTTT action is on or off other than  you telling it so via your HomeKit app, this is something for future releases of HBB.
 
 === RELATED LINKS
 * link:HomebridgeConfiguration.adoc[Homebridge Server Device Configuration]

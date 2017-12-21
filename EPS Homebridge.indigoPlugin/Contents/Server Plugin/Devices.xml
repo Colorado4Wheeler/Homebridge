@@ -2298,8 +2298,8 @@ This device type is currently experimental, use at your own risk.</Label>
 	</Device>	
 	
 	<!-- =========== IFTTT =========== -->
-	<Device type="relay" id="Homebridge-Weatherunderground">
-		<Name>If-This-Then-That</Name>
+	<Device type="relay" id="Homebridge-IFTTT">
+		<Name>Homebridge IFTTT Accessory</Name>
 		<ConfigUI>
 			<Field type="label" id="lbl_plugin" >
 				<Label>This device type is currently experimental, use at your own risk.  Please refer to the NPM page for HomeBridge-ifttt for details.</Label>
@@ -2315,57 +2315,60 @@ This device type is currently experimental, use at your own risk.</Label>
 			<Field id="sep_server" type="separator" />
 			
 			<Field type="textfield" id="name" defaultValue="IFTTT" >
-				<Label>HomeKit name:</Label>
+				<Label>Accessory name:</Label>
 			</Field>
 			
 			<Field id="sep_name" type="separator" />
 			
-			<Field type="textfield" id="buttonname" defaultValue="" >
-				<Label>Acessory name:</Label>
+			<Field type="label" id="lbl_buttons" >
+				<Label>You can add as many buttons to your IFTTT accessory as you want, each button has the action it executes via webhooks for both on and off as well as delay times for each.
+		
+		</Label>
 			</Field>
 			
+			<Field type="textfield" id="buttonname" defaultValue="Button" >
+				<Label>Button caption:</Label>
+			</Field>
 			
-			<Field type="checkbox" id="speakers" defaultValue="false">
+			<Field type="textfield" id="triggeron" defaultValue="buttonaction" >
+				<Label>ON IFTTT trigger:</Label>
+			</Field>
+			
+			<Field type="textfield" id="delayon" defaultValue="0" >
+				<Label>ON delay:</Label>
+			</Field>
+			
+			<Field type="textfield" id="triggeroff" defaultValue="" >
+				<Label>OFF IFTTT trigger:</Label>
+			</Field>
+			
+			<Field type="textfield" id="delayoff" defaultValue="0" >
+				<Label>OFF delay:</Label>
+			</Field>
+			
+			<Field type="button" id="add"  >
 				<Label> </Label>
-				<Description>Enable multi-zone speakers</Description>
+				<Title>Add Button </Title>
+				<CallbackMethod>btnAddIFTTTButton</CallbackMethod>
 			</Field>
 			
-			<Field type="menu" id="service" defaultValue="switch">
-				<Label>Speaker service type:</Label>
-				<List>
-					<Option value="switch">Switch and Volume</Option>
-					<Option value="speaker">Speaker and Volume</Option>
-					<Option value="light">Lightbulb and Brightness</Option>
-					<Option value="fan">Fan and Rotation Speed</Option>
-				</List>
+			<Field id="sep_buttons" type="separator" />
+			
+			<Field id="buttons" type="list" rows="12" defaultValue="-none-" >
+				<Label>Accessory buttons:</Label>
+				<List class="self" method="listIFTTTButtons" dynamicReload="true"/>
 			</Field>
 			
-			<Field type="checkbox" id="brightness" defaultValue="false">
+			<Field type="button" id="edit"  >
 				<Label> </Label>
-				<Description>Enable volume as brightness</Description>
+				<Title>Edit Button </Title>
+				<CallbackMethod>btnEditIFTTTButton</CallbackMethod>
 			</Field>
 			
-			<Field id="sep_brightness" type="separator" />
-			
-			<Field type="checkbox" id="changehost" defaultValue="false">
+			<Field type="button" id="remove"  >
 				<Label> </Label>
-				<Description>Manually provide Sonos host values</Description>
-			</Field>			
-			
-			<Field type="textfield" id="host" defaultValue="192.168.1.10" visibleBindingId="changehost" visibleBindingValue="true" alwaysUseInDialogHeightCalc="true">
-				<Label>Host IP:</Label>
-			</Field>
-			
-			<Field type="textfield" id="port" defaultValue="0" visibleBindingId="changehost" visibleBindingValue="true" alwaysUseInDialogHeightCalc="true">
-				<Label>Port (0 for random):</Label>
-			</Field>
-			
-			<Field type="textfield" id="searchTimeout" defaultValue="2" visibleBindingId="changehost" visibleBindingValue="true" alwaysUseInDialogHeightCalc="true" >
-				<Label>Search timeout:</Label>
-			</Field>
-			
-			<Field type="textfield" id="subscriptionTimeout" defaultValue="30" visibleBindingId="changehost" visibleBindingValue="true" alwaysUseInDialogHeightCalc="true" >
-				<Label>Subscription timeout:</Label>
+				<Title>Remove Button </Title>
+				<CallbackMethod>btnRemoveIFTTTButton</CallbackMethod>
 			</Field>
 			
 

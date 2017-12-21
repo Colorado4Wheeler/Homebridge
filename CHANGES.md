@@ -1,6 +1,18 @@
 Release Notes
 ==========
 
+Version 1.0.4
+---------------
+
+* Added If-This-Then-That plugin 0.2.2 to core Homebridge package
+* Added IFTTT accessory device to add IFTTT Webhook commands to your HomeKit
+* Fixed a bug that prevented Sonos configurations from reaching the Homebridge config file properly
+* Removed all Weatherunderground devices and references (NOTE: if you added any WU devices please removed them prior to updating the plugin)
+* Homebridge updated to 0.4.33
+* Homebridge-Indigo updated to 0.3.11
+* Homebridge-zp (Sonos ZonePlayer) updated to 0.2.11
+* Extensive documentation updates, including full instructions on the new IFTTT implementation made to the GitHub document repository (https://github.com/Colorado4Wheeler/Homebridge/blob/master/docs/1_START_HERE.adoc)
+
 Version 1.0.3
 ---------------
 

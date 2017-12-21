@@ -18,6 +18,10 @@ import sys
 import string
 import calendar
 
+# For JSON Encoding
+import json
+import hashlib
+
 class ui:
 	listcache = {}
 	
@@ -1211,6 +1215,30 @@ class ui:
 			return ret
 		
 		return retList
+	
+	################################################################################
+	# JSON LISTS
+	################################################################################	
+	
+	#
+	# Create JSON array from array
+	#
+	
+	#
+	# Create JSON array from UI list
+	#
+	
+	
+	#
+	# Create a UI list from JSON array
+	#
+	
+	#
+	# Create a hash key if needed for JSON encoding/decoding
+	#
+	def createHashKey(self, keyString):
+		hashKey = hashlib.sha256(keyString.encode('ascii', 'ignore')).digest().encode("hex")  # [0:16]
+		return hashKey
 	
 	
 	################################################################################

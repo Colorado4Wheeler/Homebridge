@@ -1632,6 +1632,8 @@ class Plugin(indigo.PluginBase):
 				for platform in json_data["platforms"]:
 					if platform["platform"] == "Indigo": newplatforms.append (platform)
 					if platform["platform"] == "iTunes": newplatforms.append (platform) # Experimental support for Homebridge-iTunes
+					if platform["platform"] == "SonosZP": newplatforms.append (platform) # Experimental support for Homebridge-SonosZP
+					if platform["platform"] == "IFTTT": newplatforms.append (platform) # Experimental support for Homebridge-IFTTT
 				
 				json_data["platforms"] = newplatforms
 				
@@ -3789,6 +3791,7 @@ class Plugin(indigo.PluginBase):
 			config["addons"] = 0
 			config["camera"] = 0
 			config["sonos"] = 0
+			config["ifttt"] = 0
 			
 			includeDev = []
 			excludeDev = []
@@ -3810,11 +3813,17 @@ class Plugin(indigo.PluginBase):
 				config["addons"] = config["addons"] + 1
 				config["camera"] = config["camera"] + 1
 				
-			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Camera"):
+			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-SonosZP"):
 				if dev.pluginProps["serverDevice"] != str(serverId): continue
 				
 				config["addons"] = config["addons"] + 1
 				config["sonos"] = config["sonos"] + 1	
+				
+			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-IFTTT"):
+				if dev.pluginProps["serverDevice"] != str(serverId): continue
+				
+				config["addons"] = config["addons"] + 1
+				config["ifttt"] = config["ifttt"] + 1		
 					
 			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Wrapper"):
 				if dev.pluginProps["serverDevice"] != str(serverId): continue
@@ -4001,6 +4010,143 @@ class Plugin(indigo.PluginBase):
 			self.logger.error (ext.getException(e))	
 			
 		return idlist
+		
+	#
+	# Edit IFTTT accessory button
+	#
+	def btnEditIFTTTButton (self, valuesDict, typeId, devId):		
+		try:
+			retValue = self.removeIFTTTButton (valuesDict)
+			valuesDict = retValue["valuesDict"]
+			buttondata = retValue["button"]
+			
+			valuesDict["buttonname"] = buttondata["name"]
+			valuesDict["triggeron"] = buttondata["on"]
+			valuesDict["triggeroff"] = buttondata["off"]
+			valuesDict["delayon"] = buttondata["delayon"]
+			valuesDict["delayoff"] = buttondata["delayoff"]
+			
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+		return valuesDict
+		
+	#
+	# Delete IFTTT accessory button
+	#
+	def removeIFTTTButton (self, valuesDict):
+		try:
+			retValue = {}
+			retValue["button"] = {}
+			retValue["valuesDict"] = valuesDict
+			
+			if 'buttonItems' not in valuesDict:
+				valuesDict['buttonItems'] = json.dumps([])  # Empty list in JSON container	
+			
+			buttonItems = json.loads(valuesDict["buttonItems"]) 
+			retList = []
+			
+			for item in buttonItems:
+				isfound = 0
+				for button in valuesDict["buttons"]:
+					if button == item["key"]: 
+						isfound = 1
+						retValue["button"] = item	
+					
+				if isfound == 0:
+					retList.append (item)	
+										
+			jdata = json.dumps(retList)
+			valuesDict["buttonItems"] = jdata	
+			retValue["valuesDict"] = valuesDict	
+							
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+		return retValue
+	
+	#
+	# Delete IFTTT accessory button ui button function
+	#
+	def btnRemoveIFTTTButton (self, valuesDict, typeId, devId):		
+		try:
+			retValue = self.removeIFTTTButton (valuesDict)
+			valuesDict = retValue["valuesDict"]		
+							
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+		return valuesDict
+		
+	#
+	# Add button to an IFTTT accessory
+	#
+	def btnAddIFTTTButton (self, valuesDict, typeId, devId):	
+		try:
+			if valuesDict["buttonname"] == '':
+				errorsDict = indigo.Dict()
+				errorsDict["showAlertText"] = "You must provide a button name"
+				return valuesDict, errorsDict
+				
+			if valuesDict["triggeron"] == '' and valuesDict["triggeroff"] == '' :
+				errorsDict = indigo.Dict()
+				errorsDict["showAlertText"] = "You must provide an on or off action for the button"
+				return valuesDict, errorsDict	
+				
+			if 'buttonItems' not in valuesDict:
+				valuesDict['buttonItems'] = json.dumps([])  # Empty list in JSON container	
+			
+			buttonItems = valuesDict["buttonItems"]
+			
+			retList = json.loads(buttonItems)
+			
+			buttonData = {}
+			buttonData["name"] = valuesDict["buttonname"]
+			buttonData["key"] = eps.ui.createHashKey (valuesDict["buttonname"])
+			buttonData["on"] = valuesDict["triggeron"]
+			buttonData["off"] = valuesDict["triggeroff"]
+			buttonData["delayon"] = valuesDict["delayon"]
+			buttonData["delayoff"] = valuesDict["delayoff"]
+			
+			retList.append (buttonData)
+			
+			jdata = json.dumps(retList)
+			valuesDict["buttonItems"] = jdata
+			
+			# Reset the fields to nothing
+			valuesDict["buttonname"] = ""
+			valuesDict["triggeron"] = ""
+			valuesDict["triggeroff"] = ""
+			valuesDict["delayon"] = ""
+			valuesDict["delayoff"] = ""
+			
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+		return valuesDict
+		
+	#
+	# Read JSON data for IFTTT buttons and return it as a list to the UI
+	#
+	def listIFTTTButtons (self, filter, valuesDict, typeId, devId):
+		retList = list()
+		
+		try:
+			if 'buttonItems' not in valuesDict:
+				return retList
+				
+			buttonItems = valuesDict["buttonItems"]			
+			jdata = json.loads(buttonItems)
+			
+			for item in jdata:
+				option = (item["key"], item["name"])
+				retList.append(option)		
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+		
+		return retList
+		
 		
 	#
 	# Refresh device count in configuration
@@ -4237,32 +4383,86 @@ class Plugin(indigo.PluginBase):
 		
 			# 0.13 - If we are defining plugin devices they get added here
 			
-			# Homebridge-iTunes
-			if server.pluginProps["itunes_control"] == 1:
-				config["addons"] = config["addons"] + 1
+			# NOTE: This is getting pretty spaghetti code with the add-ons, it needs totally rewritten but in the meantime don't forget that 
+			# in order for ANY additional platform to work it needs to be included in the homebridgeSaveConfig function too!!!!
 			
-			if config["addons"] == 0:
-				cfg +=	'\t\t}\n'
-			else:
-				cfg +=	'\t\t},\n'
-				
 			# Homebridge-iTunes
 			if server.pluginProps["itunes_control"]:
+				cfg +=	'\t\t},\n' # We need this so we allow for another platform
+				
 				cfg +=	'\t\t{\n'		
 				cfg +=	'\t\t\t"platform": "{0}"\n'.format('iTunes')
-				cfg +=	'\t\t}\n'
 				
 			# Homebridge-SonosZP
-			if config["sonos"] > 1000:
+			if config["sonos"] > 0:
+				cfg +=	'\t\t},\n' # We need this so we allow for another platform
+				
 				cfg +=	'\t\t{\n'		
 				cfg +=	'\t\t\t"platform": "{0}"\n'.format('ZP')
 				
 				cfg +=	'\t\t\t"name": "{0}"\n'.format('ZP')
 				
-				cfg +=	'\t\t}\n'	
+			# Homebridge-IFTTT
+			if config["ifttt"] > 0:
+				cfg +=	'\t\t},\n' # We need this so we allow for another platform
+				
+				cfg +=	'\t\t{\n'		
+				cfg +=	'\t\t\t"platform": "{0}",\n'.format('IFTTT')
+				cfg +=	'\t\t\t"name": "{0}",\n'.format('IFTTT')
+				cfg +=	'\t\t\t"makerkey": "{0}",\n'.format(self.pluginPrefs["ifttt_key"])
+				cfg +=	'\t\t\t"accessories": [\n'
+			
+				for dev in indigo.devices.iter(self.pluginId + ".Homebridge-IFTTT"):
+					if dev.pluginProps["serverDevice"] != str(server.id): continue
+				
+					cfg +=	'\t\t\t\t{\n'
+				
+					cfg +=	'\t\t\t\t\t"name": "{0}",\n'.format(dev.pluginProps["name"])
+				
+					cfg +=	'\t\t\t\t\t"buttons": [\n'
+					
+					buttonItems = json.loads(dev.pluginProps["buttonItems"]) 
+					bcount = 0
+					
+					for button in buttonItems:
+						cfg +=	'\t\t\t\t\t\t{\n'
+						cfg +=	'\t\t\t\t\t\t\t"caption": "{0}",\n'.format(button["name"])
+						
+						if button["on"] != "" and button["off"] == "":
+							cfg +=	'\t\t\t\t\t\t\t"trigger": "{0}"'.format(button["on"])
+						elif button["off"] != "" and button["on"] == "":
+							cfg +=	'\t\t\t\t\t\t\t"trigger": "{0}"'.format(button["off"])
+						else:
+							if button["on"] != "": cfg +=	'\t\t\t\t\t\t\t"triggerOn": "{0}"'.format(button["on"])
+							if button["off"] != "": cfg +=	'\t\t\t\t\t\t\t"triggerOff": "{0}"'.format(button["off"])
+												
+						# Note that these two lines complete the above lines with the ",\n" because they are optional and if we
+						# add them to the lines above and the lines below are empty then our config will bomb out - again this 
+						# entire routine needs to be redone in a bad way						
+						if button["delayon"] != "" and button["delayon"] != "0": cfg +=	',\n\t\t\t\t\t\t\t"delayOn": {0}'.format(button["delayon"])
+						if button["delayoff"] != "" and button["delayoff"] != "0": cfg += ',\n\t\t\t\t\t\t\t"delayOff": {0}\n'.format(button["delayoff"])
+						
+						bcount = bcount + 1
+						if bcount == len(buttonItems):
+							cfg +=	'\t\t\t\t\t\t}\n'
+						else:
+							cfg +=	'\t\t\t\t\t\t},\n'
+										
+					cfg +=	'\t\t\t\t\t]\n'
+				
+					config["addons"] = config["addons"] - 1
+					config["ifttt"] = config["ifttt"] - 1
+				
+					if config["ifttt"] == 0:
+						cfg +=	'\t\t\t\t}\n'
+						cfg +=	'\t\t\t]\n'
+					else:
+						cfg +=	'\t\t\t\t},\n'		
 			
 			# Homebridge-Camera-FFMPEG
 			if config["camera"] > 0:
+				cfg +=	'\t\t},\n' # We need this so we allow for another platform
+				
 				cfg +=	'\t\t{\n'		
 				cfg +=	'\t\t\t"platform": "{0}",\n'.format('Camera-ffmpeg')
 				cfg +=	'\t\t\t"cameras": [\n'
@@ -4296,7 +4496,7 @@ class Plugin(indigo.PluginBase):
 				
 				cfg +=	'\t\t\t]\n'
 			
-				cfg +=	'\t\t}\n'
+			cfg +=	'\t\t}\n' # No matter what at this point we are done adding platforms, close the brace
 			
 			cfg += 	'\t],\n\n'
 	
