@@ -2451,6 +2451,13 @@ This device type is currently experimental, use at your own risk.</Label>
 				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
 			
+			<!-- *********** For future use, need to dynamically toggle visibility based on if they have more than one server *********** -->
+			<Field type="checkbox" id="defaultServer" defaultValue="false" hidden="true" visibleBindingId="view" visibleBindingValue="server" tooltip="Your default server is the one that will receive all of the plugin menu actions, if you have multiple servers then you can act on the others using the Advanced Server Actions menu.">
+				<Label> </Label>
+				<Description>Use this server as your default Homebridge server</Description>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
 			<Field type="textfield" id="computerip" defaultValue="192.168.1.1" visibleBindingId="indigoServer" visibleBindingValue="false">
 				<Label>Remote Mac IP Address:</Label>
 			</Field>
@@ -2769,6 +2776,13 @@ This device type is currently experimental, use at your own risk.</Label>
 				
 			</Field>
 			
+			<!-- *********** For future use, need to dynamically toggle visibility based on if they have more than one server *********** -->
+			<Field type="checkbox" id="defaultServer" defaultValue="false" hidden="true" visibleBindingId="view" visibleBindingValue="server" tooltip="Your default server is the one that will receive all of the plugin menu actions, if you have multiple servers then you can act on the others using the Advanced Server Actions menu.">
+				<Label> </Label>
+				<Description>Use this server as your default Homebridge server</Description>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
+			</Field>
+			
 			<Field type="textfield" id="computerip" defaultValue="192.168.1.1" visibleBindingId="indigoServer" visibleBindingValue="false" alwaysUseInDialogHeightCalc="true">
 				<Label>Remote Mac IP Address:</Label>
 			</Field>
@@ -2874,6 +2888,13 @@ This device type is currently experimental, use at your own risk.</Label>
 				<Label> </Label>
 				<Description>Homebridge is on the Indigo server</Description>
 				
+			</Field>
+			
+			<!-- *********** For future use, need to dynamically toggle visibility based on if they have more than one server *********** -->
+			<Field type="checkbox" id="defaultServer" defaultValue="false" hidden="true" visibleBindingId="view" visibleBindingValue="server" tooltip="Your default server is the one that will receive all of the plugin menu actions, if you have multiple servers then you can act on the others using the Advanced Server Actions menu.">
+				<Label> </Label>
+				<Description>Use this server as your default Homebridge server</Description>
+				<CallbackMethod>formFieldChanged</CallbackMethod>
 			</Field>
 					
 			<Field id="sep_server" type="separator" visibleBindingId="indigoServer" visibleBindingValue="false"/>

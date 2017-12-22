@@ -1,6 +1,27 @@
 Release Notes
 ==========
 
+Version 1.0.6
+---------------
+
+* Added a new device validation to check that the user has selected a server from the list when creating a device
+* Added a new device validation to check that the selected server is a valid and active server in Indigo
+* Added auto configuration saving and reloading for the new plugin devices (Sonos, IFTTT) if the options are selected in the plugin config
+* Added auto configuration saving and reloading when plugin devices (Sonos, IFTTT) are changed if the options are selected in the plugin config
+* Added validation to IFTTT devices to prevent the user from using duplicate button names or duplicate triggers within the same accessory device
+* Fixed issue where when starting HBB it would report that it was starting the server(s) and to not try to use Siri until a confirmation but if the server(s) was already running it was a confusing message, now it will report the the server(s) is ready for Siri commands.  This also impacts any command to start an already running server after the plugin has been started
+* Removed Homebridge package update option from the menu
+* Removed Plugin Updates option from the menu (now controlled by Indigo Plugin Store)
+* Added new menu option for Advanced Plugin Actions - this is in advance of changing all base menu actions to be performed on the "default" server only and any additional servers will be managed via this new menu option, this new menu also allows for additional diagnostic or plugin actions to be taken that are not visible in the menu
+* Added Advanced Plugin Action to view all logs instead of just the most recent, allowing the user to get a snapshot of any possible issues over a wider span of time
+* Removed Data Dump and Comprehensive Data dump from the plugin menu and added them to the Advanced Plugin Action form
+* Removed Start Homebridge and Stop Homebridge from the plugin menu and moved them into the Advanced Plugin Action form since they were redundant given you can start and stop the servers from the device list and this is just more clutter on the menu
+* Added functions to the Advanced Plugin Actions to view a servers States, Plugin Properties and a full Indigo data dump of the server
+* Cleaning up the plugin menu in an effort to make the plugin more plug-and-play and simpler for less experienced users to grasp while still giving advanced users places to tweak the system
+* Added iTunes plugin defaults property to the auto built HBB server if none are found
+* Fixed bug in server config builder that would cause an error if the iTunes plugin property was not found
+* Added upgrade command to add iTunes control property to existing servers on startup if they didn't have it before
+
 Version 1.0.5
 ---------------
 

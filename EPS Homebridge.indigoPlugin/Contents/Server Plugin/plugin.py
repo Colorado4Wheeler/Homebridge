@@ -145,7 +145,7 @@ class Plugin(indigo.PluginBase):
 				if ext.valueValid (dev.pluginProps, "itunes_control", True) == False:
 					self.logger.info ("Adding property to '{0}' configuration for release 1.0.0".format(dev.name))
 					props = dev.pluginProps
-					props["itunes_control"] = 0
+					props["itunes_control"] = False
 					dev.replacePluginPropsOnServer (props)		
 		
 		except Exception as e:
@@ -181,6 +181,9 @@ class Plugin(indigo.PluginBase):
 						break
 						
 			self.homebridgeDiscovery()
+			
+			defaultServer = self.getDefaultServer()
+			#indigo.server.log(unicode(defaultServer))
 						
 			if msg != "":
 				self.logger.error (msg)
@@ -416,6 +419,16 @@ class Plugin(indigo.PluginBase):
 				if ret[0] == False: return
 			
 				self.menuReload(valuesDict, dev.deviceTypeId)
+				
+			if dev.deviceTypeId == "Homebridge-SonosZP" or dev.deviceTypeId == "Homebridge-IFTTT":
+				# We have to restart the server that this device is attached to so it can be recognized
+				self.checkDeviceAddress (dev)
+					
+				if ext.valueValid (dev.pluginProps, "serverDevice", True):
+					server = indigo.devices[int(dev.pluginProps["serverDevice"])]
+					self.homebridgeSaveConfig (server, self.buildServerConfig (server))
+					if self.pluginPrefs["restartNewDevice"]: self.setServerRestart (server, dev, "Plugin device '{0}' was added to '{1}'".format(dev.name, server.name), 5, 120, 5)
+			
 			
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
@@ -464,6 +477,45 @@ class Plugin(indigo.PluginBase):
 						self.setServerRestart (oldserver, newDev, "{0}'s server changed to this server".format(newDev.name))	
 						if newDev.pluginProps["serverDevice"] != "": self.setServerRestart (newserver, newDev, "{0}'s server changed from this server".format(newDev.name))					
 					
+			if newDev.deviceTypeId == "Homebridge-SonosZP":
+				if "name" in changedProps or "speakers" in changedProps or "service" in changedProps or "brightness" in changedProps or "host" in changedProps or "port" in changedProps or "searchTimeout" in changedProps or "subscriptionTimeout" in changedProps:
+					server = indigo.devices[int(newDev.pluginProps["serverDevice"])]
+					self.homebridgeSaveConfig (server, self.buildServerConfig (server))
+					if self.pluginPrefs["restartDeviceType"]: self.setServerRestart (server, origDev, "{0}'s device core parameters changed".format(newDev.name))
+					
+				if "serverDevice" in changedProps:
+					# We need to save and reload BOTH servers (unless one of them is blank from a device delete)
+					oldserver = indigo.devices[int(origDev.pluginProps["serverDevice"])]
+					
+					if newDev.pluginProps["serverDevice"] != "": newserver = indigo.devices[int(newDev.pluginProps["serverDevice"])]
+					
+					self.homebridgeSaveConfig (oldserver, self.buildServerConfig (oldserver))
+					if newDev.pluginProps["serverDevice"] != "": self.homebridgeSaveConfig (newserver, self.buildServerConfig (newserver))
+					
+					if self.pluginPrefs["restartDeviceType"]: 
+						self.setServerRestart (oldserver, newDev, "{0}'s server changed to this server".format(newDev.name))	
+						if newDev.pluginProps["serverDevice"] != "": self.setServerRestart (newserver, newDev, "{0}'s server changed from this server".format(newDev.name))									
+			
+			
+			if newDev.deviceTypeId == "Homebridge-IFTTT":
+				if "name" in changedProps or "buttonname" in changedProps or "buttonItems":
+					server = indigo.devices[int(newDev.pluginProps["serverDevice"])]
+					self.homebridgeSaveConfig (server, self.buildServerConfig (server))
+					if self.pluginPrefs["restartDeviceType"]: self.setServerRestart (server, origDev, "{0}'s device core parameters changed".format(newDev.name))
+			
+				if "serverDevice" in changedProps:
+					# We need to save and reload BOTH servers (unless one of them is blank from a device delete)
+					oldserver = indigo.devices[int(origDev.pluginProps["serverDevice"])]
+					
+					if newDev.pluginProps["serverDevice"] != "": newserver = indigo.devices[int(newDev.pluginProps["serverDevice"])]
+					
+					self.homebridgeSaveConfig (oldserver, self.buildServerConfig (oldserver))
+					if newDev.pluginProps["serverDevice"] != "": self.homebridgeSaveConfig (newserver, self.buildServerConfig (newserver))
+					
+					if self.pluginPrefs["restartDeviceType"]: 
+						self.setServerRestart (oldserver, newDev, "{0}'s server changed to this server".format(newDev.name))	
+						if newDev.pluginProps["serverDevice"] != "": self.setServerRestart (newserver, newDev, "{0}'s server changed from this server".format(newDev.name))					
+			
 		
 			if newDev.deviceTypeId == "Homebridge-Alias":
 				if newDev.pluginProps["isSprinkler"] and newDev.pluginProps["sprinklerOptions"] == "controller" and newDev.pluginProps["manageZones"]:
@@ -879,6 +931,22 @@ class Plugin(indigo.PluginBase):
 		success = True
 		
 		try:
+			if "serverDevice" in valuesDict:
+				# All items should have a server device and it can never be blank
+				if valuesDict["serverDevice"] == "":
+					errorDict["serverDevice"] = "Server cannot be blank"
+					errorDict["showAlertText"] = "Select a valid server to connect this device to"
+					return (False, valuesDict, errorDict)
+					
+				if valuesDict["serverDevice"] != "":
+					try:
+						sdev = indigo.devices[int(valuesDict["serverDevice"])]
+					
+					except Exception as e:
+						errorDict["serverDevice"] = "Invalid server"
+						errorDict["showAlertText"] = "Plugin tried to connect to the selected server but got an error, re-select the server to verify it exists"
+						return (False, valuesDict, errorDict)
+			
 			if typeId == "Homebridge-Wrapper":
 				# If the device state area is hidden then make sure the selected device matches - this is a safeguard
 				# against them changing the main device after the defaults got set
@@ -1405,8 +1473,8 @@ class Plugin(indigo.PluginBase):
 			if dev.pluginProps["autoStartStop"]: self.homebridgeStart (dev)
 					
 		except Exception as e:
-			self.logger.error (ext.getException(e))			
-		
+			self.logger.error (ext.getException(e))	
+			
 	#
 	# Discover a manual HB server or set up a HB-Indigo server if there is none
 	#
@@ -1502,6 +1570,10 @@ class Plugin(indigo.PluginBase):
 				props["treataswindows"] = ["-none-"]
 				props["invertonoff"] = ["-none-"]
 				props["username"] = "Administrator"
+				props["defaultServer"] = False # Added 1.0.5
+
+				props["itunes_control"] = False # For iTunes plugin
+				
 				
 				indigo.device.create(protocol=indigo.kProtocol.Plugin,
 					address='SERVER on Indigo Server',
@@ -1799,6 +1871,11 @@ class Plugin(indigo.PluginBase):
 	#
 	def homebridgeStart (self, dev):
 		try:
+			# See if the server is already started, getting a start message on an already running server is confusing
+			if dev.states["onOffState"]:
+				self.logger.info ("Homebridge server '{0}', is already running and is ready for Siri commands".format(dev.name))
+				return True
+		
 			self.logger.info ("Starting the Homebridge server '{0}', do not try to use Siri until you get a message that the server has started".format(dev.name))
 			
 			if dev.deviceTypeId == "Homebridge-Server" or dev.deviceTypeId == "Homebridge-Guest":
@@ -2192,7 +2269,6 @@ class Plugin(indigo.PluginBase):
 	################################################################################	
 	# GENERAL
 	################################################################################	
-	
 	
 	#
 	# We got notified of an interesting change, if the parent is a server and the change is a name then restart HB
@@ -2808,6 +2884,83 @@ class Plugin(indigo.PluginBase):
 			self.logger.error (ext.getException(e))	
 	
 	#
+	# Advanced Plugin Actions: Server Selected
+	#	
+	def advPluginServerSelected (self, valuesDict, typeId):
+		try:
+			valuesDict["showServerActions"] = "true"
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+		return valuesDict
+	
+	#
+	# Advanced Server Actions
+	#
+	def btnAdvServerAction (self, valuesDict, typeId):		
+		try:
+			if valuesDict["serverActions"] == "save":
+				ret = self.menuSave (valuesDict, typeId)
+			elif valuesDict["serverActions"] == "reload":
+				ret = self.menuReload (valuesDict, typeId)
+			elif valuesDict["serverActions"] == "savereload":
+				ret = self.menuSaveReload (valuesDict, typeId)
+			elif valuesDict["serverActions"] == "start":
+				ret = self.menuStart (valuesDict, typeId)	
+			elif valuesDict["serverActions"] == "stop":
+				ret = self.menuStop (valuesDict, typeId)
+			elif valuesDict["serverActions"] == "showlog":
+				ret = self.menuLog (valuesDict, typeId)
+			elif valuesDict["serverActions"] == "showalllogs":
+				ret = self.menuLogAll (valuesDict, typeId)
+			elif valuesDict["serverActions"] == "showconfig":
+				ret = self.menuConfig (valuesDict, typeId)
+			elif valuesDict["serverActions"] == "states":
+				dev = indigo.devices[int(valuesDict["server"])]
+				self.logger.info (unicode(dev.states))
+				return ''
+			elif valuesDict["serverActions"] == "props":
+				dev = indigo.devices[int(valuesDict["server"])]
+				self.logger.info (unicode(dev.pluginProps))
+				return ''
+			elif valuesDict["serverActions"] == "data":
+				dev = indigo.devices[int(valuesDict["server"])]
+				self.logger.info (unicode(dev))
+				return ''
+				
+			if ret[0] == False:
+				errorsDict = ret[2]
+				self.logger.error (errorsDict["showAlertText"])	
+			else:
+				valuesDict = ret[1]
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+		#return (success, valuesDict, errorsDict)	
+		return valuesDict
+		
+	#
+	# Advanced Plugin Actions
+	#
+	def btnAdvPluginAction (self, valuesDict, typeId):		
+		try:
+			if valuesDict["pluginActions"] == "update":
+				self.logger.error ("Updating the Homebridge package libraries is not yet implemented in Homebridge buddy, please check back in future releases.")				
+			elif valuesDict["pluginActions"] == "data":
+				self.pluginMenuSupportData ()
+			elif valuesDict["pluginActions"] == "compdata":
+				self.pluginMenuSupportDataEx ()
+				
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+		#return (success, valuesDict, errorsDict)	
+		return valuesDict	
+	
+				
+	#
 	# Stop the HB process
 	#
 	def menuStop (self, valuesDict, typeId):
@@ -2856,6 +3009,11 @@ class Plugin(indigo.PluginBase):
 			self.logger.error (ext.getException(e))	
 			
 		return (success, valuesDict, errorsDict)
+
+			
+	################################################################################
+	# DEVELOPMENT TESTING SANDBOX, FUNCTIONS IN THIS AREA GET MOVED ELSEWHERE LATER
+	################################################################################
 			
 	#
 	# Development testing
@@ -2864,14 +3022,195 @@ class Plugin(indigo.PluginBase):
 		try:
 			indigo.server.log ("These are not the droids you are looking for.  Move along.  Move along.")
 
-			dev = indigo.devices[848501866]
-			server = False
-			
-			
+			self.healthCheck("info")
 					
 		except Exception as e:
 			self.logger.error (ext.getException(e))	
 			
+	#
+	# Health Check Device Audit
+	#
+	def healthCheck (self, logLevel):
+		try:
+			self.outputLog (logLevel, "#############################################################")
+			self.outputLog (logLevel, "# HOMEBRIDGE BUDDY HEALTH CHECK                             #")
+			self.outputLog (logLevel, "#############################################################")
+			
+			# Audit each server as a health check, hopefully this helps find issues and curb support requests
+			for server in indigo.devices.iter(self.pluginId + ".Homebridge-Server"):
+				self.outputLog (logLevel, "Health check audit for Homebridge Server '{0}'".format(server.name))
+				
+				self.healthCheckDeviceChecker (server, server.pluginProps["devinclude"], "included device", logLevel)
+				self.healthCheckDeviceChecker (server, server.pluginProps["devexclude"], "excluded device", logLevel)
+				
+				self.healthCheckDeviceChecker (server, server.pluginProps["actinclude"], "included action group", logLevel)
+				self.healthCheckDeviceChecker (server, server.pluginProps["actexclude"], "excluded action group", logLevel)
+								
+				self.healthCheckDeviceChecker (server, server.pluginProps["treatasdoor"], "treat as door", logLevel)
+				self.healthCheckDeviceChecker (server, server.pluginProps["treatasdrapes"], "treat as window covering", logLevel)
+				self.healthCheckDeviceChecker (server, server.pluginProps["treatasfans"], "treat as fan", logLevel)
+				self.healthCheckDeviceChecker (server, server.pluginProps["treatasgarage"], "treat as garage door", logLevel)
+				self.healthCheckDeviceChecker (server, server.pluginProps["treataslock"], "treat as lock", logLevel)
+				self.healthCheckDeviceChecker (server, server.pluginProps["treatassensors"], "treat as sensor", logLevel)
+				self.healthCheckDeviceChecker (server, server.pluginProps["treatasswitch"], "treat as switch", logLevel)
+				self.healthCheckDeviceChecker (server, server.pluginProps["treataswindows"], "treat as window", logLevel)
+				
+			# Guest servers
+			for server in indigo.devices.iter(self.pluginId + ".Homebridge-Guest"):
+				self.outputLog (logLevel, "Health check audit for Homebridge Guest Server '{0}'".format(server.name))
+				
+				# Make sure the server points to a legitimate server device
+				try:
+					refServer = indigo.devices[int(server.pluginProps["servers"])]
+					
+					# Now see if it's a proper server and hasn't been changed to something else
+					if refServer.deviceTypeId != "Homebridge-Server":
+						self.outputLog ("error", "Homebridge Guest Server '{0}' references {1} as its main server that is no longer a Homebridge Server device type, either fix the Guest Server to point to a valid Homebridge Server or change {2} back to being a Homebridge Server".format(server.name, refServer.name, refServer.name))						
+					
+				except Exception as e:	
+					self.logger.error (ext.getException(e))	
+					self.outputLog ("error", "Homebridge Guest Server '{0}' references device ID {1} as its main server but that server and ID do not exist in Indigo!".format(server.name, server.pluginProps["servers"]))
+		
+				self.healthCheckDeviceChecker (server, server.pluginProps["exclude"], "excluded device", logLevel)
+				
+		
+			# Devices
+			devTypes = ["SonosZP", "IFTTT", "Wrapper", "Alias"]
+			for devType in devTypes:
+				for dev in indigo.devices.iter(self.pluginId + ".Homebridge-" + devType):
+					self.outputLog (logLevel, "Health check audit for Homebridge {0} '{1}'".format(devType, dev.name))
+					
+					# Make sure the server points to a legitimate server device
+					try:
+						refServer = indigo.devices[int(dev.pluginProps["serverDevice"])]
+					
+						# Now see if it's a proper server and hasn't been changed to something else
+						if refServer.deviceTypeId != "Homebridge-Server" and refServer.deviceTypeId != "Homebridge-Custom":
+							self.outputLog ("error", "Homebridge {3} '{0}' references {1} as its main server that is no longer a Homebridge Server device type, either fix the Guest Server to point to a valid Homebridge Server or change {2} back to being a Homebridge Server".format(dev.name, refServer.name, refServer.name, devType))						
+					
+					except Exception as e:	
+						self.logger.error (ext.getException(e))	
+						self.outputLog ("error", "Homebridge {2} '{0}' references device ID {1} as its main server but that server and ID do not exist in Indigo!".format(dev.name, server.pluginProps["servers"], devType))
+		
+					# Now check properties
+					propList = ["deviceOn", "deviceOff", "deviceDim1", "deviceDim2", "deviceDim3", "deviceDim4", "stateFromDeviceOn", "stateFromDeviceOff", "stateFromDeviceDim1", "stateFromDeviceDim2", "stateFromDeviceDim3", "stateFromDeviceDim4"]
+					for prop in propList:
+						if prop in dev.pluginProps:
+							if dev.pluginProps[prop] != "":
+								try:
+									refDev = indigo.devices[int(dev.pluginProps[prop])]
+
+								except Exception as e:	
+									self.logger.error (ext.getException(e))	
+									self.outputLog ("error", "Homebridge {2} '{0}' references device ID {1} as the device for property '{3}' but that device ID does not exist in Indigo!".format(dev.name, dev.pluginProps[prop], devType, prop))
+		
+						
+		
+			self.outputLog (logLevel, "#############################################################")
+			self.outputLog (logLevel, "# END HOMEBRIDGE BUDDY HEALTH CHECK                         #")
+			self.outputLog (logLevel, "#############################################################")
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+	#
+	# Health Check Device List Loop
+	#
+	def healthCheckDeviceChecker (self, server, itemList, listDesc, logLevel):
+		try:
+			
+			for devId in itemList:
+				itemFound = 0
+				itemType = "device"
+				
+				if devId[0:1] == "-": continue
+				if devId == "default": continue
+			
+				# Check if it's a device
+				try:
+					dev = indigo.devices[int(devId)]					
+					itemFound = 1
+					
+				except Exception as e:
+					itemFound = 0
+
+				if itemFound == 0: # Check if it's an action
+					try:
+						itemType = "action group"
+						dev = indigo.actionGroups[int(devId)]					
+						itemFound = 1
+					
+					except Exception as e:
+						itemFound = 0
+						itemType = "action group or device" # since nothing was found this ensures our message includes both, otherwise it would always say action group
+
+				
+				if itemFound == 0: 
+					self.outputLog ("error", "Homebridge Server '{0}' is trying to use {1} ID {2} in the {3} list but that ID does not exist as an Indigo {4}".format(server.name, itemType, devId, listDesc, itemType))	
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+	#
+	# Output to info, debug or error as requested
+	#
+	def outputLog (self, level, message):
+		try:
+			if level == "info": self.logger.info (message)
+			if level == "debug": self.logger.debug (message)
+			if level == "error": self.logger.error (message)
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+	#
+	# Find a default server, either by user checkbox or discovery
+	#
+	def getDefaultServer (self):				
+		try:
+			server = False
+
+			servers = 0
+			
+			# First search our preferred built-in devices
+			for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Server"):
+				servers = servers + 1
+				server = dev # Just catalog the most recently found
+				
+				if "defaultServer" in dev.pluginProps:
+					if dev.pluginProps["defaultServer"]: return dev # We found the user defined default
+				
+			# If we don't find a default then search guest servers
+			if server == False:
+				for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Guest"):
+					servers = servers + 1
+					server = dev # Just catalog the most recently found
+				
+					if "defaultServer" in dev.pluginProps:
+						if dev.pluginProps["defaultServer"]: return dev # We found the user defined default	
+						
+			# If we don't find a default then search custom servers
+			if server == False:
+				for dev in indigo.devices.iter(self.pluginId + ".Homebridge-Custom"):
+					servers = servers + 1
+					server = dev # Just catalog the most recently found
+				
+					if "defaultServer" in dev.pluginProps:
+						if dev.pluginProps["defaultServer"]: return dev # We found the user defined default		
+						
+			if server == False:
+				self.logger.error ("Unable to find any Homebridge server, built in or otherwise, to serve as a default server.  Please verify that you have defined a Homebridge server in Indigo!")
+			else:
+				return server
+		
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+			
+		return False		
+				
+	################################################################################
+	# END DEVELOPMENT TESTING AREA
+	################################################################################				
 	
 	#
 	# Reload HB
@@ -2946,6 +3285,40 @@ class Plugin(indigo.PluginBase):
 		return (success, valuesDict, errorsDict)
 		
 	#
+	# Output all of the the built in server logs
+	#
+	def menuLogAll (self, valuesDict, typeId):	
+		errorsDict = indigo.Dict()
+		success = True
+		
+		try:
+			if valuesDict["server"] == "" or valuesDict["server"] == "-line-":
+				errorsDict["server"] = "Please select a server"
+				errorsDict["showAlertText"] = "This job will be much easier if you select a server you want to get the log for!"
+				success = False
+		
+			else:		
+				dev = indigo.devices[int(valuesDict["server"])]
+				
+				home = self.configdir + "/" + str(dev.id)
+				
+				for i in range(7, 0, -1):
+					logext = "." + str(i)
+					if i == 0: logext = ""
+													
+					if os.path.exists(home + "/homebridge.log" + logext):
+						file = open(home + "/homebridge.log" + logext, 'r')
+						logdetails = file.read()
+					
+						self.logger.info ("SHOWING LOG: " + "homebridge.log" + logext)
+						self.logger.info (logdetails)
+						
+		except Exception as e:
+			self.logger.error (ext.getException(e))	
+	
+		return (success, valuesDict, errorsDict)
+		
+	#
 	# Output the built in server config
 	#
 	def menuConfig (self, valuesDict, typeId):	
@@ -2974,6 +3347,9 @@ class Plugin(indigo.PluginBase):
 			self.logger.error (ext.getException(e))	
 	
 		return (success, valuesDict, errorsDict)	
+	
+
+	
 	
 	#
 	# Build and save the configuration
@@ -4083,6 +4459,12 @@ class Plugin(indigo.PluginBase):
 	#
 	def btnAddIFTTTButton (self, valuesDict, typeId, devId):	
 		try:
+			if 'buttonItems' not in valuesDict:
+				valuesDict['buttonItems'] = json.dumps([])  # Empty list in JSON container	
+			
+			buttonItems = valuesDict["buttonItems"]
+			retList = json.loads(buttonItems)
+			
 			if valuesDict["buttonname"] == '':
 				errorsDict = indigo.Dict()
 				errorsDict["showAlertText"] = "You must provide a button name"
@@ -4093,12 +4475,26 @@ class Plugin(indigo.PluginBase):
 				errorsDict["showAlertText"] = "You must provide an on or off action for the button"
 				return valuesDict, errorsDict	
 				
-			if 'buttonItems' not in valuesDict:
-				valuesDict['buttonItems'] = json.dumps([])  # Empty list in JSON container	
+			for b in retList:
+				if b["name"] == valuesDict["buttonname"]:
+					errorsDict = indigo.Dict()
+					errorsDict["buttonname"] = "Invalid name"
+					errorsDict["showAlertText"] = "You already have a button with this name, please change the name to something else"
+					return valuesDict, errorsDict
+				
+				if b["on"] != "" and b["on"] == valuesDict["triggeron"]:
+					errorsDict = indigo.Dict()
+					errorsDict["triggeron"] = "Invalid trigger"
+					errorsDict["showAlertText"] = "This trigger is already being used by {0}".format(b["name"])
+					return valuesDict, errorsDict
+					
+				if b["off"] != "" and b["off"] == valuesDict["triggeroff"]:
+					errorsDict = indigo.Dict()
+					errorsDict["triggeroff"] = "Invalid trigger"
+					errorsDict["showAlertText"] = "This trigger is already being used by {0}".format(b["name"])
+					return valuesDict, errorsDict
 			
-			buttonItems = valuesDict["buttonItems"]
 			
-			retList = json.loads(buttonItems)
 			
 			buttonData = {}
 			buttonData["name"] = valuesDict["buttonname"]
@@ -4387,11 +4783,12 @@ class Plugin(indigo.PluginBase):
 			# in order for ANY additional platform to work it needs to be included in the homebridgeSaveConfig function too!!!!
 			
 			# Homebridge-iTunes
-			if server.pluginProps["itunes_control"]:
-				cfg +=	'\t\t},\n' # We need this so we allow for another platform
+			if "itunes_control" in server.pluginProps:
+				if server.pluginProps["itunes_control"]:
+					cfg +=	'\t\t},\n' # We need this so we allow for another platform
 				
-				cfg +=	'\t\t{\n'		
-				cfg +=	'\t\t\t"platform": "{0}"\n'.format('iTunes')
+					cfg +=	'\t\t{\n'		
+					cfg +=	'\t\t\t"platform": "{0}"\n'.format('iTunes')
 				
 			# Homebridge-SonosZP
 			if config["sonos"] > 0:

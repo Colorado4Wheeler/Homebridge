@@ -268,7 +268,10 @@ class devices:
 					self.zoneMinutesComplete = round (self.zoneRunTime - self.zoneMinutesRemaining, 2)
 					
 					self.schedulePercentRemaining = int(round(self.scheduleMinutesRemaining / self.scheduleRunTime, 2) * 100)
-					self.zonePercentRemaining = int(round(self.zoneMinutesRemaining / self.zoneRunTime, 2) * 100)
+					if self.zoneRunTime > 0:
+						self.zonePercentRemaining = int(round(self.zoneMinutesRemaining / self.zoneRunTime, 2) * 100)
+					else:
+						self.logger.info ("The zone run time is zero, unable to calculate time remaining.  This is not a critical problem and may only indicate that you stopped a sprinkler that wasn't running.")
 					
 					self.schedulePercentComplete = 100 - self.schedulePercentRemaining
 					self.zonePercentComplete = 100 - self.zonePercentRemaining

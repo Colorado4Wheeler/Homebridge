@@ -60,39 +60,6 @@
     
     <MenuItem id="sep_hb2"/>
     
-    <MenuItem id="startHB">
-    	<Name>Start Homebridge</Name>
-    	<CallbackMethod>menuStart</CallbackMethod>
-    	<ButtonTitle>Start</ButtonTitle>
-        <ConfigUI>
-        	<Field type="menu" id="server" defaultValue="-all-">
-				<Label>Homebridge Server:</Label>
-				<List class="self" filter="#plugin#[index=server, callback=listServers]" method="getCustomList" dynamicReload="true"/>
-			</Field>
-        	
-        </ConfigUI>
-    </MenuItem>
-    
-    <MenuItem id="stopHB">
-    	<Name>Stop Homebridge</Name>
-    	<CallbackMethod>menuStop</CallbackMethod>
-        <ButtonTitle>Stop</ButtonTitle>
-        <ConfigUI>
-        	<Field type="menu" id="server" defaultValue="-all-">
-				<Label>Homebridge Server:</Label>
-				<List class="self" filter="#plugin#[index=server, callback=listServers]" method="getCustomList" dynamicReload="true"/>
-			</Field>
-        	
-        </ConfigUI>
-    </MenuItem>
-    
-    <MenuItem id="updateHB">
-    	<Name>Homebridge Software Update</Name>
-    	<CallbackMethod>menuUpdate</CallbackMethod>
-    </MenuItem>
-    
-    <MenuItem id="sep_hb3"/>
-    
     <MenuItem id="logHB">
     	<Name>Show Homebridge Log</Name>
     	<CallbackMethod>menuLog</CallbackMethod>
@@ -117,9 +84,98 @@
         </ConfigUI>
     </MenuItem>
     
-    <MenuItem id="sep_hb4"/>
+    <MenuItem id="sep_options"/>
     
-	<MenuItem id="performanceOptions">
+ 	<MenuItem id="libVersion">
+    	<Name>Show Support Information</Name>
+    	<CallbackMethod>pluginMenuSupportInfo</CallbackMethod>
+    </MenuItem>
+    
+    <MenuItem id="sep_adv"/>
+    
+    <MenuItem id="advancedPluginActions">
+    	<Name>Advanced Plugin Actions</Name>
+    	<ButtonTitle>Done</ButtonTitle>
+        <ConfigUI>
+        	<Field type="label" id="lbl_devmessage" >
+				<Label>NOTE: This window and all the options are currently being developed.  You are seeing this message because you are using a pre-release or development build and that means that some things may not yet be finished in the development stages, including everything on this form.  Use at your own risk.
+				</Label>
+			</Field>
+			
+			<Field id="sep_devmessage" type="separator" />
+			
+			<Field type="label" id="lbl_server" >
+				<Label>After selecting a server you will be able to perform all of the plugin menu actions on any Homebridge Buddy or Homebridge-Indigo server added to Indigo.
+				</Label>
+			</Field>
+        
+        	<Field type="menu" id="server" defaultValue="-all-">
+				<Label>Homebridge Server:</Label>
+				<List class="self" filter="#plugin#[index=server, callback=listServers]" method="getCustomList" dynamicReload="true"/>
+				<CallbackMethod>advPluginServerSelected</CallbackMethod>
+			</Field>
+			
+			<Field type="checkbox" id="showServerActions" defaultValue="false" hidden="true">
+				<Label> </Label>
+				<Description>Hidden field to determine if server actions are visible</Description>
+			</Field>
+			
+			<Field type="menu" id="serverActions" defaultValue="save" visibleBindingId="showServerActions" visibleBindingValue="true" alwaysUseInDialogHeightCalc="true">
+				<Label>Server Action:</Label>
+				<List>
+					<Option value="save">Save Server Configuration</Option>
+					<Option value="reload">Reload Server</Option>
+					<Option value="savereload">Save Server Config and Reload Server</Option>
+					<Option value="start">Start Server</Option>
+					<Option value="stop">Stop Server</Option>
+					<Option value="showlog">Show Server Log</Option>
+					<Option value="showalllogs">Show All Server Logs</Option>
+					<Option value="showconfig">Show Server Configuration</Option>
+					<Option value="props">Indigo Device Plugin Properties</Option>
+					<Option value="states">Indigo Device States</Option>
+					<Option value="data">Indigo Device Data Dump</Option>
+				</List>
+			</Field>
+			
+			<Field type="button" id="serverActionRun" visibleBindingId="showServerActions" visibleBindingValue="true" alwaysUseInDialogHeightCalc="true">
+				<Label> </Label>
+				<Title>Execute Action </Title>
+				<CallbackMethod>btnAdvServerAction</CallbackMethod>
+			</Field>
+			
+			
+			<Field id="sep_actions" type="separator" />
+			
+			<Field type="label" id="lbl_global" >
+				<Label>These options and actions below are not for a specific server but for the plugin as a whole, using them should be done with extreme caution!
+				</Label>
+			</Field>
+			
+			<Field type="menu" id="pluginActions" defaultValue="data" >
+				<Label>Plugin Action:</Label>
+				<List>
+					<Option value="data">Plugin Data Dump</Option>
+					<Option value="compdata">Comprehensive Plugin Data Dump</Option>
+					<Option value="update">Update Homebridge Packages</Option>
+				</List>
+			</Field>
+			
+			<Field type="button" id="pluginActionRun"  >
+				<Label> </Label>
+				<Title>Execute Action </Title>
+				<CallbackMethod>btnAdvPluginAction</CallbackMethod>
+			</Field>
+        	
+			<Field id="sep_notice" type="separator" />
+        	
+        	<Field type="label" id="lbl_devexclude" >
+				<Label>Note that remote Homebridge servers may cause Indigo to time out during this process, in most cases this should be fine but if you experience problems then try using an Action Group to perform this action instead.</Label>
+			</Field>
+        	
+        </ConfigUI>
+    </MenuItem>
+    
+    <MenuItem id="performanceOptions">
         <Name>Performance Options</Name>
         <ButtonTitle>Save</ButtonTitle>
         <CallbackMethod>performanceOptions</CallbackMethod>
@@ -190,30 +246,6 @@ Using this method is nit-picking performance since polling is almost equally as 
 			</Field>
 			
         </ConfigUI>
-    </MenuItem>
-    
-    <MenuItem id="sep_options"/>
-    
- 	<MenuItem id="libVersion">
-    	<Name>Show Support Information</Name>
-    	<CallbackMethod>pluginMenuSupportInfo</CallbackMethod>
-    </MenuItem>
-    
-    <MenuItem id="supportLog">
-    	<Name>Support Data Dump</Name>
-    	<CallbackMethod>pluginMenuSupportData</CallbackMethod>
-    </MenuItem>
-    
-    <MenuItem id="supportLogEx">
-    	<Name>Support Comprehensive Data Dump</Name>
-    	<CallbackMethod>pluginMenuSupportDataEx</CallbackMethod>
-    </MenuItem>
-    
-    <MenuItem id="sep_update"/>
-    
-    <MenuItem id="update">
-    	<Name>Check For Plugin Update</Name>
-    	<CallbackMethod>pluginMenuCheckUpdates</CallbackMethod>
     </MenuItem>
     
     <MenuItem id="sep_dev"/>
